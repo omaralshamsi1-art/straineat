@@ -16,9 +16,9 @@ The app is in English by default; Settings → Language switches to Arabic (the 
 
 ## Today
 - Top: three rings — EATEN (% of today's calorie target eaten; red when over), LEFT (kcal left = target − confirmed
-  meals) and BURN (calories burned as a % of calories eaten — over 100% means a deficit). Tap a ring for details.
+  meals) and BURN (kcal burned so far today; the ring fills toward the expected full-day burn). Tap a ring for details.
 - Under the rings: a status line, then two cards — "Nutrition monitor" (calories, protein, carbs, fat, fibre, sodium
-  vs target: "within range" or which need attention) and "Energy" (burn vs intake: deficit or surplus). Tapping opens
+  vs target: "within range" or which need attention) and "Energy" (burn − intake so far: +deficit / −surplus). Tapping opens
   a detail page with a 7-day chart and a tile per metric with its range. Drafts (analysed but not confirmed) do NOT
   count until confirmed. Burn comes from WHOOP / Apple Health / manual entry.
 - Today's eating schedule: each planned meal/snack with its time, a kcal target and status (Done / Now / Upcoming /

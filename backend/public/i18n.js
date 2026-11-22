@@ -9,6 +9,9 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"الحرق يتراكم خلال اليوم، فالرقم الصباحي طبيعي أن يكون منخفضاً.": "Burn adds up through the day, so a low number in the morning is normal.",
+"المتوقع {}": "expected {}",
+"من حرق اليوم المتوقع": "OF EXPECTED DAILY BURN",
 "الاستشفاء والنوم · WHOOP": "RECOVERY & SLEEP · WHOOP",
 "أعد ربط WHOOP مرة واحدة لإظهار الاستشفاء والنوم.": "Reconnect WHOOP once to show recovery and sleep.",
 "إعادة الربط ›": "Reconnect ›",

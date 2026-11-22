@@ -86,6 +86,8 @@ export class EnergyService {
         : null,
       burnIsPartialDay: isToday && !!chosen,
       estimatedTdee: estimatedTdee(profile),
+      /** the plan's best estimate of a full day's burn (adaptive / device / formula) */
+      expectedBurnKcal: Math.round(plan.maintenanceKcal ?? estimatedTdee(profile) ?? 0) || null,
       goal: plan.effectiveGoal,
       goalDeltaKcal: plan.dailyDeltaKcal,
       targetIntakeKcal: target,

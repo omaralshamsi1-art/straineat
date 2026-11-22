@@ -147,6 +147,7 @@ struct Balance: Codable {
     let burn: Burn?
     let burnIsPartialDay: Bool
     let estimatedTdee: Double?
+    var expectedBurnKcal: Double?
     let goal: String
     let targetIntakeKcal: Double?
     let remainingKcal: Double?

@@ -2279,9 +2279,11 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
     setRing('r3Left', Math.max(0, left) / (target || 1), left < 0 ? 'var(--bad)' : '#2fbf55');
     $('r3LeftV').textContent = `${left < 0 ? '−' : ''}${fmt(Math.abs(left))}`;
     $('r3LeftL').textContent = left < 0 ? T('فوق الهدف ›') : T('المتبقي ›');
-    const burnPct = burn && eaten ? Math.round((burn / eaten) * 100) : null;
-    setRing('r3Burn', burnPct ? burnPct / 200 : 0, '#1e90e8');
-    $('r3BurnV').innerHTML = burnPct != null ? `${burnPct}<small>%</small>` : burn ? fmt(burn) : '—';
+    // Burn ring: kcal burned so far; the ring fills toward a full day's expected burn.
+    const expBurn = b.expectedBurnKcal || null;
+    const burnPct = burn != null && expBurn ? Math.round((burn / expBurn) * 100) : null;
+    setRing('r3Burn', burnPct != null ? burnPct / 100 : 0, '#1e90e8');
+    $('r3BurnV').textContent = burn != null ? fmt(burn) : '—';
     // monitors
     const checks = nutrientChecks(b).filter((c) => c.key !== 'sodium' || b.intake.sodium_mg);
     const okN = checks.filter((c) => c.state === 'ok').length;
@@ -2293,10 +2295,10 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
     $('monNutS').textContent = L`${okN}/${checks.length} عناصر`;
     if (burn != null) {
       const net = burn - eaten;
-      $('monEnB').className = `badge2 ${net >= 0 ? 'ok' : 'hi'}`; $('monEnB').textContent = burnPct != null ? `${burnPct}%` : '—';
+      $('monEnB').className = `badge2 ${net >= 0 ? 'ok' : 'hi'}`; $('monEnB').textContent = `${net >= 0 ? '+' : '−'}${fmt(Math.abs(net))}`;
       $('monEnT').className = net >= 0 ? 'ok-t' : 'hi-t';
       $('monEnT').textContent = net >= 0 ? T('عجز') : T('فائض');
-      $('monEnB').style.fontSize = String($('monEnB').textContent).length > 3 ? '12.5px' : '';
+      $('monEnB').style.fontSize = String($('monEnB').textContent).length > 4 ? '12px' : '';
       $('monEnS').textContent = L`حرقت ${fmt(burn)} · أكلت ${fmt(eaten)}`;
     } else {
       $('monEnB').className = 'badge2 lo'; $('monEnB').textContent = '—';
@@ -2341,19 +2343,20 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
         tileHtml(T('الألياف'), fmt(lft(t.fiber_g, i.fiber_g)), ' ' + T('غ'), L`من ${fmt(t.fiber_g)}`, 'lo'),
       ].join('') + `<div style="grid-column:1/-1"><button class="btn" id="detSug" style="margin-top:6px">${T('ماذا آكل الآن؟')}</button></div>`;
     } else {
-      const pct = burn && eaten ? Math.round((burn / eaten) * 100) : null;
+      const exp = b.expectedBurnKcal || null;
+      const pct = burn != null && exp ? Math.round((burn / exp) * 100) : null;
       const net = burn != null ? burn - eaten : null;
       chart = `<div class="dchart"><div class="t">${T('الحرق آخر 7 أيام')}</div><div class="small muted" id="detDay">${T('اليوم')}</div><div class="big num" id="detBig">${burn != null ? fmt(burn) : '—'}<small style="font-size:15px"> ${T('سعرة')} ${b.burn ? `· ${esc(SRC[b.burn.source] || b.burn.source)}` : ''}</small></div><div id="detChart"><div class="loading"><div class="spinner"></div></div></div></div>`;
       const act = b.activity || {};
       tiles = [
-        tileHtml(T('الحرق ÷ الأكل'), pct != null ? pct : '—', '%', pct != null ? (pct >= 100 ? T('✓ الحرق أعلى') : T('↑ الأكل أعلى')) : '', pct != null && pct >= 100 ? 'ok' : 'hi'),
+        tileHtml(T('من حرق اليوم المتوقع'), pct != null ? pct : '—', '%', exp ? L`المتوقع ${fmt(exp)}` : '', 'lo'),
         tileHtml(T('الفرق'), net != null ? `${net >= 0 ? '+' : '−'}${fmt(Math.abs(net))}` : '—', ' ' + T('سعرة'), net != null ? (net >= 0 ? T('✓ عجز') : T('↑ فائض')) : '', net != null && net >= 0 ? 'ok' : 'hi'),
         tileHtml(T('الحرق النشط'), b.burn && b.burn.activeKcal != null ? fmt(b.burn.activeKcal) : '—', ' ' + T('سعرة'), '', ''),
         tileHtml(T('الحرق الأساسي'), b.burn && b.burn.basalKcal != null ? fmt(b.burn.basalKcal) : '—', ' ' + T('سعرة'), '', ''),
         tileHtml(T('التمارين'), act.totalKcal ? fmt(act.totalKcal) : '—', ' ' + T('سعرة'), act.totalMin ? L`${fmt(act.totalMin)} دقيقة` : '', 'lo'),
         tileHtml(T('أكلت'), fmt(eaten), ' ' + T('سعرة'), L`الهدف ${fmt(b.targetIntakeKcal)}`, 'lo'),
       ].join('');
-      if (burn == null) tiles += `<div style="grid-column:1/-1" class="small muted">${T('اربط WHOOP أو Apple Health من الإعدادات لحساب الحرق.')}</div>`;
+      tiles += `<div style="grid-column:1/-1" class="small muted">${burn == null ? T('اربط WHOOP أو Apple Health من الإعدادات لحساب الحرق.') : T('الحرق يتراكم خلال اليوم، فالرقم الصباحي طبيعي أن يكون منخفضاً.')}</div>`;
     }
     $('detBody').innerHTML = chart + `<div class="tiles">${tiles}</div>`;
     const sb = $('detSug'); if (sb) sb.onclick = () => { closeDetail(); loadSuggestions(false); setTimeout(() => $('sugBody').scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); };

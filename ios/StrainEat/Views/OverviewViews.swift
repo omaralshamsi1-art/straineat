@@ -77,14 +77,15 @@ struct OverviewSection: View {
         let eaten = b.intake.calories, target = max(b.targetIntakeKcal ?? 1, 1), left = b.remainingKcal ?? 0
         let burn = b.burn?.totalKcal
         let eatPct = Int((eaten / target * 100).rounded())
-        let burnPct: Int? = (burn != nil && eaten > 0) ? Int((burn! / eaten * 100).rounded()) : nil
+        let expBurn = b.expectedBurnKcal
+        let burnFrac: Double = (burn != nil && (expBurn ?? 0) > 0) ? burn! / expBurn! : 0
         let checks = nutrientChecks(b, isToday: isToday)
         let okN = checks.filter { $0.state == .ok }.count
         VStack(spacing: 12) {
             HStack(spacing: 4) {
                 Button { detail = .eaten } label: { MiniRing(fraction: eaten / target, color: eatPct > 105 && b.goal != "gain" ? Theme.bad : eatColor, value: "\(eatPct)%", label: t("EATEN", "الأكل")) }
                 Button { detail = .left } label: { MiniRing(fraction: max(0, left) / target, color: left < 0 ? Theme.bad : leftColor, value: "\(left < 0 ? "−" : "")\(fmt(abs(left)))", label: left < 0 ? t("OVER", "فوق الهدف") : t("LEFT", "المتبقي")) }
-                Button { detail = .burn } label: { MiniRing(fraction: Double(burnPct ?? 0) / 200, color: burnColor, value: burnPct.map { "\($0)%" } ?? "—", label: t("BURN", "الحرق")) }
+                Button { detail = .burn } label: { MiniRing(fraction: burnFrac, color: burnColor, value: burn.map { fmt($0) } ?? "—", label: t("BURN", "الحرق")) }
             }
             .buttonStyle(.plain)
             HStack(spacing: 10) {
@@ -94,7 +95,7 @@ struct OverviewSection: View {
                         sub: t("\(okN)/\(checks.count) metrics", "\(okN)/\(checks.count) عناصر")) { detail = .eaten }
                 if let burn {
                     let net = burn - eaten
-                    monitor(title: t("ENERGY", "الطاقة"), badge: burnPct.map { "\($0)%" } ?? "—", state: net >= 0 ? .ok : .high,
+                    monitor(title: t("ENERGY", "الطاقة"), badge: "\(net >= 0 ? "+" : "−")\(fmt(abs(net)))", state: net >= 0 ? .ok : .high,
                             headline: net >= 0 ? t("DEFICIT", "عجز") : t("SURPLUS", "فائض"),
                             sub: t("Burned \(fmt(burn)) · Ate \(fmt(eaten))", "حرقت \(fmt(burn)) · أكلت \(fmt(eaten))")) { detail = .burn }
                 } else {
@@ -227,9 +228,10 @@ struct OverviewDetailView: View {
         case .burn:
             let eaten = b.intake.calories
             let burn = b.burn?.totalKcal
-            let pct: Int? = (burn != nil && eaten > 0) ? Int((burn! / eaten * 100).rounded()) : nil
+            let exp = b.expectedBurnKcal
+            let pct: Int? = (burn != nil && (exp ?? 0) > 0) ? Int((burn! / exp! * 100).rounded()) : nil
             let net = burn.map { $0 - eaten }
-            tile(t("BURN ÷ INTAKE", "الحرق ÷ الأكل"), pct.map { "\($0)%" } ?? "—", "", chip: pct.map { $0 >= 100 ? t("✓ burn higher", "✓ الحرق أعلى") : t("↑ intake higher", "↑ الأكل أعلى") }, state: (pct ?? 0) >= 100 ? .ok : .high)
+            tile(t("OF EXPECTED DAILY BURN", "من حرق اليوم المتوقع"), pct.map { "\($0)%" } ?? "—", "", chip: exp.map { t("expected \(fmt($0))", "المتوقع \(fmt($0))") }, state: .low)
             tile(t("DIFFERENCE", "الفرق"), net.map { "\($0 >= 0 ? "+" : "−")\(fmt(abs($0)))" } ?? "—", t("kcal", "سعرة"), chip: net.map { $0 >= 0 ? t("✓ deficit", "✓ عجز") : t("↑ surplus", "↑ فائض") }, state: (net ?? 0) >= 0 ? .ok : .high)
             tile(t("ACTIVE BURN", "الحرق النشط"), b.burn?.activeKcal.map { fmt($0) } ?? "—", t("kcal", "سعرة"), chip: nil, state: .ok)
             tile(t("BASAL BURN", "الحرق الأساسي"), b.burn?.basalKcal.map { fmt($0) } ?? "—", t("kcal", "سعرة"), chip: nil, state: .ok)
