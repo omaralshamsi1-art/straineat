@@ -561,6 +561,48 @@ button.navcard span { font-size: 20px; }
 .bbar { display: block; height: 4px; border-radius: 99px; background: var(--ring-track); margin-top: 5px; overflow: hidden; max-width: 150px; }
 .bbar > i { display: block; height: 100%; background: #1e90e8; border-radius: 99px; }
 .tchips { flex-wrap: wrap; }
+/* ---- Today v4: WHOOP-style rings, swipe cards, monitors ---- */
+.brand #streakChip:empty { display: none; }
+.top { gap: 8px; } .top .brand { min-width: 0; } .top .daynav { flex: none; }
+.brand .streak { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; background: var(--card); border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 3px 9px; margin-inline-start: 8px; white-space: nowrap; }
+.brand .streak svg { color: #ff7a45; }
+.rings3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 6px; }
+.rings3 button { border: 0; background: none; color: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 0; }
+.rings3 .rg { position: relative; width: 100%; max-width: 104px; aspect-ratio: 1; display: grid; place-items: center; }
+.rings3 svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.rings3 .trk { fill: none; stroke: var(--ring-track); stroke-width: 7; }
+.rings3 .arc { fill: none; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 270.2; stroke-dashoffset: 270.2; transition: stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1); }
+.rings3 .rg b { font-size: 22px; font-weight: 800; letter-spacing: -.5px; }
+.rings3 .lb { font-size: 13px; font-weight: 800; margin-top: 6px; }
+html[dir="ltr"] .rings3 .lb { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; }
+.rings3 .u { font-size: 11px; color: var(--muted); }
+.stack { position: relative; margin: 14px 0 4px; min-height: 64px; }
+.stack .peek { position: absolute; inset: 10px 12px -8px; background: var(--card); opacity: .55; border-radius: 18px; }
+.scard { position: relative; background: var(--card); border-radius: 18px; padding: 14px 16px; touch-action: pan-y; user-select: none; cursor: grab; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+.scard .sh { display: flex; align-items: center; gap: 10px; }
+.scard .sh svg { color: var(--warn); flex: none; }
+.scard.bad .sh svg { color: var(--bad); }
+.scard .sh b { flex: 1; font-size: 16px; font-weight: 700; }
+.scard .cnt { font-size: 12px; color: var(--muted); }
+.scard .x { border: 0; background: none; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 4px 6px; }
+.scard p { margin: 6px 0 0; font-size: 14px; color: var(--muted); padding-inline-start: 30px; }
+.scard .sa { display: flex; gap: 8px; margin-top: 10px; padding-inline-start: 30px; flex-wrap: wrap; }
+.scard .sa button { min-height: 38px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--card-2); color: var(--ink); font-weight: 700; font-size: 13px; cursor: pointer; }
+.scard .sa button.go { background: var(--brand-2); border-color: transparent; color: #fff; }
+.scard .hint { font-size: 11px; color: var(--muted); text-align: center; margin-top: 8px; opacity: .7; }
+.stack-empty { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--muted); font-size: 13px; padding: 10px; }
+.stack-empty svg { color: var(--good); }
+.mon2b { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.mon2b .card { margin: 0; border: 0; text-align: start; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; gap: 4px; font: inherit; }
+.mon2b .t { font-size: 13px; font-weight: 800; display: flex; justify-content: space-between; }
+html[dir="ltr"] .mon2b .t { text-transform: uppercase; letter-spacing: .1em; font-size: 12px; }
+.mon2b .t i { font-style: normal; color: var(--muted); }
+html[dir="rtl"] .mon2b .t i { transform: scaleX(-1); display: inline-block; }
+.mon2b .v { font-size: 16px; font-weight: 800; }
+.mon2b small { font-size: 12px; color: var(--muted); }
+.dayhead { display: flex; align-items: center; justify-content: space-between; margin: 20px 2px 4px; }
+.dayhead h2 { margin: 0; font-size: 24px; font-weight: 800; }
+.dayhead .plus { width: 44px; height: 44px; border-radius: 14px; border: 0; background: var(--ink); color: var(--bg); font-size: 26px; font-weight: 600; cursor: pointer; line-height: 1; }
 /* ================= WHOOP-scale sizing + WHOOP-style dark theme ================= */
 html[data-theme="dark"] {
   --bg: #13181b; --card: #262d32; --card-2: #323a40; --ink: #f2f5f6; --muted: #9ba6ad; --line: #39424a;
@@ -629,6 +671,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     <symbol id="i-ball" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" d="M3.5 9h17M3.5 15h17M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
     <symbol id="i-spark" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3l1.8 4.6L18.5 9l-4.7 1.6L12 15l-1.8-4.4L5.5 9l4.7-1.4zM18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></symbol>
     <symbol id="i-send" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 12l16-8-6 16-2-6z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 7v5l3 2"/></symbol>
     <symbol id="i-heart" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".15"/><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M7 12.5l3.2 3.2L17 9"/></symbol>
     <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".15"/><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 7v6M12 16.5v.5"/></symbol>
@@ -639,7 +682,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
 
 <div class="wrap">
   <div class="top">
-    <div class="brand"><img src="icon.svg" alt=""><span>Strain<b>Eat</b></span></div>
+    <div class="brand"><img src="icon.svg" alt=""><span>Strain<b>Eat</b></span><span id="streakChip"></span></div>
     <div class="daynav" id="dayNav">
       <button id="prevDay" aria-label="اليوم السابق"><svg width="18" height="18"><use href="#i-chev-r"/></svg></button>
       <span id="dayLabel">اليوم</span>
@@ -684,23 +727,16 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
 
   <!-- ============ TODAY ============ -->
   <section id="v-today" class="hidden fade">
-    <div class="greet" id="greet">مرحباً</div>
-    <div class="tchips"><span class="tchip" id="goalLine"></span><span id="streakChip"></span></div>
+    <!-- written by code, not shown -->
+    <div hidden><span id="greet"></span><span id="goalLine"></span><div id="dayStatus"></div><div id="kPendRow"><b id="kPend"></b></div><div id="tips"></div></div>
 
-    <div class="card hero3">
-      <div class="h3row">
-        <button class="bigring" data-det="left" aria-label="المتبقي اليوم"><svg viewBox="0 0 148 148" aria-hidden="true"><circle cx="74" cy="74" r="64" class="trk"/><circle cx="74" cy="74" r="64" class="arc" id="ringLeft" stroke-dasharray="402.1" stroke-dashoffset="402.1"/></svg><span class="v"><b class="num" id="ringLeftV" dir="ltr">—</b><span id="ringLeftL">سعرة متبقية</span></span></button>
-        <div class="hstats">
-          <button data-det="left"><span>ميزانية اليوم</span><b><span class="num" id="hsBudget">—</span> <small>سعرة</small></b></button>
-          <button data-det="eaten"><span>أكلت</span><b><span class="num" id="hsEaten">—</span> <small class="num" id="hsEatenPct"></small></b></button>
-          <button data-det="burn"><span id="hsBurnL">حرقت</span><b class="burn"><span class="num" id="hsBurn">—</span> <small id="hsBurnU">سعرة</small></b><i class="bbar hidden" id="hsBurnBar"><i></i></i></button>
-        </div>
-      </div>
-      <button class="netrow hidden" id="netRow" data-det="burn"><b id="netL">الحرق حتى الآن</b><span><b class="num" id="netV" dir="ltr"></b> <span id="netU">سعرة</span></span><small id="netT"></small></button>
-      <div class="protrow"><div class="row"><b>البروتين</b><span class="muted"><b class="num" id="protHave">—</b> <span id="protOf"></span></span></div><div class="bar"><i id="protBar" style="width:0;background:var(--p)"></i></div></div>
-      <div class="status" id="dayStatus" role="status"></div>
-      <div id="kPendRow" class="hidden small" style="margin:8px 4px 0;color:var(--warn)">مسودات غير مؤكدة: <b class="num" id="kPend">—</b> سعرة</div>
+    <div class="rings3">
+      <button data-det="left" aria-label="المتبقي اليوم"><span class="rg"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="43" class="trk"/><circle cx="50" cy="50" r="43" class="arc" id="rgLeft" stroke="#2ba84a"/></svg><b class="num" id="rgLeftV">—</b></span><span class="lb" id="rgLeftL">متبقي</span><small class="u">سعرة</small></button>
+      <button data-det="eaten" aria-label="البروتين"><span class="rg"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="43" class="trk"/><circle cx="50" cy="50" r="43" class="arc" id="rgProt" stroke="#8a7df0"/></svg><b class="num" id="rgProtV">—</b></span><span class="lb">بروتين</span><small class="u" id="rgProtU">غ</small></button>
+      <button data-det="burn" aria-label="الحرق"><span class="rg"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="43" class="trk"/><circle cx="50" cy="50" r="43" class="arc" id="rgBurn" stroke="#1e90e8"/></svg><b class="num" id="rgBurnV">—</b></span><span class="lb">حرق</span><small class="u" id="rgBurnU">سعرة</small></button>
     </div>
+
+    <div class="stack" id="stack" aria-live="polite"></div>
 
     <div class="card ram hidden" id="ramCard">
       <div class="row"><b style="font-size:17px">🌙 وضع رمضان</b><span class="small muted" id="ramTimes"></span></div>
@@ -712,24 +748,26 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       </div>
     </div>
 
-    <div id="tips"></div>
 
-    <div class="card" id="nextCard">
-      <h3><span>التالي</span> <button class="chip src" id="sugRefresh" style="cursor:pointer" aria-label="اقتراحات جديدة">تحديث</button></h3>
-      <div id="nextBody"></div>
-      <div id="sugBody"><button class="btn ghost" id="sugBtn"><svg width="20" height="20"><use href="#i-bulb"/></svg>اقترح لي وجبة تناسب ما تبقى</button></div>
+    <div class="mon2b">
+      <button class="card" data-det="eaten"><span class="t">التغذية <i>›</i></span><span class="v" id="monNutV">—</span><small id="monNutS"></small></button>
+      <button class="card" id="monBody"><span class="t">الجسم <i>›</i></span><span class="v" id="monBodyV">—</span><small id="monBodyS"></small></button>
     </div>
 
+    <div class="dayhead"><h2>يومي</h2><button class="plus" id="dayPlus" aria-label="سجّل وجبة">+</button></div>
     <div class="card">
       <h3><span>وجبات اليوم <span class="small" id="mealCount"></span></span> <button class="chip src" id="schEdit" style="cursor:pointer">تعديل الأوقات</button></h3>
       <div id="mealList"></div>
     </div>
 
     <div class="card" id="bodyCard">
-      <h3><span>جسمك اليوم</span> <span class="small" id="actSub"></span></h3>
+      <h3><span>النشاط</span> <span class="small" id="actSub"></span></h3>
       <div class="well3 hidden" id="wellRow"></div>
       <div id="actList"></div>
     </div>
+
+    <!-- meal ideas live here and open in a sheet -->
+    <div hidden id="sugHome"><div id="sugWrap"><div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="chip src" id="sugRefresh" style="cursor:pointer">تحديث</button></div><div id="sugBody"></div><button hidden id="sugBtn"></button></div></div>
   </section>
 
   <!-- ============ PROGRESS ============ -->
@@ -1508,7 +1546,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   }
   $('prevDay').onclick = () => { day.setDate(day.getDate() - 1); loadToday(); };
   // suggestions only make sense for today
-  const _loadToday = () => { const isT = isoDay(day) === isoDay(new Date()); $('sugBody').closest('.card').classList.toggle('hidden', !isT); };
+  const _loadToday = () => {};
   $('nextDay').onclick = () => { if (isoDay(day) === isoDay(new Date())) return; day.setDate(day.getDate() + 1); loadToday(); };
 
   const SRC = { apple_health: 'Apple Health', whoop: 'WHOOP', health_connect: 'Health Connect', garmin: 'Garmin', fitbit: 'Fitbit', manual: T('يدوي') };
@@ -1603,19 +1641,95 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     $('mealList').querySelectorAll('.meal').forEach((el) => (el.onclick = async () => openReview(await api(`meals/${el.dataset.id}`))));
     $('mealList').querySelectorAll('[data-slot-log]').forEach((el) => (el.onclick = () => show('snap')));
     const skip = async (slot, undo) => {
-      try { schedCache = await api('schedule/skip', { method: 'POST', json: { slot, undo } }); renderTimeline(lastBal || b, schedCache); renderNext(schedCache); }
+      try { schedCache = await api('schedule/skip', { method: 'POST', json: { slot, undo } }); renderTimeline(lastBal || b, schedCache); renderStack(); }
       catch (e) { toast(e.message); }
     };
     $('mealList').querySelectorAll('[data-skip]').forEach((el) => (el.onclick = () => skip(el.dataset.skip, false)));
     $('mealList').querySelectorAll('[data-unskip]').forEach((el) => (el.onclick = () => skip(el.dataset.unskip, true)));
   }
-  function renderNext(d) {
-    const nx = d && d.slots.find((s) => s.status === 'now' || s.status === 'upcoming');
-    if (!nx) { $('nextBody').innerHTML = `<p class="small muted" style="margin:0 0 12px">${T('انتهت وجبات اليوم المخططة. إذا جعت، اختر شيئاً خفيفاً يناسب ما تبقى.')}</p>`; return; }
-    const lbl = LANG === 'en' ? nx.label_en : nx.label_ar;
-    const mins = Math.max(0, hmToMin(nx.time) - nowMinLocal());
-    const when = nx.status === 'now' ? T('الآن') : mins >= 60 ? L`بعد ${Math.round(mins / 60)} س` : L`بعد ${mins} د`;
-    $('nextBody').innerHTML = `<div class="nx"><div><b>${esc(lbl)} · <span class="num" dir="ltr">${esc(nx.time)}</span></b><span class="small muted">${L`هدفك حوالي ${fmt(nx.targetKcal)} سعرة`}</span></div><span class="when">${when}</span></div>`;
+  // ---- insight cards: one at a time, swipe away (dismissed per day) ----
+  let lastSt = null;
+  const disKey = () => `ns_dis_${isoDay(day)}`;
+  const dismissed = () => { try { return JSON.parse(ls.get(disKey()) || '[]'); } catch { return []; } };
+  const dismiss = (id) => { const d = dismissed(); if (!d.includes(id)) d.push(id); ls.set(disKey(), JSON.stringify(d)); };
+  const hash = (t) => { let h = 0; for (const c of String(t)) h = (h * 31 + c.charCodeAt(0)) | 0; return (h >>> 0).toString(36); };
+  function stackCards() {
+    const b = lastBal; if (!b) return [];
+    const isT = isoDay(day) === isoDay(new Date());
+    const d = isT ? schedCache : null;
+    const out = [];
+    if (isT && d) {
+      const nx = d.slots.find((x) => x.status === 'now' || x.status === 'upcoming');
+      if (nx) {
+        const lbl = LANG === 'en' ? nx.label_en : nx.label_ar;
+        const mins = Math.max(0, hmToMin(nx.time) - nowMinLocal());
+        const when = nx.status === 'now' ? T('الآن') : mins >= 60 ? L`بعد ${Math.round(mins / 60)} س` : L`بعد ${mins} د`;
+        out.push({ id: `next:${nx.id}`, icon: 'i-clock', title: `${esc(lbl)} · <span class="num" dir="ltr">${esc(nx.time)}</span>`, sub: `${L`هدفك حوالي ${fmt(nx.targetKcal)} سعرة`} · ${when}`, acts: [[T('اقترح وجبة'), openSuggest, 1]] });
+      } else if (b.remainingKcal > 150) {
+        out.push({ id: 'next:done', icon: 'i-clock', title: T('انتهت وجبات اليوم المخططة'), sub: L`متبقي ${fmt(b.remainingKcal)} سعرة`, acts: [[T('اقترح شيئاً خفيفاً'), openSuggest, 1]] });
+      }
+      d.slots.filter((x) => x.status === 'missed' && !x.items.length).forEach((x) => {
+        const lbl = LANG === 'en' ? x.label_en : x.label_ar;
+        out.push({ id: `miss:${x.id}`, icon: 'i-alert', title: L`${esc(lbl)} لم تُسجّل`, sub: L`المخطط ~${fmt(x.targetKcal)} سعرة`, acts: [[T('سجّلها'), () => show('snap'), 1], [T('تخطيتها'), () => skipSlot(x.id)]] });
+      });
+    }
+    if (lastSt && lastSt.cls === 'bad') out.push({ id: 'over', icon: 'i-alert', tone: 'bad', title: esc(lastSt.text), sub: '' });
+    if (b.pendingDrafts.calories > 0) out.push({ id: 'drafts', icon: 'i-alert', title: L`مسودات لم تُحسب: ${fmt(b.pendingDrafts.calories)} سعرة`, sub: T('افتحها وأكّدها لتدخل في حسابك'), acts: [[T('عرض'), () => $('mealList').scrollIntoView({ behavior: 'smooth', block: 'center' }), 1]] });
+    if (isT && wellCache && wellCache.connected && wellCache.needsReconnect) out.push({ id: 'whoop-re', icon: 'i-heart', title: T('أعد ربط WHOOP مرة واحدة'), sub: T('لإظهار الاستشفاء والنوم'), acts: [[T('إعادة الربط'), () => openDetail('reconnect'), 1]] });
+    const ch = motCache && motCache.challenge;
+    if (isT && ch && !ch.done) out.push({ id: `chal:${ch.id || ''}`, icon: 'i-flame', title: L`تحدي الأسبوع: ${ch.progress}/${ch.target}`, sub: esc(tx(ch, 'title') || '') });
+    (b.tips || []).forEach((t) => {
+      const full = tx(t, 'text'), head = full.split(/ — |: |\. /)[0];
+      out.push({ id: `tip:${hash(full)}`, icon: 'i-bulb', title: esc(head), sub: head.length < full.length ? esc(full.slice(head.length).replace(/^( — |: |\. )/, '')) : '' });
+    });
+    const gone = dismissed();
+    return out.filter((c) => !gone.includes(c.id));
+  }
+  function renderStack() {
+    const el = $('stack'); const cards = stackCards();
+    if (!cards.length) { el.innerHTML = `<div class="stack-empty"><svg width="18" height="18"><use href="#i-check"/></svg>${T('لا جديد الآن')}</div>`; return; }
+    const c = cards[0];
+    el.innerHTML = `${cards.length > 1 ? '<div class="peek"></div>' : ''}<div class="scard ${c.tone || ''}" id="scTop">
+      <div class="sh"><svg width="20" height="20"><use href="#${c.icon}"/></svg><b>${c.title}</b><span class="cnt num">${cards.length > 1 ? `1/${cards.length}` : ''}</span><button class="x" aria-label="${T('إخفاء')}">×</button></div>
+      ${c.sub ? `<p>${c.sub}</p>` : ''}
+      ${c.acts ? `<div class="sa">${c.acts.map((a, i) => `<button data-a="${i}" class="${a[2] ? 'go' : ''}">${a[0]}</button>`).join('')}</div>` : ''}
+      ${cards.length > 1 ? `<div class="hint">${T('اسحب للتالي')}</div>` : ''}</div>`;
+    const top = $('scTop');
+    top.querySelectorAll('[data-a]').forEach((btn) => (btn.onclick = (e) => { e.stopPropagation(); c.acts[+btn.dataset.a][1](); }));
+    const fly = (dir) => { top.style.transition = 'transform .25s ease, opacity .25s'; top.style.transform = `translateX(${dir * 420}px) rotate(${dir * 12}deg)`; top.style.opacity = '0'; dismiss(c.id); setTimeout(renderStack, 230); };
+    top.querySelector('.x').onclick = (e) => { e.stopPropagation(); fly(LANG === 'ar' ? -1 : 1); };
+    let x0 = null, dx = 0;
+    top.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return; x0 = e.clientX; dx = 0; top.setPointerCapture(e.pointerId); top.style.transition = 'none'; });
+    top.addEventListener('pointermove', (e) => { if (x0 == null) return; dx = e.clientX - x0; top.style.transform = `translateX(${dx}px) rotate(${dx / 25}deg)`; });
+    const end = () => { if (x0 == null) return; x0 = null; if (Math.abs(dx) > 80) fly(Math.sign(dx)); else { top.style.transition = 'transform .2s'; top.style.transform = ''; } };
+    top.addEventListener('pointerup', end); top.addEventListener('pointercancel', end);
+  }
+  async function skipSlot(slot, undo = false) {
+    try { schedCache = await api('schedule/skip', { method: 'POST', json: { slot, undo } }); renderTimeline(lastBal, schedCache); renderStack(); } catch (e) { toast(e.message); }
+  }
+  function openSuggest() {
+    $('det').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+    $('detBack').textContent = '‹'; $('detTitle').textContent = T('اقتراحات وجبات');
+    $('detBody').innerHTML = ''; $('detBody').appendChild($('sugWrap'));
+    if (!$('sugBody').children.length) loadSuggestions(false);
+  }
+  function renderMonitors() {
+    const b = lastBal; if (!b || !lastSt) return;
+    $('monNutV').textContent = lastSt.cls === 'good' ? T('✓ ضمن الهدف') : lastSt.cls === 'bad' ? T('تجاوزت الهدف') : T('في الطريق');
+    $('monNutV').style.color = lastSt.color;
+    $('monNutS').textContent = L`أكلت ${fmt(b.intake.calories)} من ${fmt(b.targetIntakeKcal)}`;
+    const w = wellCache, t0 = w && w.connected && !w.needsReconnect ? w.today || {} : null;
+    if (t0 && t0.recovery != null) {
+      $('monBodyV').innerHTML = `<span class="num ${recCls(t0.recovery)}" dir="ltr">${t0.recovery}%</span>`;
+      $('monBodyS').textContent = `${T('الاستشفاء')}${t0.sleepMin ? ` · ${T('نوم')} ${hm(t0.sleepMin)}` : ''}`;
+      $('monBody').onclick = () => openDetail('well');
+    } else {
+      const a = b.activity;
+      $('monBodyV').textContent = a && a.workouts && a.workouts.length ? L`${a.workouts.length} تمرين` : T('لا تمرين بعد');
+      $('monBodyV').style.color = '';
+      $('monBodyS').textContent = b.burn ? L`حرق ${fmt(b.burn.totalKcal)} سعرة` : T('اربط WHOOP أو Apple Health');
+      $('monBody').onclick = () => openDetail('burn');
+    }
   }
 
   async function loadToday() {
@@ -1637,7 +1751,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       $('dayStatus').className = `status ${st.cls}`;
       $('dayStatus').innerHTML = `<svg width="22" height="22"><use href="#${st.cls === 'good' ? 'i-check' : 'i-alert'}"/></svg><span>${st.text}</span>`;
       $('kPendRow').classList.toggle('hidden', !(b.pendingDrafts.calories > 0)); $('kPend').textContent = fmt(b.pendingDrafts.calories);
-      lastBal = b;
+      lastBal = b; lastSt = st;
       renderOverview(b, st);
       $('tips').innerHTML = (b.tips || []).map((t) => {
         const full = tx(t, 'text'), head = full.split(/ — |: |\. /)[0];
@@ -1654,7 +1768,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       loadWellness();
       ramCtx = b.ramadan;
       const sched = await schedP; schedCache = sched;
-      if (isTodayV) renderNext(sched);
+      lastSt = st; renderStack(); renderMonitors();
       renderTimeline(b, sched);
     } catch (e) { $('mealList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
@@ -1667,10 +1781,9 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       const m = await api('motivation'); motCache = m;
       const st = m.streak;
       const c = m.challenge;
-      const parts = [];
-      if (st.current) parts.push(L`${st.current} ${st.current === 1 ? T('يوم') : T('أيام')}`);
-      if (c) parts.push(c.done ? T('تحدي الأسبوع ✓') : L`${c.progress}/${c.target} هذا الأسبوع`);
-      $('streakChip').innerHTML = parts.length ? `<span class="streak" title="${esc(tx(c || {}, 'title') || '')}"><svg width="14" height="14"><use href="#i-flame"/></svg>${parts.join(' · ')}</span>` : '';
+      // header shows only the streak number (like WHOOP); the weekly challenge is an insight card
+      $('streakChip').innerHTML = st.current ? `<span class="streak" title="${esc(L`${st.current} ${st.current === 1 ? T('يوم') : T('أيام')}`)}"><svg width="13" height="13"><use href="#i-flame"/></svg><b class="num">${st.current}</b></span>` : '';
+      void c; renderStack();
     } catch (e) { console.warn(e); }
   }
   function renderBadges(m) {
@@ -1752,7 +1865,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       btn.textContent = T('✓ تمت الإضافة'); toast(T('تمت إضافة الوجبة لليوم ✓')); loadToday();
     } catch (err) { btn.disabled = false; btn.textContent = T('سجّلها'); toast(err.message); }
   });
-  $('sugBtn').onclick = () => loadSuggestions(false);
+  $('dayPlus').onclick = () => show('snap');
   $('sugRefresh').onclick = () => loadSuggestions(true);
 
   // ---------------- coach: weekly ----------------
@@ -2300,7 +2413,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   const ST_LBL = () => ({ done: T('✓ تم'), now: T('الآن'), upcoming: T('قادم'), missed: T('لم تُسجّل') });
   async function loadSchedule() {
     if (isoDay(day) !== isoDay(new Date()) || !lastBal) return;
-    try { schedCache = await api('schedule'); renderNext(schedCache); renderTimeline(lastBal, schedCache); } catch (e) { console.warn(e); }
+    try { schedCache = await api('schedule'); renderStack(); renderTimeline(lastBal, schedCache); } catch (e) { console.warn(e); }
   }
   $('schEdit').onclick = () => { show('plan'); setTimeout(() => $('schSettings').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300); };
 
@@ -2360,29 +2473,11 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   const recCls = (r) => (r == null ? '' : r >= 67 ? 'rec-hi' : r >= 34 ? 'rec-mid' : 'rec-lo');
   const recColor = (r) => (r >= 67 ? '#16a34a' : r >= 34 ? '#eab308' : '#dc2626');
   async function loadWellness() {
-    const row = $('wellRow');
-    if (isoDay(day) !== isoDay(new Date())) { row.classList.add('hidden'); return; }
-    try {
-      const w = await api(`integrations/whoop/wellness?date=${isoDay(day)}`);
-      wellCache = w;
-      if (!w.connected) { row.classList.add('hidden'); return; }
-      row.classList.remove('hidden');
-      if (w.needsReconnect) {
-        row.innerHTML = `<button class="full" data-det="reconnect"><span>${T('أعد ربط WHOOP مرة واحدة لإظهار الاستشفاء والنوم.')}</span><b style="font-size:15px;color:var(--brand-2)">${T('إعادة الربط ›')}</b></button>`;
-        return;
-      }
-      const t = w.today || {};
-      if (t.recovery == null && t.sleepMin == null && t.strain == null) {
-        row.innerHTML = `<div class="full small muted">${T('لا توجد بيانات اليوم بعد — اسحب الشاشة للتحديث.')}</div>`;
-        return;
-      }
-      const recWord = t.recovery == null ? '' : t.recovery >= 67 ? T('جيد') : t.recovery >= 34 ? T('متوسط') : T('منخفض');
-      row.innerHTML =
-        `<button data-det="well"><span>${T('الاستشفاء ›')}</span><b class="num ${recCls(t.recovery)}" dir="ltr">${t.recovery != null ? t.recovery + '%' : '—'}</b><small>${recWord}</small></button>` +
-        `<button data-det="well"><span>${T('النوم ›')}</span><b class="num" dir="ltr">${hm(t.sleepMin)}</b><small>${T('الليلة الماضية')}</small></button>` +
-        `<button data-det="well"><span>${T('الجهد ›')}</span><b class="num" dir="ltr" style="color:#1e90e8">${t.strain != null ? t.strain : '—'}</b><small>${t.strain != null ? strainLabel(t.strain) : ''}</small></button>`;
-    } catch { row.classList.add('hidden'); }
+    if (isoDay(day) !== isoDay(new Date())) { wellCache = null; renderMonitors(); return; }
+    try { wellCache = await api(`integrations/whoop/wellness?date=${isoDay(day)}`); } catch { wellCache = null; }
+    renderMonitors(); renderStack();
   }
+
   function wellnessDetail() {
     const w = wellCache; if (!w) return '';
     const t = w.today || {}, past = w.days.slice(0, -1);
@@ -2447,38 +2542,23 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     ];
   }
   function renderOverview(b, st) {
-    const eaten = b.intake.calories, target = b.targetIntakeKcal, left = b.remainingKcal;
-    const burn = b.burn ? b.burn.totalKcal : null;
-    const R = 402.1, el = $('ringLeft');
-    el.setAttribute('stroke', left < 0 ? 'var(--bad)' : '#2ba84a');
-    const frac = left < 0 ? 1 : Math.max(0, Math.min(1, left / (target || 1)));
-    requestAnimationFrame(() => { el.style.strokeDashoffset = String(R * (1 - frac)); });
-    $('ringLeftV').textContent = `${left < 0 ? '+' : ''}${fmt(Math.abs(left))}`;
-    $('ringLeftL').textContent = left < 0 ? T('فوق الهدف') : T('سعرة متبقية');
-    $('hsBudget').textContent = fmt(target);
-    $('hsEaten').textContent = fmt(eaten);
-    $('hsEatenPct').textContent = target ? `· ${Math.round((eaten / target) * 100)}%` : '';
-    $('hsBurnL').textContent = b.burn && b.burn.source ? `${T('حرقت')} · ${SRC[b.burn.source] || b.burn.source}` : T('حرقت');
-    $('hsBurn').textContent = burn != null ? fmt(burn) : '—';
-    const expB = b.expectedBurnKcal;
-    const partial = burn != null && b.burnIsPartialDay && expB;
-    $('hsBurnU').textContent = partial ? L`من ~${fmt(expB)}` : T('سعرة');
-    $('hsBurnBar').classList.toggle('hidden', !partial);
-    if (partial) $('hsBurnBar').firstElementChild.style.width = `${Math.min(100, (burn / expB) * 100)}%`;
-    // the net line only for finished days (during the day burn is still adding up)
-    $('netRow').classList.toggle('hidden', burn == null || !!partial);
-    if (burn != null && !partial) {
-      const net = eaten - burn;
-      $('netL').textContent = T('صافي اليوم');
-      $('netV').textContent = `${net > 0 ? '+' : net < 0 ? '−' : ''}${fmt(Math.abs(net))}`;
-      $('netU').textContent = T('سعرة');
-      $('netT').textContent = '';
-    }
+    const C = 270.2;
+    const ring = (id, frac) => { const el = $(id); requestAnimationFrame(() => { el.style.strokeDasharray = String(C); el.style.strokeDashoffset = String(C * (1 - Math.max(0, Math.min(1, frac)))); }); };
+    const eaten = b.intake.calories, target = b.targetIntakeKcal || 1, left = b.remainingKcal;
+    $('rgLeft').setAttribute('stroke', left < 0 && b.goal !== 'gain' ? 'var(--bad)' : '#2ba84a');
+    ring('rgLeft', left < 0 ? 1 : left / target);
+    $('rgLeftV').textContent = `${left < 0 ? '+' : ''}${fmt(Math.abs(left))}`;
+    $('rgLeftL').textContent = left < 0 ? T('فوق الهدف') : T('متبقي');
     const pw = (b.macroTargets || {}).protein_g || 0, ph = b.intake.protein_g || 0;
-    $('protHave').textContent = fmt(ph);
-    $('protOf').textContent = pw ? L`من ${fmt(pw)} غ` : T('غ');
-    $('protBar').style.width = `${pw ? Math.min(100, (ph / pw) * 100) : 0}%`;
+    ring('rgProt', pw ? ph / pw : 0);
+    $('rgProtV').textContent = fmt(ph);
+    $('rgProtU').textContent = pw ? L`من ${fmt(pw)} غ` : T('غ');
+    const burn = b.burn ? b.burn.totalKcal : null, expB = b.expectedBurnKcal;
+    ring('rgBurn', burn != null && expB ? burn / expB : 0);
+    $('rgBurnV').textContent = burn != null ? fmt(burn) : '—';
+    $('rgBurnU').textContent = burn != null && b.burnIsPartialDay && expB ? L`من ~${fmt(expB)}` : T('سعرة');
   }
+
   function barsSvg(days, valKey, lineKey, color) {
     const w = 320, h = 120, n = days.length, max = Math.max(1, ...days.map((d) => Math.max(d[valKey] || 0, d[lineKey] || 0))) * 1.1;
     const bw = w / n * 0.56;
@@ -2532,7 +2612,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       tiles += `<div style="grid-column:1/-1" class="small muted">${burn == null ? T('اربط WHOOP أو Apple Health من الإعدادات لحساب الحرق.') : T('الحرق يتراكم خلال اليوم، فالرقم الصباحي طبيعي أن يكون منخفضاً.')}</div>`;
     }
     $('detBody').innerHTML = chart + `<div class="tiles">${tiles}</div>`;
-    const sb = $('detSug'); if (sb) sb.onclick = () => { closeDetail(); loadSuggestions(false); setTimeout(() => $('sugBody').scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); };
+    const sb = $('detSug'); if (sb) sb.onclick = () => { closeDetail(); openSuggest(); };
     if (kind !== 'left') {
       try {
         histCache = histCache || (await api('history?days=7'));
@@ -2555,7 +2635,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       } catch { $('detChart').innerHTML = ''; }
     }
   }
-  function closeDetail() { $('det').classList.add('hidden'); document.body.style.overflow = ''; }
+  function closeDetail() { $('det').classList.add('hidden'); document.body.style.overflow = ''; if ($('detBody').contains($('sugWrap'))) $('sugHome').appendChild($('sugWrap')); }
   $('detBack').onclick = closeDetail;
   // Arabic labels inside charts: give each SVG <text> its own RTL direction (Safari breaks the letters otherwise)
   const AR_RE = /[\u0600-\u06FF]/;
