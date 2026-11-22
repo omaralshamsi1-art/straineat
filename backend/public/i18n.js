@@ -9,6 +9,9 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"ميزانيتك {} + {} لأن حرقك اليوم أكثر من المتوقع (نضيف نصف الزيادة فقط لأن تقدير الساعة تقريبي).": "Your budget is {} + {} because you burned more than expected today (we add back only half — watch calorie estimates are rough).",
+"+{} من الحرق": "+{} from burn",
+"اقترح وجبة بعد التمرين": "Suggest a post-workout meal",
 "مشروب": "Drink",
 "{}غ بروتين": "{} g protein",
 "تخطيته": "skipped",

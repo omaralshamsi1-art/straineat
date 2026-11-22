@@ -4,6 +4,7 @@ import { EnergyDay, EnergySource, Profile, WeightEntry } from '../common/types';
 import { SUPERVISED_CONDITIONS } from '../common/types';
 import { ageOf, bmrKcal, estimatedTdee, ProfileService } from '../profile/profile.service';
 import { REPOSITORY, Repository } from '../storage/repository';
+import { burnBonus, localMinuteOfDay } from '../insights/insights';
 import {
   ActivityLevel,
   adaptiveMaintenance,
@@ -257,7 +258,7 @@ export class PlanService {
         proteinG: Math.round(dayMeals.reduce((a, m) => a + m.final.totals.protein_g, 0)),
         meals: dayMeals.length,
         burnKcal: burn?.totalKcal ?? null,
-        targetKcal: plan.targetKcal,
+        targetKcal: plan.targetKcal + burnBonus({ burnKcal: burn?.totalKcal, expectedKcal: plan.maintenanceKcal || estimatedTdee(profile), partialDay: date === today, minuteOfDay: localMinuteOfDay(new Date(), profile.timezone) }).bonusKcal,
       });
     }
     const logged = out.filter((d) => d.meals > 0);

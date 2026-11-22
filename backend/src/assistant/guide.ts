@@ -84,6 +84,17 @@ opens details: HRV, resting HR, SpO2, skin temp, respiratory rate, sleep stages,
 7-day recovery chart. Older connections must tap "Reconnect WHOOP" once to allow recovery and sleep. Low recovery or
 short sleep → suggest easy, protein-rich, hydrating food and warn about cravings; no extra restriction.
 
+## Morning plan, after-workout note and the extra-burn allowance
+- Morning plan card (and a notification 05:00–12:00 once WHOOP recovery is in): recovery band (green ≥67 / yellow
+  34–66 / red ≤33) → harder session with carbs around it / moderate session / rest and focus on protein + water;
+  short sleep → hunger warning; last coffee 6 h before the usual bedtime; protein goal at ~20–40 g per meal.
+- After a workout of ≥20 min or ≥150 kcal (WHOOP), a card + notification within 3 h: protein ≈0.3 g/kg (20–40 g)
+  within ~2 h, with carbs if the session was ≥60 min / strain ≥14 / ≥600 kcal; at iftar when fasting; drink water.
+- Extra-burn allowance: when the device burn (projected to a full day) beats the plan's expected burn by ≥100 kcal,
+  half of the extra (rounded, max 1000) is added to today's budget — device calorie estimates are rough, so only half.
+  It never lowers the budget. The Left ring shows "+N from burn" and meal slots scale with it.
+- WHOOP is re-synced in the background about every 20 min (05:00–23:00) for users with notifications on.
+
 ## Apple Health on the website
 A website can't read Apple Health. Settings → Burn source → Apple Health offers an iPhone Shortcut: copy the personal
 sync link, build the Shortcut (Find Health Samples: Active Energy / Resting Energy, start date today → Calculate

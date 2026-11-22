@@ -8,6 +8,7 @@ import { ProfileService } from '../profile/profile.service';
 import { REPOSITORY, Repository } from '../storage/repository';
 import { dietLine } from '../agent/prompts';
 import { ramadanView } from './coach-math';
+import { burnBonus } from '../insights/insights';
 
 const SAFETY = `Safety rules (always):
 - Never suggest eating below the user's daily calorie target or skipping meals to "make up" for a big day.
@@ -211,12 +212,13 @@ Every option needs realistic kcal, protein, carbs and fat for what is described.
         protein: Math.round(ms.reduce((a, m) => a + m.final.totals.protein_g, 0)),
         fiber: Math.round(ms.reduce((a, m) => a + m.final.totals.fiber_g, 0)),
         burn: burn?.totalKcal ?? null,
+        target: plan.targetKcal + burnBonus({ burnKcal: burn?.totalKcal, expectedKcal: plan.maintenanceKcal, partialDay: false, minuteOfDay: 0 }).bonusKcal,
       });
     }
     const logged = days.filter((d) => d.logged);
     const avg = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, x) => a + x, 0) / xs.length) : null);
     const onTarget = logged.filter((d) =>
-      plan.effectiveGoal === 'gain' ? d.kcal >= plan.targetKcal * 0.95 && d.kcal <= plan.targetKcal * 1.15 : d.kcal <= plan.targetKcal,
+      plan.effectiveGoal === 'gain' ? d.kcal >= d.target * 0.95 && d.kcal <= d.target * 1.15 : d.kcal <= d.target,
     ).length;
     const wIn = weights.entries.filter((w) => w.date >= addDays(start, -1) && w.date <= end);
     const weightChange = wIn.length >= 2 ? Math.round((wIn[wIn.length - 1].trend - wIn[0].trend) * 10) / 10 : null;

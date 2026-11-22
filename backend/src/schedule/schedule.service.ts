@@ -1,8 +1,9 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { isIsoDate, localDate } from '../common/dates';
 import { ramadanView } from '../coach/coach-math';
-import { addDays, PlanService } from '../plan/plan.service';
-import { ProfileService } from '../profile/profile.service';
+import { addDays, pickEnergy, PlanService } from '../plan/plan.service';
+import { estimatedTdee, ProfileService } from '../profile/profile.service';
+import { burnBonus } from '../insights/insights';
 import { REPOSITORY, Repository } from '../storage/repository';
 import { buildDay, defaultSchedule, usualMealTimes, ramadanSchedule, SLOT_LABEL, slotTargets, toMin } from './schedule';
 
@@ -28,7 +29,10 @@ export class ScheduleService {
     const history = await this.repo.listMealsRange(userId, addDays(today, -21), today);
     let schedule = (p as any).mealSchedule?.slots?.length ? (p as any).mealSchedule : defaultSchedule(p.mealsPerDay, usualMealTimes(history.filter((m) => m.date < today), tz));
     if (ram.active) schedule = ramadanSchedule(p.ramadan.suhoorTime, p.ramadan.iftarTime);
-    const targets = slotTargets(schedule.slots, plan.targetKcal, ram.split);
+    const burn = pickEnergy(await this.repo.listEnergy(userId, d), p.preferredEnergySource);
+    const bonus = burnBonus({ burnKcal: burn?.totalKcal, expectedKcal: plan.maintenanceKcal || estimatedTdee(p), partialDay: d === today, minuteOfDay: minuteIn(now.toISOString(), tz) }).bonusKcal;
+    const dayTarget = plan.targetKcal + bonus;
+    const targets = slotTargets(schedule.slots, dayTarget, ram.split);
     const meals = d >= addDays(today, -21) && d <= today ? history.filter((m) => m.date === d) : await this.repo.listMeals(userId, d);
     const nowMin = d === today ? minuteIn(now.toISOString(), tz) : d < today ? 1440 : -1;
     const skip = await this.repo.getCache(userId, `schedule-skip:${d}`);
@@ -40,7 +44,8 @@ export class ScheduleService {
       custom: !!schedule.custom && !ram.active,
       ramadan: ram.active,
       fasting: ram.fasting,
-      targetKcal: plan.targetKcal,
+      targetKcal: dayTarget,
+      burnBonusKcal: bonus,
       ...view,
       slots: view.slots.map((s) => ({ ...s, label: SLOT_LABEL[s.id][lang], label_en: SLOT_LABEL[s.id].en, label_ar: SLOT_LABEL[s.id].ar })),
     };

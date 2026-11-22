@@ -10,6 +10,9 @@ import { ramadanView } from './coach-math';
 import { ScheduleService } from '../schedule/schedule.service';
 import { dueSlotReminders, toMin } from '../schedule/schedule';
 import { dueMedReminders } from '../meds/meds';
+import { EnergyService } from '../energy/energy.service';
+import { WhoopService } from '../integrations/whoop/whoop.service';
+import { isNotableWorkout } from '../insights/insights';
 
 export const PUSH_SENDER = Symbol('PUSH_SENDER');
 export type PushSender = (sub: PushSub, payload: string) => Promise<void>;
@@ -71,7 +74,9 @@ export function dueReminders(i: {
 export class RemindersService implements OnModuleInit, OnModuleDestroy {
   private readonly log = new Logger(RemindersService.name);
   private timer: NodeJS.Timeout | null = null;
+  private busy = false;
   private readonly enabled: boolean;
+  private readonly pollMs: number;
   private readonly send: PushSender;
 
   constructor(
@@ -80,7 +85,10 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
     private readonly config: ConfigService,
     @Optional() @Inject(PUSH_SENDER) sender?: PushSender,
     @Optional() private readonly schedule?: ScheduleService,
+    @Optional() private readonly energy?: EnergyService,
+    @Optional() private readonly whoop?: WhoopService,
   ) {
+    this.pollMs = Math.max(5, Number(config.get('WHOOP_POLL_MINUTES') ?? 20) || 20) * 60_000;
     const pub = config.get<string>('VAPID_PUBLIC_KEY');
     const priv = config.get<string>('VAPID_PRIVATE_KEY');
     let ok = false;
@@ -151,13 +159,58 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
 
   /** Runs every minute. Each reminder is sent at most once per user per day; one user's error never blocks the others. */
   async tick(now = new Date()) {
-    const users = [...new Set((await this.repo.listPushSubs()).map((s) => s.userId))];
-    let sent = 0;
-    for (const userId of users) {
-      try { sent += await this.tickUser(userId, now); } catch (e: any) { this.log.warn(`reminders for ${userId}: ${e?.message ?? e}`); }
+    if (this.busy) return { users: 0, sent: 0, skipped: true }; // a slow tick (WHOOP sync) must not overlap the next
+    this.busy = true;
+    try {
+      const users = [...new Set((await this.repo.listPushSubs()).map((s) => s.userId))];
+      let sent = 0;
+      for (const userId of users) {
+        try { sent += await this.tickUser(userId, now); } catch (e: any) { this.log.warn(`reminders for ${userId}: ${e?.message ?? e}`); }
+      }
+      if (sent) this.log.log(`reminders sent: ${sent}`);
+      return { users: users.length, sent };
+    } finally {
+      this.busy = false;
     }
-    if (sent) this.log.log(`reminders sent: ${sent}`);
-    return { users: users.length, sent };
+  }
+
+  /** Keep WHOOP data fresh (every WHOOP_POLL_MINUTES, 05:00–23:00) so morning / after-workout notes go out without opening the app. */
+  private async pollWhoop(userId: string, today: string, nowMin: number, now: Date) {
+    if (!this.whoop || nowMin < 5 * 60 || nowMin >= 23 * 60) return;
+    const last = await this.repo.getCache(userId, 'whoop-poll');
+    if (last && now.getTime() - Date.parse(last.createdAt) < this.pollMs) return;
+    if (!(await this.repo.getTokens(userId, 'whoop'))) return;
+    await this.repo.setCache({ userId, key: 'whoop-poll', payload: {}, createdAt: now.toISOString() });
+    try {
+      await this.whoop.sync(userId, addDays(today, -1), today);
+    } catch (e: any) {
+      this.log.warn(`WHOOP poll for ${userId}: ${e?.message ?? e}`);
+    }
+  }
+
+  /** Morning plan (05:00–12:00, once recovery is in) and a note after each notable workout (within 3 h). */
+  private async insightPushes(userId: string, today: string, nowMin: number, now: Date, lang: string) {
+    if (!this.energy) return [];
+    const doneKey = (k: string) => this.repo.getCache(userId, `reminder:${today}:${k}`);
+    const well = (await this.repo.getCache(userId, `whoop-day:${today}`))?.payload as { recovery?: number | null } | undefined;
+    const wantMorning = nowMin >= 5 * 60 && nowMin < 12 * 60 && well?.recovery != null && !(await doneKey('am'));
+    const t = now.getTime();
+    const fresh = (await this.repo.listWorkouts(userId, today, today)).filter((w) => {
+      const end = Date.parse(w.end);
+      return end <= t && t - end <= 180 * 60000 && isNotableWorkout(w);
+    });
+    const pending: string[] = [];
+    for (const w of fresh) if (!(await doneKey(`wo:${w.id}`))) pending.push(w.id);
+    if (!wantMorning && !pending.length) return [];
+    const b = await this.energy.balance(userId, today, now);
+    const out: { key: string; title: string; body: string }[] = [];
+    for (const c of b.cards ?? []) {
+      const title = lang === 'ar' ? c.title_ar : c.title_en;
+      const body = (lang === 'ar' ? c.lines_ar : c.lines_en).slice(0, 2).join(' ');
+      if (c.kind === 'morning' && wantMorning) out.push({ key: 'am', title, body });
+      if (c.kind === 'workout' && pending.includes(c.id.slice(3))) out.push({ key: c.id, title, body });
+    }
+    return out;
   }
 
   private async tickUser(userId: string, now: Date) {
@@ -172,6 +225,7 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
       const lang = p.language ?? 'en';
       const fasting = ramadanView(p.ramadan, now, tz, 2000).fasting;
       const nowMin = localMinutes(now, tz);
+      await this.pollWhoop(userId, today, nowMin, now);
       // weight reminder (meal reminders now follow the eating schedule below)
       const due = dueReminders({
         nowMin,
@@ -187,6 +241,7 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
         const day = await this.schedule.day(userId, undefined, now);
         due.push(...dueSlotReminders(day.slots, toMin(`${Math.floor(nowMin / 60)}:${nowMin % 60}`), lang, { fasting }));
       }
+      due.push(...(await this.insightPushes(userId, today, nowMin, now, lang)));
       for (const r of due) {
         const key = `reminder:${today}:${r.key}`;
         if (await this.repo.getCache(userId, key)) continue;

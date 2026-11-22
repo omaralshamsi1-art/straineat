@@ -581,7 +581,9 @@ html[dir="ltr"] .rings3 .lb { text-transform: uppercase; letter-spacing: .12em; 
 .scard { position: relative; background: var(--card); border-radius: 18px; padding: 14px 16px; touch-action: pan-y; user-select: none; cursor: grab; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
 .scard .sh { display: flex; align-items: center; gap: 10px; }
 .scard .sh svg { color: var(--warn); flex: none; }
-.scard.bad .sh svg { color: var(--bad); }
+.scard.bad .sh svg, .scard.low .sh svg { color: var(--bad); }
+.scard.good .sh svg { color: var(--good); } .scard.mid .sh svg { color: var(--warn); } .scard.info .sh svg { color: #1e90e8; }
+.scard p .ln { display: block; margin-top: 4px; } .scard p .ln:first-child { margin-top: 0; }
 .scard .sh b { flex: 1; font-size: 16px; font-weight: 700; }
 .scard .cnt { font-size: 12px; color: var(--muted); }
 .scard .x { border: 0; background: none; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 4px 6px; }
@@ -1682,6 +1684,12 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     const isT = isoDay(day) === isoDay(new Date());
     const d = isT ? schedCache : null;
     const out = [];
+    (b.cards || []).forEach((c) => out.push({
+      id: c.id, icon: c.kind === 'morning' ? 'i-sun' : 'i-bolt', tone: c.tone,
+      title: esc(tx(c, 'title')),
+      sub: (LANG === 'en' ? c.lines_en : c.lines_ar).map((l) => `<span class="ln">${esc(l)}</span>`).join(''),
+      acts: c.kind === 'workout' ? [[T('اقترح وجبة بعد التمرين'), openSuggest, 1]] : null,
+    }));
     if (isT && d) {
       const nx = d.slots.find((x) => x.status === 'now' || x.status === 'upcoming');
       if (nx) {
@@ -2582,6 +2590,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     ring('rgLeft', left < 0 ? 1 : left / target);
     $('rgLeftV').textContent = `${left < 0 ? '+' : ''}${fmt(Math.abs(left))}`;
     $('rgLeftL').textContent = left < 0 ? T('فوق الهدف') : T('متبقي');
+    $('rgLeftL').nextElementSibling.textContent = b.burnBonusKcal > 0 ? L`+${fmt(b.burnBonusKcal)} من الحرق` : T('سعرة');
     const pw = (b.macroTargets || {}).protein_g || 0, ph = b.intake.protein_g || 0;
     ring('rgProt', pw ? ph / pw : 0);
     $('rgProtV').textContent = fmt(ph);
@@ -2621,7 +2630,8 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     } else if (kind === 'left') {
       const t = b.macroTargets || {}, i = b.intake;
       const lft = (want, have) => Math.max(0, Math.round((want || 0) - (have || 0)));
-      chart = `<div class="dchart"><div class="t">${T('متبقي لك اليوم')}</div><div class="big num">${b.remainingKcal < 0 ? '−' : ''}${fmt(Math.abs(b.remainingKcal))}<small style="font-size:15px"> ${T('سعرة')}</small></div><div id="detChart"></div></div>`;
+      const bonusNote = b.burnBonusKcal > 0 ? `<p class="small muted" style="margin:6px 0 0">${L`ميزانيتك ${fmt(b.baseTargetKcal)} + ${fmt(b.burnBonusKcal)} لأن حرقك اليوم أكثر من المتوقع (نضيف نصف الزيادة فقط لأن تقدير الساعة تقريبي).`}</p>` : '';
+      chart = `<div class="dchart"><div class="t">${T('متبقي لك اليوم')}</div><div class="big num">${b.remainingKcal < 0 ? '−' : ''}${fmt(Math.abs(b.remainingKcal))}<small style="font-size:15px"> ${T('سعرة')}</small></div>${bonusNote}<div id="detChart"></div></div>`;
       tiles = [
         tileHtml(T('البروتين'), fmt(lft(t.protein_g, i.protein_g)), ' ' + T('غ'), L`من ${fmt(t.protein_g)}`, 'lo'),
         tileHtml(T('الكربوهيدرات'), fmt(lft(t.carbs_g, i.carbs_g)), ' ' + T('غ'), L`من ${fmt(t.carbs_g)}`, 'lo'),

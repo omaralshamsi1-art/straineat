@@ -8,6 +8,7 @@ import { pickEnergy, PlanService } from '../plan/plan.service';
 import { WorkoutsService } from '../workouts/workouts.service';
 import { ramadanTips, ramadanView } from '../coach/coach-math';
 import { REPOSITORY, Repository } from '../storage/repository';
+import { burnBonus, localMinuteOfDay, todayCards, WellnessDay } from '../insights/insights';
 
 export interface EnergySampleInput {
   date: string;
@@ -53,9 +54,8 @@ export class EnergyService {
     return { saved: saved.length };
   }
 
-  async balance(userId: string, date?: string) {
+  async balance(userId: string, date?: string, now = new Date()) {
     const profile = await this.profiles.get(userId);
-    const now = new Date();
     const today = localDate(now, profile.timezone);
     const d = date ?? today;
     if (!isIsoDate(d)) throw new BadRequestException('date must be YYYY-MM-DD');
@@ -72,8 +72,12 @@ export class EnergyService {
     const chosen = pickEnergy(days, profile.preferredEnergySource);
     const isToday = d === today;
 
-    // The daily target comes from the plan (stable, safe); today's device burn is shown alongside.
-    const target = plan.targetKcal;
+    // The daily target comes from the plan; a day that burns clearly more than the plan expects
+    // adds back half of the extra (device estimates are rough), never less than the plan.
+    const expectedBurn = Math.round(plan.maintenanceKcal || estimatedTdee(profile) || 0) || null;
+    const minuteOfDay = localMinuteOfDay(now, profile.timezone);
+    const bonus = burnBonus({ burnKcal: chosen?.totalKcal, expectedKcal: expectedBurn, partialDay: isToday, minuteOfDay });
+    const target = plan.targetKcal + bonus.bonusKcal;
     const macroTargets = { protein_g: plan.proteinG, carbs_g: plan.carbsG, fat_g: plan.fatG, fiber_g: plan.fiberG };
     const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: profile.timezone, hour: '2-digit', hourCycle: 'h23' }).format(now));
 
@@ -87,7 +91,13 @@ export class EnergyService {
       burnIsPartialDay: isToday && !!chosen,
       estimatedTdee: estimatedTdee(profile),
       /** the plan's best estimate of a full day's burn (adaptive / device / formula) */
-      expectedBurnKcal: Math.round(plan.maintenanceKcal ?? estimatedTdee(profile) ?? 0) || null,
+      expectedBurnKcal: expectedBurn,
+      /** today's burn projected to a full day (burn so far + expected rate for the hours left) */
+      projectedBurnKcal: bonus.projectedKcal,
+      /** plan target before any extra-burn allowance */
+      baseTargetKcal: plan.targetKcal,
+      /** kcal added today because the device shows a bigger day than expected */
+      burnBonusKcal: bonus.bonusKcal,
       goal: plan.effectiveGoal,
       goalDeltaKcal: plan.dailyDeltaKcal,
       targetIntakeKcal: target,
@@ -103,6 +113,21 @@ export class EnergyService {
       })(),
       onboarded: profile.onboarded,
       activity,
+      /** morning plan (from WHOOP recovery/sleep) and after-workout note, today only */
+      cards: isToday
+        ? todayCards({
+            date: d,
+            now,
+            tz: profile.timezone,
+            wellness: ((await this.repo.getCache(userId, `whoop-day:${d}`))?.payload as WellnessDay | undefined) ?? null,
+            workouts: activity.workouts.map((w: any) => ({ id: w.id, sportAr: w.sportAr, sportEn: w.sportEn, end: w.end, durationMin: w.durationMin, kcal: w.kcal, strain: w.strain })),
+            weightKg: plan.currentWeightKg ?? profile.weightKg ?? null,
+            proteinTargetG: plan.proteinG,
+            bonusKcal: bonus.bonusKcal,
+            ramadan: !!ramadanView(profile.ramadan, now, profile.timezone, target)?.active,
+            fasting: !!ramadanView(profile.ramadan, now, profile.timezone, target)?.fasting,
+          })
+        : [],
       meals: meals.map((m) => ({
         id: m.id,
         eatenAt: m.eatenAt,

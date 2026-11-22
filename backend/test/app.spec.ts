@@ -236,8 +236,11 @@ describe('energy balance', () => {
     expect(b.burn?.totalKcal).toBe(2400);
     expect(b.intake.calories).toBe(520);
     // plan: no weight yet → conservative −400 from formula fallback (2000)
-    expect(b.targetIntakeKcal).toBe(1600);
-    expect(b.remainingKcal).toBe(1080);
+    expect(b.baseTargetKcal).toBe(1600);
+    // a finished day that burned 2400 vs 2000 expected: half of the 400 extra is added back
+    expect(b.burnBonusKcal).toBe(200);
+    expect(b.targetIntakeKcal).toBe(1800);
+    expect(b.remainingKcal).toBe(1280);
     expect(b.macroTargets.protein_g).toBeGreaterThan(0);
 
     await s.profiles.update('u1', { preferredEnergySource: 'apple_health' });
