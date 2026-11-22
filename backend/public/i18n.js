@@ -9,6 +9,11 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"آخر قياس (كغ)": "Last weigh-in (kg)",
+"آخر قياس (كغ) · {}": "Last weigh-in (kg) · {}",
+"الاتجاه ": "Trend ",
+" كغ ": " kg ",
+"— يتحرك تدريجياً ليتجاهل تذبذب الماء": "— moves gradually to ignore water swings",
 "الحرق حتى الآن": "Burned so far",
 "من ~{} سعرة متوقعة": "of ~{} kcal expected",
 "لو أكلت ميزانيتك ({}) يكون عجزك حوالي {} سعرة نهاية اليوم": "Eat your budget ({}) and you'll end the day ~{} kcal in deficit",

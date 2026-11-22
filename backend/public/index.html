@@ -731,7 +731,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     <div class="card">
       <h3>الوزن <span class="small" id="pWeightSrc"></span></h3>
       <div class="row" style="align-items:flex-end">
-        <div><div style="font-size:40px;font-weight:700" class="num" id="pCurrent">—</div><div class="small muted">الاتجاه الحالي (كغ)</div></div>
+        <div><div style="font-size:40px;font-weight:700" class="num" id="pCurrent">—</div><div class="small muted" id="pCurL">آخر قياس (كغ)</div><div class="small" id="pTrend" style="margin-top:2px"></div></div>
         <div style="text-align:end"><div style="font-size:20px;font-weight:700" class="num" id="pChange">—</div><div class="small muted">منذ البداية</div></div>
       </div>
       <div id="pGoalWrap" style="margin-top:14px">
@@ -1783,7 +1783,11 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       const [w, plan, h] = await Promise.all([api('weights?days=90'), api('plan'), api('history?days=7')]);
       planCache = plan;
       $('pSub').textContent = L`هدفك: ${GOAL_AR[plan.effectiveGoal]}`;
-      $('pCurrent').textContent = plan.currentWeightKg ? fmt1(plan.currentWeightKg) : '—';
+      const lastW = w.entries[w.entries.length - 1];
+      // Big number = the weight you actually logged last; the smoothed trend sits under it.
+      $('pCurrent').textContent = lastW ? fmt1(lastW.kg) : plan.currentWeightKg ? fmt1(plan.currentWeightKg) : '—';
+      $('pCurL').textContent = lastW ? L`آخر قياس (كغ) · ${arDate(lastW.date)}` : T('آخر قياس (كغ)');
+      $('pTrend').innerHTML = lastW && Math.abs(lastW.trend - lastW.kg) >= 0.05 ? L`الاتجاه <b class="num">${fmt1(lastW.trend)}</b> كغ <span class="muted">— يتحرك تدريجياً ليتجاهل تذبذب الماء</span>` : '';
       const ch = plan.changeSinceStartKg;
       $('pChange').textContent = ch == null ? '—' : L`${ch > 0 ? '+' : ''}${fmt1(ch)} كغ`;
       $('pChange').style.color = ch == null || ch === 0 ? '' : (plan.goal === 'lose') === ch < 0 ? 'var(--ok)' : 'var(--warn)';

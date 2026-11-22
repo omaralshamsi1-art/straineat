@@ -32,7 +32,11 @@ struct ProgressTab: View {
 
     private var weightCard: some View {
         Card(title: t("Weight", "الوزن"), icon: "scalemass.fill",
-             trailing: weights?.current.map { AnyView(Text(t("\(fmt1($0)) kg", "\(fmt1($0)) كغ")).font(.headline).monospacedDigit()) }) {
+             trailing: (weights?.entries.last?.kg ?? weights?.current).map { AnyView(Text(t("Last \(fmt1($0)) kg", "آخر قياس \(fmt1($0)) كغ")).font(.headline).monospacedDigit()) }) {
+            if let last = weights?.entries.last, abs(last.trend - last.kg) >= 0.05 {
+                Text(t("Trend \(fmt1(last.trend)) kg — moves gradually to ignore water swings", "الاتجاه \(fmt1(last.trend)) كغ — يتحرك تدريجياً ليتجاهل تذبذب الماء"))
+                    .font(.caption).foregroundStyle(Theme.muted)
+            }
             if let entries = weights?.entries, entries.count >= 2 {
                 Chart {
                     ForEach(entries) { e in
