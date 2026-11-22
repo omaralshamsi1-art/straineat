@@ -420,4 +420,10 @@ export class ScheduleController {
   day(@UserId() userId: string, @Query('date') date?: string) {
     return this.schedule.day(userId, date);
   }
+
+  /** Mark a slot as skipped today ({ slot, undo? }); returns the updated day. */
+  @Post('skip')
+  skip(@UserId() userId: string, @Body() body: { slot?: string; undo?: boolean; date?: string }) {
+    return this.schedule.skip(userId, String(body?.slot || ''), !!body?.undo, body?.date);
+  }
 }

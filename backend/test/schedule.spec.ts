@@ -78,6 +78,13 @@ describe('schedule', () => {
     const rv = buildDay(ram, slotTargets(ram, 2000, { suhoor: 600, iftar: 900, evening: 500 }), [], toMin('18:05'), () => 0).slots;
     expect(dueSlotReminders(rv, toMin('18:05'), 'ar', { fasting: true }).map((r) => r.key)).toEqual(['slot:iftar:before']);
   });
+  it('a skipped slot shows as skipped and gets no reminders', () => {
+    const slots = defaultSchedule(3, {}).slots;
+    const v = buildDay(slots, slotTargets(slots, 2000), [], toMin('14:40'), () => 0, ['lunch', 'breakfast']).slots;
+    expect(v.find((s) => s.id === 'breakfast')!.status).toBe('skipped');
+    expect(v.find((s) => s.id === 'lunch')!.status).toBe('skipped');
+    expect(dueSlotReminders(v, toMin('14:40'), 'en', { fasting: false })).toEqual([]);
+  });
 });
 
 describe('schedule service + reminders', () => {

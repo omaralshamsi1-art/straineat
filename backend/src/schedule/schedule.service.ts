@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { isIsoDate, localDate } from '../common/dates';
 import { ramadanView } from '../coach/coach-math';
 import { addDays, PlanService } from '../plan/plan.service';
@@ -31,7 +31,9 @@ export class ScheduleService {
     const targets = slotTargets(schedule.slots, plan.targetKcal, ram.split);
     const meals = d >= addDays(today, -21) && d <= today ? history.filter((m) => m.date === d) : await this.repo.listMeals(userId, d);
     const nowMin = d === today ? minuteIn(now.toISOString(), tz) : d < today ? 1440 : -1;
-    const view = buildDay(schedule.slots, targets, meals, nowMin, (m) => minuteIn(m.eatenAt, tz));
+    const skip = await this.repo.getCache(userId, `schedule-skip:${d}`);
+    const skipped: string[] = Array.isArray((skip?.payload as any)?.slots) ? (skip!.payload as any).slots : [];
+    const view = buildDay(schedule.slots, targets, meals, nowMin, (m) => minuteIn(m.eatenAt, tz), skipped);
     const lang = p.language === 'ar' ? 'ar' : 'en';
     return {
       date: d,
@@ -42,5 +44,18 @@ export class ScheduleService {
       ...view,
       slots: view.slots.map((s) => ({ ...s, label: SLOT_LABEL[s.id][lang], label_en: SLOT_LABEL[s.id].en, label_ar: SLOT_LABEL[s.id].ar })),
     };
+  }
+
+  /** Mark a planned slot as intentionally skipped today (or undo). Skipped slots get no reminders. */
+  async skip(userId: string, slot: string, undo = false, date?: string, now = new Date()) {
+    const p = await this.profiles.get(userId);
+    const d = isIsoDate(date) ? date : localDate(now, p.timezone);
+    if (!Object.prototype.hasOwnProperty.call(SLOT_LABEL, slot)) throw new BadRequestException('Unknown slot');
+    const key = `schedule-skip:${d}`;
+    const cur = await this.repo.getCache(userId, key);
+    const set = new Set<string>(Array.isArray((cur?.payload as any)?.slots) ? (cur!.payload as any).slots : []);
+    if (undo) set.delete(slot); else set.add(slot);
+    await this.repo.setCache({ userId, key, payload: { slots: [...set] }, createdAt: now.toISOString() });
+    return this.day(userId, d, now);
   }
 }

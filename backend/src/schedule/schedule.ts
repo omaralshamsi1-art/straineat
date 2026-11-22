@@ -127,7 +127,7 @@ export function slotTargets(slots: SlotDef[], targetKcal: number, ramadanSplit?:
   return out;
 }
 
-export type SlotStatus = 'done' | 'now' | 'upcoming' | 'missed';
+export type SlotStatus = 'done' | 'now' | 'upcoming' | 'missed' | 'skipped';
 export interface SlotView extends SlotDef {
   targetKcal: number;
   status: SlotStatus;
@@ -139,7 +139,7 @@ export interface SlotView extends SlotDef {
  * Put today's confirmed meals into the slots: meals → nearest meal slot, snacks → nearest snack slot (within 3 h, else "extras");
  * drinks are listed apart and never mark a slot as done.
  */
-export function buildDay(slots: SlotDef[], targets: Record<string, number>, meals: Meal[], nowMin: number, minuteOf: (m: Meal) => number) {
+export function buildDay(slots: SlotDef[], targets: Record<string, number>, meals: Meal[], nowMin: number, minuteOf: (m: Meal) => number, skipped: string[] = []) {
   const view: SlotView[] = slots.map((s) => ({ ...s, targetKcal: targets[s.id] ?? 0, status: 'upcoming', eatenKcal: 0, items: [] }));
   const drinks: SlotView['items'] = [];
   const extras: SlotView['items'] = []; // eaten far from any planned slot of that kind
@@ -157,7 +157,7 @@ export function buildDay(slots: SlotDef[], targets: Record<string, number>, meal
   }
   for (const s of view) {
     const t = toMin(s.time);
-    s.status = s.items.length ? 'done' : nowMin < t - 15 ? 'upcoming' : nowMin <= t + 60 ? 'now' : 'missed';
+    s.status = s.items.length ? 'done' : skipped.includes(s.id) ? 'skipped' : nowMin < t - 15 ? 'upcoming' : nowMin <= t + 60 ? 'now' : 'missed';
   }
   return { slots: view, drinks, drinksKcal: drinks.reduce((a, d) => a + d.kcal, 0), extras };
 }
@@ -178,7 +178,7 @@ export const SLOT_LABEL: Record<SlotId, { en: string; ar: string }> = {
 export function dueSlotReminders(view: SlotView[], nowMin: number, lang: 'en' | 'ar', opts: { fasting: boolean }) {
   const out: { key: string; title: string; body: string }[] = [];
   for (const s of view) {
-    if (s.status === 'done') continue;
+    if (s.status === 'done' || s.status === 'skipped') continue;
     const t = toMin(s.time);
     const quiet = (nowMin >= 23 * 60 || nowMin < 7 * 60) && s.id !== 'suhoor';
     if (quiet) continue;

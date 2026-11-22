@@ -401,6 +401,54 @@ html[data-theme="dark"] .ql .ti { color: #111113; }
 .status.good { background: var(--mint); color: #13361d; }
 .status.bad { background: var(--pink); color: #5a1a10; }
 .status.pending { background: var(--y); color: #3d3500; }
+/* ---- Today v3 (redesign) ---- */
+.tchips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; }
+.tchip:empty { display: none; }
+.tchip, .tchips .streak { display: inline-flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 500; color: var(--ink); margin: 0; }
+.tchips .streak { background: var(--y); border-color: transparent; color: #3d3500; font-weight: 600; }
+.hero3 { display: flex; flex-direction: column; gap: 16px; }
+.h3row { display: flex; align-items: center; gap: 18px; }
+.bigring { position: relative; width: 148px; height: 148px; flex: none; border: 0; padding: 0; background: none; cursor: pointer; color: var(--ink); }
+.bigring svg { width: 148px; height: 148px; transform: rotate(-90deg); }
+.bigring .trk { fill: none; stroke: var(--ring-track); stroke-width: 14; }
+.bigring .arc { fill: none; stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1); }
+.bigring .v { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.bigring .v b { font-size: 32px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+.bigring .v span { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.hstats { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
+.hstats button { border: 0; background: none; padding: 0; text-align: start; cursor: pointer; color: var(--ink); display: flex; flex-direction: column; gap: 1px; }
+.hstats button > span { font-size: 13px; color: var(--muted); }
+.hstats b { font-size: 20px; font-weight: 700; }
+.hstats b small { font-size: 13px; font-weight: 500; color: var(--muted); }
+.hstats b.burn > .num { color: #1765b5; }
+[data-theme="dark"] .hstats b.burn > .num { color: #7fb8f0; }
+.netrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 8px; border: 0; cursor: pointer; width: 100%; background: var(--sky); color: #123f70; border-radius: 16px; padding: 12px 14px; font-size: 14px; text-align: start; }
+.netrow b { font-weight: 700; } .netrow small { flex-basis: 100%; font-size: 13px; opacity: .8; } .netrow .num { font-size: 17px; font-weight: 800; }
+[data-theme="dark"] .netrow { background: #1b2a38; color: #cfe4f7; }
+.protrow .row { margin-bottom: 8px; font-size: 15px; }
+.hero3 .status { margin: 0; justify-content: flex-start; text-align: start; font-weight: 600; }
+.nx { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.nx b { font-size: 18px; display: block; } .nx .small { font-size: 15px; }
+.nx .when { font-size: 13px; font-weight: 600; background: var(--card-2); border-radius: 999px; padding: 6px 10px; white-space: nowrap; }
+.tl { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+#mealList > :first-child { border-top: 0; }
+#mealList .meal + .meal { border-top: 1px solid var(--line); }
+#mealList .meal { border-top: 1px solid var(--line); }
+.tl .ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; flex: none; background: var(--card-2); color: var(--muted); }
+.tl .ic.up { background: none; border: 1.5px dashed var(--line); box-sizing: border-box; }
+.tl .t { flex: 1; min-width: 0; } .tl .t b { display: block; font-weight: 600; }
+.tlx { display: flex; flex-direction: column; border-top: 1px solid var(--line); padding: 12px 0; gap: 10px; }
+.tlx .tl { border: 0; padding: 0; }
+.tlx .acts { display: flex; gap: 8px; padding-inline-start: 58px; }
+.tlx .acts button { min-height: 44px; padding: 0 18px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid var(--line); background: var(--card-2); color: var(--ink); }
+.tlx .acts button.go { background: var(--mint); border-color: transparent; color: #13361d; }
+.tl .undo { border: 0; background: none; color: var(--brand-2); font-weight: 600; cursor: pointer; padding: 10px 4px; font-size: 14px; }
+.well3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.well3 button { border: 0; border-radius: 16px; background: var(--card-2); padding: 12px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; color: var(--ink); text-align: start; }
+.well3 button > span { font-size: 13px; color: var(--muted); }
+.well3 button b { font-size: 22px; font-weight: 800; }
+.well3 button small { font-size: 12px; color: var(--muted); }
+.well3 .full { grid-column: 1 / -1; }
 .ring .big { font-weight: 800; letter-spacing: -0.03em; }
 #ringArc { stroke: #2f9e55; }
 .bar { background: rgba(0,0,0,.07); }
@@ -584,34 +632,22 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
   <!-- ============ TODAY ============ -->
   <section id="v-today" class="hidden fade">
     <div class="greet" id="greet">مرحباً</div>
-    <div class="sub" id="goalLine"></div>
-    <div id="streakChip"></div>
+    <div class="tchips"><span class="tchip" id="goalLine"></span><span id="streakChip"></span></div>
 
-    <div class="sect"><em class="acc">روابط</em> سريعة</div>
-    <div class="ql">
-      <button class="y" id="qlSnap"><div class="ti"><svg width="26" height="26"><use href="#i-camera"/></svg></div><b>سجّل وجبة</b></button>
-      <button class="l" id="qlFav"><div class="ti"><svg width="26" height="26"><use href="#i-heart"/></svg></div><b>المفضلة</b></button>
-      <button class="s" id="qlSch"><div class="ti"><svg width="26" height="26"><use href="#i-target"/></svg></div><b>جدولي</b></button>
-      <button class="p" id="qlAsk"><div class="ti"><svg width="26" height="26"><use href="#i-spark"/></svg></div><b>المساعد</b></button>
+    <div class="card hero3">
+      <div class="h3row">
+        <button class="bigring" data-det="left" aria-label="المتبقي اليوم"><svg viewBox="0 0 148 148" aria-hidden="true"><circle cx="74" cy="74" r="64" class="trk"/><circle cx="74" cy="74" r="64" class="arc" id="ringLeft" stroke-dasharray="402.1" stroke-dashoffset="402.1"/></svg><span class="v"><b class="num" id="ringLeftV" dir="ltr">—</b><span id="ringLeftL">سعرة متبقية</span></span></button>
+        <div class="hstats">
+          <button data-det="left"><span>ميزانية اليوم</span><b><span class="num" id="hsBudget">—</span> <small>سعرة</small></b></button>
+          <button data-det="eaten"><span>أكلت</span><b><span class="num" id="hsEaten">—</span> <small class="num" id="hsEatenPct"></small></b></button>
+          <button data-det="burn"><span id="hsBurnL">حرقت</span><b class="burn"><span class="num" id="hsBurn">—</span> <small>سعرة</small></b></button>
+        </div>
+      </div>
+      <button class="netrow hidden" id="netRow" data-det="burn"><b>الصافي حتى الآن</b><span><b class="num" id="netV" dir="ltr"></b> سعرة</span><small id="netT"></small></button>
+      <div class="protrow"><div class="row"><b>البروتين</b><span class="muted"><b class="num" id="protHave">—</b> <span id="protOf"></span></span></div><div class="bar"><i id="protBar" style="width:0;background:var(--p)"></i></div></div>
+      <div class="status" id="dayStatus" role="status"></div>
+      <div id="kPendRow" class="hidden small" style="margin:8px 4px 0;color:var(--warn)">مسودات غير مؤكدة: <b class="num" id="kPend">—</b> سعرة</div>
     </div>
-
-    <div class="rings3">
-      <button class="r3" data-det="eaten"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" class="trk"/><circle cx="60" cy="60" r="50" class="arc" id="r3Eat" stroke-dasharray="314.2" stroke-dashoffset="314.2"/></svg><div class="v"><b class="num" id="r3EatV" dir="ltr">—</b></div><span class="lb">الأكل ›</span></button>
-      <button class="r3" data-det="left"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" class="trk"/><circle cx="60" cy="60" r="50" class="arc" id="r3Left" stroke-dasharray="314.2" stroke-dashoffset="314.2"/></svg><div class="v"><b class="num" id="r3LeftV" dir="ltr">—</b></div><span class="lb" id="r3LeftL">المتبقي ›</span></button>
-      <button class="r3" data-det="burn"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" class="trk"/><circle cx="60" cy="60" r="50" class="arc" id="r3Burn" stroke-dasharray="314.2" stroke-dashoffset="314.2"/></svg><div class="v"><b class="num" id="r3BurnV" dir="ltr">—</b></div><span class="lb">الحرق ›</span></button>
-    </div>
-    <div class="status" id="dayStatus" role="status"></div>
-    <div class="mon2">
-      <button class="mon" data-det="eaten"><div class="mh">مراقبة التغذية <span>›</span></div><div class="mb"><span class="badge2" id="monNutB">—</span><div><b id="monNutT">—</b><span class="small muted" id="monNutS"></span></div></div></button>
-      <button class="mon" data-det="burn"><div class="mh">الطاقة <span>›</span></div><div class="mb"><span class="badge2" id="monEnB">—</span><div><b id="monEnT">—</b><span class="small muted" id="monEnS"></span></div></div></button>
-    </div>
-    <button class="wcard hidden" id="wellCard" data-det="well">
-      <div class="mh">الاستشفاء والنوم · WHOOP <span>›</span></div>
-      <div class="wrow" id="wellRow"></div>
-    </button>
-    <div id="kPendRow" class="hidden small" style="margin:8px 4px 0;color:var(--warn)">مسودات غير مؤكدة: <b class="num" id="kPend">—</b> سعرة</div>
-
-    <div class="sect"><em class="acc">يومي</em></div>
 
     <div class="card ram hidden" id="ramCard">
       <div class="row"><b style="font-size:17px">🌙 وضع رمضان</b><span class="small muted" id="ramTimes"></span></div>
@@ -625,32 +661,21 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
 
     <div id="tips"></div>
 
-    <div class="card hidden" id="chalCard">
-      <h3>تحدي الأسبوع <span class="small" id="chalLeft"></span></h3>
-      <b id="chalTitle" style="font-size:16px"></b>
-      <p class="small muted" id="chalDesc" style="margin:4px 0 10px"></p>
-      <div class="row small" style="margin-bottom:6px"><span id="chalProg"></span><b id="chalDone"></b></div>
-      <div class="bar"><i id="chalBar" style="width:0;background:var(--accent)"></i></div>
-    </div>
-
-    <div class="card" id="schCard">
-      <h3><span>جدول <em class="acc">وجباتك</em></span> <button class="chip src" id="schEdit" style="cursor:pointer">تعديل الأوقات</button></h3>
-      <div id="schBody"><div class="loading"><div class="spinner"></div></div></div>
-    </div>
-
-    <div class="card">
-      <h3><span><em class="acc">ماذا</em> آكل الآن؟</span> <button class="chip src" id="sugRefresh" style="cursor:pointer" aria-label="اقتراحات جديدة">تحديث</button></h3>
+    <div class="card" id="nextCard">
+      <h3><span>التالي</span> <button class="chip src" id="sugRefresh" style="cursor:pointer" aria-label="اقتراحات جديدة">تحديث</button></h3>
+      <div id="nextBody"></div>
       <div id="sugBody"><button class="btn ghost" id="sugBtn"><svg width="20" height="20"><use href="#i-bulb"/></svg>اقترح لي وجبة تناسب ما تبقى</button></div>
     </div>
 
     <div class="card">
-      <h3>نشاطك <span class="small" id="actSub"></span></h3>
-      <div id="actList"></div>
+      <h3><span>وجبات اليوم <span class="small" id="mealCount"></span></span> <button class="chip src" id="schEdit" style="cursor:pointer">تعديل الأوقات</button></h3>
+      <div id="mealList"></div>
     </div>
 
-    <div class="card">
-      <h3>وجبات اليوم <span class="small" id="mealCount"></span></h3>
-      <div id="mealList"></div>
+    <div class="card" id="bodyCard">
+      <h3><span>جسمك اليوم</span> <span class="small" id="actSub"></span></h3>
+      <div class="well3 hidden" id="wellRow"></div>
+      <div id="actList"></div>
     </div>
   </section>
 
@@ -1470,6 +1495,54 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
     return { cls: 'good', color: 'var(--good)', text: isToday ? L`ممتاز، أنت ضمن هدف اليوم — متبقي ${fmt(left)} سعرة` : L`كنت ضمن الهدف — أقل بـ ${fmt(left)} سعرة` };
   }
 
+  // ---- today's meals: plan slots + logged meals in one time-ordered list ----
+  let schedCache = null;
+  const hmToMin = (t) => { const [h, m] = String(t).split(':').map(Number); return h * 60 + (m || 0); };
+  const minOf = (iso) => { const d = new Date(iso); return d.getHours() * 60 + d.getMinutes(); };
+  const nowMinLocal = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+  function mealRow(m) {
+    const [slot, icon] = m.kind === 'drink' ? [T('☕ مشروب'), 'i-bolt'] : m.kind === 'snack' ? [T('سناك'), 'i-apple'] : mealSlot(m.eatenAt);
+    const time = new Date(m.eatenAt).toLocaleTimeString(LOC, { hour: 'numeric', minute: '2-digit' });
+    return L`<button class="meal" data-id="${esc(m.id)}"><span class="ic k-${esc(m.kind || 'meal')}"><svg width="22" height="22"><use href="#${icon}"/></svg></span>
+      <span class="t"><b>${esc(nameOf(m))}</b><span class="small muted">${slot} · ${time}${m.restaurant ? ` · ${esc(m.restaurant)}` : ''}</span></span>
+      <span class="k"><b class="num">${fmt(m.calories)}</b> <span class="small muted">سعرة</span><div class="small muted num">${fmt(m.protein_g)} غ بروتين</div>${m.status !== 'confirmed' ? T('<span class="pill draft">مسودة</span>') : ''}</span></button>`;
+  }
+  function slotIcon(s) { return s.kind === 'snack' ? 'i-apple' : ['breakfast', 'suhoor'].includes(s.id) ? 'i-sun' : ['dinner', 'iftar', 'evening'].includes(s.id) ? 'i-moon' : 'i-bowl'; }
+  function slotRow(s) {
+    const lbl = LANG === 'en' ? s.label_en : s.label_ar;
+    const plan = L`المخطط ~${fmt(s.targetKcal)} سعرة`;
+    const head = (cls, sub) => `<div class="tl"><span class="ic ${cls}"><svg width="22" height="22"><use href="#${slotIcon(s)}"/></svg></span><span class="t"><b>${esc(lbl)} · <span class="num" dir="ltr">${esc(s.time)}</span></b><span class="small muted">${sub}</span></span>`;
+    if (s.status === 'upcoming') return head('up', `${T('قادم')} · ${plan}`) + '</div>';
+    if (s.status === 'skipped') return head('', T('تم التخطي')) + `<button class="undo" data-unskip="${esc(s.id)}">${T('تراجع')}</button></div>`;
+    const sub = `${s.status === 'now' ? T('الآن') : T('لم تُسجّل')} · ${plan}`;
+    return `<div class="tlx">${head('', sub)}</div><div class="acts"><button class="go" data-slot-log>${T('سجّلها')}</button><button data-skip="${esc(s.id)}">${T('تخطيتها')}</button></div></div>`;
+  }
+  function renderTimeline(b, d) {
+    const rows = b.meals.map((m) => ({ at: minOf(m.eatenAt), html: mealRow(m) }));
+    const drafts = b.meals.filter((m) => m.status !== 'confirmed').map((m) => minOf(m.eatenAt));
+    if (d) d.slots.filter((s) => !s.items.length && !drafts.some((x) => Math.abs(x - hmToMin(s.time)) <= 180)).forEach((s) => rows.push({ at: hmToMin(s.time), html: slotRow(s) }));
+    rows.sort((x, y) => x.at - y.at);
+    $('mealCount').textContent = b.meals.length ? L`${b.meals.length} وجبات` : '';
+    $('schEdit').classList.toggle('hidden', !d);
+    $('mealList').innerHTML = rows.length ? rows.map((r) => r.html).join('') : T('<div class="empty">لا توجد وجبات بعد.<br>اضغطي زر الكاميرا لتسجيل وجبتك الأولى.</div>');
+    $('mealList').querySelectorAll('.meal').forEach((el) => (el.onclick = async () => openReview(await api(`meals/${el.dataset.id}`))));
+    $('mealList').querySelectorAll('[data-slot-log]').forEach((el) => (el.onclick = () => show('snap')));
+    const skip = async (slot, undo) => {
+      try { schedCache = await api('schedule/skip', { method: 'POST', json: { slot, undo } }); renderTimeline(lastBal || b, schedCache); renderNext(schedCache); }
+      catch (e) { toast(e.message); }
+    };
+    $('mealList').querySelectorAll('[data-skip]').forEach((el) => (el.onclick = () => skip(el.dataset.skip, false)));
+    $('mealList').querySelectorAll('[data-unskip]').forEach((el) => (el.onclick = () => skip(el.dataset.unskip, true)));
+  }
+  function renderNext(d) {
+    const nx = d && d.slots.find((s) => s.status === 'now' || s.status === 'upcoming');
+    if (!nx) { $('nextBody').innerHTML = `<p class="small muted" style="margin:0 0 12px">${T('انتهت وجبات اليوم المخططة. إذا جعت، اختر شيئاً خفيفاً يناسب ما تبقى.')}</p>`; return; }
+    const lbl = LANG === 'en' ? nx.label_en : nx.label_ar;
+    const mins = Math.max(0, hmToMin(nx.time) - nowMinLocal());
+    const when = nx.status === 'now' ? T('الآن') : mins >= 60 ? L`بعد ${Math.round(mins / 60)} س` : L`بعد ${mins} د`;
+    $('nextBody').innerHTML = `<div class="nx"><div><b>${esc(lbl)} · <span class="num" dir="ltr">${esc(nx.time)}</span></b><span class="small muted">${L`هدفك حوالي ${fmt(nx.targetKcal)} سعرة`}</span></div><span class="when">${when}</span></div>`;
+  }
+
   async function loadToday() {
     $('dayLabel').textContent = dayLabel();
     const nm = ls.get('ns_name') || (user() === 'meera' ? T('ميرا') : user());
@@ -1479,10 +1552,12 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
     try {
       const b = await api(`balance?date=${isoDay(day)}`);
       if (b.onboarded === false && isoDay(day) === isoDay(new Date())) { startOnboarding(await api('profile')); return; }
-      $('goalLine').textContent = L`هدفك: ${GOAL_AR[b.goal] || ''}${deltaWords(b.goalDeltaKcal)}`;
+      const gd = b.goalDeltaKcal;
+      $('goalLine').textContent = (GOAL_AR[b.goal] || '') + (gd ? ' · ' + (gd < 0 ? L`عجز ${fmt(-gd)} سعرة يومياً` : L`فائض ${fmt(gd)} سعرة يومياً`) : '');
       const eaten = b.intake.calories, target = b.targetIntakeKcal;
       const isTodayV = isoDay(day) === isoDay(new Date());
       const st = dayState(b.goal, eaten, target, b.meals.length, isTodayV);
+      const schedP = isTodayV ? api('schedule').catch(() => null) : Promise.resolve(null);
       $('dayStatus').className = `status ${st.cls}`;
       $('dayStatus').innerHTML = `<svg width="22" height="22"><use href="#${st.cls === 'good' ? 'i-check' : 'i-alert'}"/></svg><span>${st.text}</span>`;
       $('kPendRow').classList.toggle('hidden', !(b.pendingDrafts.calories > 0)); $('kPend').textContent = fmt(b.pendingDrafts.calories);
@@ -1494,18 +1569,11 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
       loadMotivation();
       renderRamadan(b.ramadan);
       _loadToday();
-      loadSchedule();
       loadWellness();
       ramCtx = b.ramadan;
-      $('mealCount').textContent = b.meals.length ? L`${b.meals.length} وجبات` : '';
-      $('mealList').innerHTML = b.meals.length ? b.meals.map((m) => {
-        const [slot, icon] = m.kind === 'drink' ? [T('☕ مشروب'), 'i-bolt'] : m.kind === 'snack' ? [T('سناك'), 'i-apple'] : mealSlot(m.eatenAt);
-        const time = new Date(m.eatenAt).toLocaleTimeString(LOC, { hour: 'numeric', minute: '2-digit' });
-        return L`<button class="meal" data-id="${esc(m.id)}"><span class="ic k-${esc(m.kind || 'meal')}"><svg width="22" height="22"><use href="#${icon}"/></svg></span>
-          <span class="t"><b>${esc(nameOf(m))}</b><span class="small muted">${slot} · ${time}${m.restaurant ? ` · ${esc(m.restaurant)}` : ''}</span></span>
-          <span class="k"><b class="num">${fmt(m.calories)}</b> <span class="small muted">سعرة</span><div class="small muted num">${fmt(m.protein_g)} غ بروتين</div>${m.status !== 'confirmed' ? T('<span class="pill draft">مسودة</span>') : ''}</span></button>`;
-      }).join('') : T('<div class="empty">لا توجد وجبات بعد.<br>اضغطي زر الكاميرا لتسجيل وجبتك الأولى.</div>');
-      document.querySelectorAll('.meal').forEach((el) => (el.onclick = async () => openReview(await api(`meals/${el.dataset.id}`))));
+      const sched = await schedP; schedCache = sched;
+      if (isTodayV) renderNext(sched);
+      renderTimeline(b, sched);
     } catch (e) { $('mealList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
 
@@ -1516,15 +1584,11 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
     try {
       const m = await api('motivation'); motCache = m;
       const st = m.streak;
-      $('streakChip').innerHTML = st.current ? L`<span class="streak">🔥 ${st.current} ${st.current === 1 ? T('يوم') : T('أيام')} متتالية${st.loggedToday ? '' : T(' — سجّل اليوم لتستمر')}</span>` : '';
       const c = m.challenge;
-      $('chalCard').classList.remove('hidden');
-      $('chalTitle').textContent = tx(c, 'title'); $('chalDesc').textContent = tx(c, 'desc');
-      $('chalProg').textContent = L`${c.progress} من ${c.target} ${LANG === 'en' ? c.unit_en || c.unit : c.unit}`;
-      $('chalDone').textContent = c.done ? T('أنجزته 🎉') : '';
-      $('chalLeft').textContent = c.done ? '' : L`باقي ${c.daysLeft} ${c.daysLeft === 1 ? T('يوم') : T('أيام')}`;
-      $('chalBar').style.width = `${(c.progress / c.target) * 100}%`;
-      $('chalBar').style.background = c.done ? 'var(--good)' : 'var(--accent)';
+      const parts = [];
+      if (st.current) parts.push(L`${st.current} ${st.current === 1 ? T('يوم') : T('أيام')} متتالية`);
+      if (c) parts.push(c.done ? T('تحدي الأسبوع: أنجزته') : L`${c.progress} من ${c.target} هذا الأسبوع`);
+      $('streakChip').innerHTML = parts.length ? `<span class="streak" title="${esc(tx(c || {}, 'title') || '')}"><svg width="14" height="14"><use href="#i-flame"/></svg>${parts.join(' · ')}</span>` : '';
     } catch (e) { console.warn(e); }
   }
   function renderBadges(m) {
@@ -1647,7 +1711,7 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
     const list = (a && a.workouts) || [];
     $('actSub').textContent = list.length ? `${list.length} ${list.length === 1 ? T('تمرين') : T('تمارين')}` : '';
     if (!list.length) {
-      $('actList').innerHTML = T('<div class="empty small">لا يوجد تمرين مسجّل لهذا اليوم.<br>تُسحب التمارين تلقائياً من WHOOP، ومن Apple Health عبر تطبيق iOS.</div>');
+      $('actList').innerHTML = `<div class="tl" style="border:0;padding:4px 0"><svg width="20" height="20" style="color:var(--muted);flex:none"><use href="#i-heart"/></svg><span class="small muted">${T('لا يوجد تمرين بعد · يُسحب من WHOOP و Apple Health')}</span></div>`;
       return;
     }
     const sum = L`<div class="actsum"><div><b class="num">${fmt(a.totalMin)}</b><span>دقيقة</span></div><div><b class="num">${a.totalKcal ? fmt(a.totalKcal) : '—'}</b><span>سعرة في التمارين</span></div>${a.maxStrain != null
@@ -2108,22 +2172,8 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
   // ---------------- eating schedule ----------------
   const ST_LBL = () => ({ done: T('✓ تم'), now: T('الآن'), upcoming: T('قادم'), missed: T('لم تُسجّل') });
   async function loadSchedule() {
-    const isT = isoDay(day) === isoDay(new Date());
-    $('schCard').classList.toggle('hidden', !isT);
-    if (!isT) return;
-    try {
-      const d = await api('schedule');
-      const rows = d.slots.map((s) => {
-        const lbl = LANG === 'en' ? s.label_en : s.label_ar;
-        const eaten = s.items.length ? `<div class="small muted">${s.items.map((i) => esc(LANG === 'en' ? i.name || i.name_ar : i.name_ar || i.name)).join(LANG === 'en' ? ', ' : String.fromCharCode(1548) + ' ')} · <span class="num">${fmt(s.eatenKcal)}</span> ${T('سعرة')}</div>` : '';
-        const st = s.status === 'now' ? `<button class="st now" data-sch-log style="border:0;cursor:pointer">${T('الآن — سجّل')}</button>` : `<span class="st ${s.status}">${ST_LBL()[s.status]}</span>`;
-        return `<div class="sch"><span class="tm num">${esc(s.time)}</span><div><b>${s.kind === 'snack' ? '🍎' : '🍽️'} ${esc(lbl)}</b> <span class="small muted num">~${fmt(s.targetKcal)} ${T('سعرة')}</span>${eaten}</div>${st}</div>`;
-      }).join('');
-      const drinks = d.drinks.length ? `<p class="small" style="margin:10px 0 0">${L`☕ المشروبات اليوم: ${d.drinks.length} · ${fmt(d.drinksKcal)} سعرة`} <span class="muted">${T('(تُحسب في السعرات، لا كوجبة)')}</span></p>` : '';
-      const extras = d.extras && d.extras.length ? `<p class="small muted" style="margin:6px 0 0">${L`خارج الجدول: ${d.extras.map((i) => esc(LANG === 'en' ? i.name || i.name_ar : i.name_ar || i.name)).join(LANG === 'en' ? ', ' : String.fromCharCode(1548) + ' ')}`}</p>` : '';
-      $('schBody').innerHTML = (d.ramadan ? `<p class="small muted" style="margin:0 0 4px">${T('🌙 جدول رمضان: الإفطار والسحور')}</p>` : '') + rows + drinks + extras;
-      const lb = $('schBody').querySelector('[data-sch-log]'); if (lb) lb.onclick = () => show('snap');
-    } catch (e) { $('schBody').innerHTML = `<div class="empty small">${esc(e.message)}</div>`; }
+    if (isoDay(day) !== isoDay(new Date()) || !lastBal) return;
+    try { schedCache = await api('schedule'); renderNext(schedCache); renderTimeline(lastBal, schedCache); } catch (e) { console.warn(e); }
   }
   $('schEdit').onclick = () => { show('plan'); setTimeout(() => $('schSettings').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300); };
 
@@ -2183,29 +2233,28 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
   const recCls = (r) => (r == null ? '' : r >= 67 ? 'rec-hi' : r >= 34 ? 'rec-mid' : 'rec-lo');
   const recColor = (r) => (r >= 67 ? '#16a34a' : r >= 34 ? '#eab308' : '#dc2626');
   async function loadWellness() {
-    const card = $('wellCard');
-    if (isoDay(day) !== isoDay(new Date())) { card.classList.add('hidden'); return; }
+    const row = $('wellRow');
+    if (isoDay(day) !== isoDay(new Date())) { row.classList.add('hidden'); return; }
     try {
       const w = await api(`integrations/whoop/wellness?date=${isoDay(day)}`);
       wellCache = w;
-      if (!w.connected) { card.classList.add('hidden'); return; }
-      card.classList.remove('hidden');
+      if (!w.connected) { row.classList.add('hidden'); return; }
+      row.classList.remove('hidden');
       if (w.needsReconnect) {
-        $('wellRow').innerHTML = `<div style="grid-column:1/-1" class="small">${T('أعد ربط WHOOP مرة واحدة لإظهار الاستشفاء والنوم.')} <b style="color:var(--brand-2)">${T('إعادة الربط ›')}</b></div>`;
-        card.dataset.det = 'reconnect';
+        row.innerHTML = `<button class="full" data-det="reconnect"><span>${T('أعد ربط WHOOP مرة واحدة لإظهار الاستشفاء والنوم.')}</span><b style="font-size:15px;color:var(--brand-2)">${T('إعادة الربط ›')}</b></button>`;
         return;
       }
-      card.dataset.det = 'well';
       const t = w.today || {};
       if (t.recovery == null && t.sleepMin == null && t.strain == null) {
-        $('wellRow').innerHTML = `<div style="grid-column:1/-1" class="small muted">${T('لا توجد بيانات اليوم بعد — اسحب الشاشة للتحديث.')}</div>`;
+        row.innerHTML = `<div class="full small muted">${T('لا توجد بيانات اليوم بعد — اسحب الشاشة للتحديث.')}</div>`;
         return;
       }
-      $('wellRow').innerHTML =
-        `<div class="ws"><b class="num ${recCls(t.recovery)}" dir="ltr">${t.recovery != null ? t.recovery + '%' : '—'}</b><span>${T('الاستشفاء')}</span></div>` +
-        `<div class="ws"><b class="num" dir="ltr">${hm(t.sleepMin)}</b><span>${T('النوم')}</span></div>` +
-        `<div class="ws"><b class="num" dir="ltr" style="color:#1e90e8">${t.strain != null ? t.strain : '—'}</b><span>${T('الجهد')}</span></div>`;
-    } catch { card.classList.add('hidden'); }
+      const recWord = t.recovery == null ? '' : t.recovery >= 67 ? T('جيد') : t.recovery >= 34 ? T('متوسط') : T('منخفض');
+      row.innerHTML =
+        `<button data-det="well"><span>${T('الاستشفاء ›')}</span><b class="num ${recCls(t.recovery)}" dir="ltr">${t.recovery != null ? t.recovery + '%' : '—'}</b><small>${recWord}</small></button>` +
+        `<button data-det="well"><span>${T('النوم ›')}</span><b class="num" dir="ltr">${hm(t.sleepMin)}</b><small>${T('الليلة الماضية')}</small></button>` +
+        `<button data-det="well"><span>${T('الجهد ›')}</span><b class="num" dir="ltr" style="color:#1e90e8">${t.strain != null ? t.strain : '—'}</b><small>${t.strain != null ? strainLabel(t.strain) : ''}</small></button>`;
+    } catch { row.classList.add('hidden'); }
   }
   function wellnessDetail() {
     const w = wellCache; if (!w) return '';
@@ -2273,38 +2322,27 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
   function renderOverview(b, st) {
     const eaten = b.intake.calories, target = b.targetIntakeKcal, left = b.remainingKcal;
     const burn = b.burn ? b.burn.totalKcal : null;
-    const eatPct = target ? Math.round((eaten / target) * 100) : 0;
-    setRing('r3Eat', eaten / (target || 1), eatPct > 105 && b.goal !== 'gain' ? 'var(--bad)' : '#7ba6c9');
-    $('r3EatV').innerHTML = `${eatPct}<small>%</small>`;
-    setRing('r3Left', Math.max(0, left) / (target || 1), left < 0 ? 'var(--bad)' : '#2fbf55');
-    $('r3LeftV').textContent = `${left < 0 ? '−' : ''}${fmt(Math.abs(left))}`;
-    $('r3LeftL').textContent = left < 0 ? T('فوق الهدف ›') : T('المتبقي ›');
-    // Burn ring: kcal burned so far; the ring fills toward a full day's expected burn.
-    const expBurn = b.expectedBurnKcal || null;
-    const burnPct = burn != null && expBurn ? Math.round((burn / expBurn) * 100) : null;
-    setRing('r3Burn', burnPct != null ? burnPct / 100 : 0, '#1e90e8');
-    $('r3BurnV').textContent = burn != null ? fmt(burn) : '—';
-    // monitors
-    const checks = nutrientChecks(b).filter((c) => c.key !== 'sodium' || b.intake.sodium_mg);
-    const okN = checks.filter((c) => c.state === 'ok').length;
-    const allOk = okN === checks.length;
-    $('monNutB').className = `badge2 ${allOk ? 'ok' : checks.some((c) => c.state === 'hi') ? 'hi' : 'lo'}`;
-    $('monNutB').textContent = allOk ? '✓' : String(checks.length - okN);
-    $('monNutT').className = allOk ? 'ok-t' : 'hi-t';
-    $('monNutT').textContent = allOk ? T('ضمن النطاق') : T('يحتاج انتباه');
-    $('monNutS').textContent = L`${okN}/${checks.length} عناصر`;
+    const R = 402.1, el = $('ringLeft');
+    el.setAttribute('stroke', left < 0 ? 'var(--bad)' : '#2ba84a');
+    const frac = left < 0 ? 1 : Math.max(0, Math.min(1, left / (target || 1)));
+    requestAnimationFrame(() => { el.style.strokeDashoffset = String(R * (1 - frac)); });
+    $('ringLeftV').textContent = `${left < 0 ? '+' : ''}${fmt(Math.abs(left))}`;
+    $('ringLeftL').textContent = left < 0 ? T('فوق الهدف') : T('سعرة متبقية');
+    $('hsBudget').textContent = fmt(target);
+    $('hsEaten').textContent = fmt(eaten);
+    $('hsEatenPct').textContent = target ? `· ${Math.round((eaten / target) * 100)}%` : '';
+    $('hsBurnL').textContent = b.burn && b.burn.source ? `${T('حرقت')} · ${SRC[b.burn.source] || b.burn.source}` : T('حرقت');
+    $('hsBurn').textContent = burn != null ? fmt(burn) : '—';
+    $('netRow').classList.toggle('hidden', burn == null);
     if (burn != null) {
-      const net = burn - eaten;
-      $('monEnB').className = `badge2 ${net >= 0 ? 'ok' : 'hi'}`; $('monEnB').textContent = `${net >= 0 ? '+' : '−'}${fmt(Math.abs(net))}`;
-      $('monEnT').className = net >= 0 ? 'ok-t' : 'hi-t';
-      $('monEnT').textContent = net >= 0 ? T('عجز') : T('فائض');
-      $('monEnB').style.fontSize = String($('monEnB').textContent).length > 4 ? '12px' : '';
-      $('monEnS').textContent = L`حرقت ${fmt(burn)} · أكلت ${fmt(eaten)}`;
-    } else {
-      $('monEnB').className = 'badge2 lo'; $('monEnB').textContent = '—';
-      $('monEnT').className = ''; $('monEnT').textContent = T('لا توجد بيانات حرق');
-      $('monEnS').textContent = T('اربط WHOOP أو Apple Health');
+      const net = eaten - burn;
+      $('netV').textContent = `${net > 0 ? '+' : net < 0 ? '−' : ''}${fmt(Math.abs(net))}`;
+      $('netT').textContent = net <= 0 ? T('حرقت أكثر مما أكلت') : T('أكلت أكثر مما حرقت');
     }
+    const pw = (b.macroTargets || {}).protein_g || 0, ph = b.intake.protein_g || 0;
+    $('protHave').textContent = fmt(ph);
+    $('protOf').textContent = pw ? L`من ${fmt(pw)} غ` : T('غ');
+    $('protBar').style.width = `${pw ? Math.min(100, (ph / pw) * 100) : 0}%`;
   }
   function barsSvg(days, valKey, lineKey, color) {
     const w = 320, h = 120, n = days.length, max = Math.max(1, ...days.map((d) => Math.max(d[valKey] || 0, d[lineKey] || 0))) * 1.1;
@@ -2384,7 +2422,7 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
   }
   function closeDetail() { $('det').classList.add('hidden'); document.body.style.overflow = ''; }
   $('detBack').onclick = closeDetail;
-  document.querySelectorAll('[data-det]').forEach((el) => (el.onclick = () => openDetail(el.dataset.det)));
+  document.addEventListener('click', (e) => { const el = e.target.closest && e.target.closest('[data-det]'); if (el && !el.closest('#det')) openDetail(el.dataset.det); });
   
 
   // ---------------- pull to refresh (sync WHOOP + reload the screen) ----------------
@@ -2435,10 +2473,6 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
   $('scRotate').onclick = async () => { try { const u = await scUrl(true); await copyText(u); toast(T('رابط جديد نُسخ ✓ — حدّثه في الاختصار'), 4000); } catch (e) { toast(e.message); } };
 
   // ---------------- quick links ----------------
-  $('qlSnap').onclick = () => show('snap');
-  $('qlFav').onclick = () => { show('snap'); snapMode('fav'); };
-  $('qlSch').onclick = () => $('schCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  $('qlAsk').onclick = () => openAsk();
 
   // ---------------- assistant chat ----------------
   const ASK_SUGGEST = () => [
