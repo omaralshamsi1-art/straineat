@@ -32,25 +32,23 @@ struct TodayChips: View {
         if let c = motivation?.challenge { parts.append(c.done ? t("Weekly challenge: done", "تحدي الأسبوع: أنجزته") : t("\(fmt(c.progress))/\(fmt(c.target)) this week", "\(fmt(c.progress)) من \(fmt(c.target)) هذا الأسبوع")) }
         let goalChip = [goalName, delta].filter { !$0.isEmpty }.joined(separator: " · ")
         let motChip = parts.joined(separator: " · ")
-        return ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) { chips(goalChip, motChip); Spacer(minLength: 0) }
-            VStack(alignment: .leading, spacing: 8) { chips(goalChip, motChip) }
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) { chips(goalChip, motChip) }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder private func chips(_ goal: String, _ mot: String) -> some View {
             if !goal.isEmpty {
                 Label(goal, systemImage: "scope")
-                    .font(.footnote.weight(.medium)).lineLimit(1).fixedSize()
-                    .padding(.horizontal, 12).padding(.vertical, 7)
+                    .font(.caption.weight(.medium)).lineLimit(1).fixedSize()
+                    .padding(.horizontal, 10).padding(.vertical, 5)
                     .background(Theme.card, in: Capsule())
             }
             if !mot.isEmpty {
                 Label(mot, systemImage: "flame.fill")
-                    .font(.footnote.weight(.semibold)).lineLimit(1).fixedSize()
+                    .font(.caption.weight(.semibold)).lineLimit(1).fixedSize()
                     .foregroundStyle(Theme.onPastel)
-                    .padding(.horizontal, 12).padding(.vertical, 7)
+                    .padding(.horizontal, 10).padding(.vertical, 5)
                     .background(Theme.yellow, in: Capsule())
             }
     }
@@ -92,32 +90,13 @@ struct TodayHero: View {
                 VStack(alignment: .leading, spacing: 10) {
                     stat(t("Daily budget", "ميزانية اليوم"), fmt(target), t("kcal", "سعرة"), Theme.ink) { detail = .left }
                     stat(t("Eaten", "أكلت"), fmt(eaten), "· \(Int((eaten / target * 100).rounded()))%", Theme.ink) { detail = .eaten }
+                    let expB = b.burnIsPartialDay ? (b.expectedBurnKcal ?? 0) : 0
                     stat(b.burn.map { t("Burned · \(sourceName($0.source))", "حرقت · \(sourceName($0.source))") } ?? t("Burned", "حرقت"),
-                         burn.map { fmt($0) } ?? "—", t("kcal", "سعرة"), burnBlue) { detail = .burn }
+                         burn.map { fmt($0) } ?? "—", expB > 0 ? t("of ~\(fmt(expB))", "من ~\(fmt(expB))") : t("kcal", "سعرة"), burnBlue,
+                         bar: expB > 0 && burn != nil ? min(1, burn! / expB) : nil) { detail = .burn }
                 }
             }
-            if let burn, b.burnIsPartialDay, let expB = b.expectedBurnKcal, expB > 0 {
-                // Burn is still adding up today: show progress toward the expected full-day burn, not a net.
-                Button { detail = .burn } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(alignment: .firstTextBaseline) {
-                            Text(t("Burned so far", "الحرق حتى الآن")).font(.subheadline.weight(.bold))
-                            Spacer()
-                            Text(fmt(burn)).font(.headline.weight(.heavy)).monospacedDigit()
-                            Text(t("of ~\(fmt(expB)) expected", "من ~\(fmt(expB)) متوقعة")).font(.caption)
-                        }
-                        if expB - target > 0 {
-                            Text(t("Eat your budget (\(fmt(target))) and you'll end the day ~\(fmt(expB - target)) kcal in deficit",
-                                   "لو أكلت ميزانيتك (\(fmt(target))) يكون عجزك حوالي \(fmt(expB - target)) سعرة نهاية اليوم"))
-                                .font(.caption).opacity(0.8)
-                        }
-                    }
-                    .foregroundStyle(Color(red: 0.07, green: 0.25, blue: 0.44))
-                    .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Theme.sky, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                }
-                .buttonStyle(.plain)
-            } else if let burn {
+            if let burn, !(b.burnIsPartialDay && (b.expectedBurnKcal ?? 0) > 0) {
                 let net = eaten - burn
                 Button { detail = .burn } label: {
                     VStack(alignment: .leading, spacing: 2) {
@@ -127,8 +106,6 @@ struct TodayHero: View {
                             Text("\u{2066}\(net > 0 ? "+" : net < 0 ? "−" : "")\(fmt(abs(net)))\u{2069}").font(.headline.weight(.heavy)).monospacedDigit()
                             Text(t("kcal", "سعرة")).font(.subheadline)
                         }
-                        Text(net <= 0 ? t("burned more than eaten", "حرقت أكثر مما أكلت") : t("ate more than burned", "أكلت أكثر مما حرقت"))
-                            .font(.caption).opacity(0.8)
                     }
                     .foregroundStyle(Color(red: 0.07, green: 0.25, blue: 0.44))
                     .padding(12).frame(maxWidth: .infinity, alignment: .leading)
@@ -158,13 +135,22 @@ struct TodayHero: View {
         .sheet(item: $detail) { d in OverviewDetailView(kind: d, balance: b, isToday: isToday) }
     }
 
-    private func stat(_ label: String, _ value: String, _ unit: String, _ color: Color, action: @escaping () -> Void) -> some View {
+    private func stat(_ label: String, _ value: String, _ unit: String, _ color: Color, bar: Double? = nil, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 1) {
                 Text(label).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(value).font(.title3.weight(.bold)).monospacedDigit().foregroundStyle(color)
                     Text(unit).font(.caption).foregroundStyle(Theme.muted)
+                }
+                if let bar {
+                    GeometryReader { g in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Theme.ringTrack)
+                            Capsule().fill(Color(red: 0.12, green: 0.56, blue: 0.91)).frame(width: g.size.width * bar)
+                        }
+                    }
+                    .frame(width: 130, height: 4).padding(.top, 4)
                 }
             }
         }
@@ -179,14 +165,14 @@ struct TodayHero: View {
         let text: String
         if b.goal == "gain" {
             good = eaten >= target * 0.95
-            text = good ? t("You reached today's target", "وصلت هدف اليوم") : t("\(fmt(target - eaten)) kcal left to reach your gain target", "يتبقى \(fmt(target - eaten)) سعرة لتصل هدف الزيادة")
+            text = good ? t("You reached today's target", "وصلت هدف اليوم") : t("On the way to your gain target", "في الطريق لهدف الزيادة")
         } else if over > 0 {
             good = false
             text = t("\(fmt(over)) kcal over today's target", "تجاوزت هدف اليوم بـ \(fmt(over)) سعرة")
         } else {
             good = true
-            text = okN == checks.count ? t("On track. All \(checks.count) nutrients in range", "ممتاز، كل العناصر (\(checks.count)) ضمن النطاق")
-                : t("Within target · \(checks.count - okN) nutrient(s) need attention", "ضمن الهدف · \(checks.count - okN) عناصر تحتاج انتباه")
+            text = okN == checks.count ? t("Within target", "ضمن الهدف")
+                : t("Within target · \(checks.count - okN) to watch", "ضمن الهدف · \(checks.count - okN) تحتاج انتباه")
         }
         return HStack(spacing: 10) {
             Image(systemName: good ? "checkmark.circle" : "exclamationmark.circle").font(.headline)
@@ -403,4 +389,24 @@ struct BodyTodayCard: View {
     }
 
     private func load() async { data = try? await APIClient.shared.wellness() }
+}
+
+/// A tip shown as one short line; tap to read the rest.
+struct TipRow: View {
+    let text: String
+    @State private var open = false
+    var body: some View {
+        let head = text.components(separatedBy: " — ").first?.components(separatedBy: ": ").first?.components(separatedBy: ". ").first ?? text
+        Button { withAnimation(.easeOut(duration: 0.2)) { open.toggle() } } label: {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "lightbulb").foregroundStyle(Theme.warn)
+                Text(open || head == text ? text : head + " ›").font(.subheadline).foregroundStyle(Theme.ink)
+                    .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 12).padding(.vertical, 10)
+            .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
 }

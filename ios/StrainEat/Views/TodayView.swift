@@ -18,7 +18,7 @@ struct TodayView: View {
                         }
                         if let r = b.ramadan, r.active || r.needsChoice { RamadanCard(view: r) }
                         if let tips = b.tips, !tips.isEmpty, store.isToday {
-                            VStack(spacing: 8) { ForEach(tips, id: \.self) { Notice(text: $0.text, level: $0.kind == "over" ? "warn" : "info") } }
+                            VStack(spacing: 8) { ForEach(tips, id: \.self) { TipRow(text: $0.text) } }
                         }
                         if store.isToday { SuggestCard(showNext: true, next: schedule?.slots.first { $0.status == "now" || $0.status == "upcoming" }) }
                         TimelineCard(meals: b.meals, schedule: store.isToday ? schedule : nil, onLog: onLog,

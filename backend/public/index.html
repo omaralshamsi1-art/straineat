@@ -554,6 +554,14 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
 
 button.navcard { display: flex; width: 100%; align-items: center; justify-content: space-between; border: 0; color: var(--ink); font: inherit; font-size: 15px; cursor: pointer; text-align: start; min-height: 56px; }
 button.navcard span { font-size: 20px; }
+/* compact today: tips, burn bar, chips */
+.tipc { width: 100%; border: 0; font: inherit; text-align: start; cursor: pointer; padding: 10px 12px; align-items: center; }
+.tipc .f { display: none; } .tipc.open .f { display: block; } .tipc.open .h { display: none; }
+.tipc .h b { color: var(--muted); }
+.bbar { display: block; height: 4px; border-radius: 99px; background: var(--ring-track); margin-top: 5px; overflow: hidden; max-width: 150px; }
+.bbar > i { display: block; height: 100%; background: #1e90e8; border-radius: 99px; }
+.tchips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.tchips::-webkit-scrollbar { display: none; }
 /* ================= WHOOP-scale sizing + WHOOP-style dark theme ================= */
 html[data-theme="dark"] {
   --bg: #13181b; --card: #262d32; --card-2: #323a40; --ink: #f2f5f6; --muted: #9ba6ad; --line: #39424a;
@@ -566,7 +574,7 @@ html[data-theme="dark"] nav { background: rgba(38,45,50,.92); }
 html[dir="ltr"] .card h3 > span:first-child, html[dir="ltr"] .card h3:not(:has(> span)) { text-transform: uppercase; letter-spacing: .12em; font-size: 13.5px; }
 html[dir="ltr"] .card h3 .small, html[dir="ltr"] .card h3 .chip { text-transform: none; letter-spacing: 0; }
 #v-today .greet { font-size: 28px; margin: 8px 0 4px; }
-.tchip, .tchips .streak { font-size: 13px; padding: 5px 11px; }
+.tchip, .tchips .streak { font-size: 12px; padding: 4px 10px; white-space: nowrap; flex: none; }
 .h3row { gap: 16px; }
 .bigring, .bigring svg { width: 128px; height: 128px; }
 .bigring .v b { font-size: 30px; }
@@ -686,7 +694,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
         <div class="hstats">
           <button data-det="left"><span>ميزانية اليوم</span><b><span class="num" id="hsBudget">—</span> <small>سعرة</small></b></button>
           <button data-det="eaten"><span>أكلت</span><b><span class="num" id="hsEaten">—</span> <small class="num" id="hsEatenPct"></small></b></button>
-          <button data-det="burn"><span id="hsBurnL">حرقت</span><b class="burn"><span class="num" id="hsBurn">—</span> <small>سعرة</small></b></button>
+          <button data-det="burn"><span id="hsBurnL">حرقت</span><b class="burn"><span class="num" id="hsBurn">—</span> <small id="hsBurnU">سعرة</small></b><i class="bbar hidden" id="hsBurnBar"><i></i></i></button>
         </div>
       </div>
       <button class="netrow hidden" id="netRow" data-det="burn"><b id="netL">الحرق حتى الآن</b><span><b class="num" id="netV" dir="ltr"></b> <span id="netU">سعرة</span></span><small id="netT"></small></button>
@@ -1557,11 +1565,10 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     if (goal === 'gain') {
       if (eaten >= target * 0.95 && eaten <= target * 1.15) return { cls: 'good', color: 'var(--good)', text: T('وصلت هدف اليوم') };
       if (eaten > target * 1.15) return { cls: 'bad', color: 'var(--bad)', text: L`تجاوزت الهدف بـ ${fmt(over)} سعرة` };
-      return { cls: isToday ? 'pending' : 'bad', color: isToday ? 'var(--warn)' : 'var(--bad)', text: isToday ? L`يتبقى ${fmt(left)} سعرة لتصل هدف الزيادة` : L`نقص ${fmt(left)} سعرة عن هدف الزيادة` };
+      return { cls: isToday ? 'pending' : 'bad', color: isToday ? 'var(--warn)' : 'var(--bad)', text: isToday ? T('في الطريق لهدف الزيادة') : L`نقص ${fmt(left)} سعرة عن هدف الزيادة` };
     }
     if (over > 0) return { cls: 'bad', color: 'var(--bad)', text: L`تجاوزت هدف اليوم بـ ${fmt(over)} سعرة` };
-    if (!meals) return { cls: 'good', color: 'var(--good)', text: L`ضمن الهدف — متاح لك ${fmt(left)} سعرة اليوم` };
-    return { cls: 'good', color: 'var(--good)', text: isToday ? L`ممتاز، أنت ضمن هدف اليوم — متبقي ${fmt(left)} سعرة` : L`كنت ضمن الهدف — أقل بـ ${fmt(left)} سعرة` };
+    return { cls: 'good', color: 'var(--good)', text: isToday ? T('ضمن الهدف') : L`كنت ضمن الهدف — أقل بـ ${fmt(left)} سعرة` };
   }
 
   // ---- today's meals: plan slots + logged meals in one time-ordered list ----
@@ -1633,7 +1640,13 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       $('kPendRow').classList.toggle('hidden', !(b.pendingDrafts.calories > 0)); $('kPend').textContent = fmt(b.pendingDrafts.calories);
       lastBal = b;
       renderOverview(b, st);
-      $('tips').innerHTML = (b.tips || []).map((t) => `<div class="tip fade"><svg width="20" height="20"><use href="#i-bulb"/></svg><div>${esc(tx(t, 'text'))}</div></div>`).join('');
+      $('tips').innerHTML = (b.tips || []).map((t) => {
+        const full = tx(t, 'text'), head = full.split(/ — |: |\. /)[0];
+        return head.length < full.length
+          ? `<button class="tip tipc fade"><svg width="20" height="20"><use href="#i-bulb"/></svg><span class="h">${esc(head)} <b>${LANG === 'ar' ? '‹' : '›'}</b></span><span class="f">${esc(full)}</span></button>`
+          : `<div class="tip fade"><svg width="20" height="20"><use href="#i-bulb"/></svg><div>${esc(full)}</div></div>`;
+      }).join('');
+      $('tips').querySelectorAll('.tipc').forEach((el) => (el.onclick = () => el.classList.toggle('open')));
       planGoal = b.goal;
       renderActivity(b.activity);
       loadMotivation();
@@ -2446,22 +2459,19 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     $('hsEatenPct').textContent = target ? `· ${Math.round((eaten / target) * 100)}%` : '';
     $('hsBurnL').textContent = b.burn && b.burn.source ? `${T('حرقت')} · ${SRC[b.burn.source] || b.burn.source}` : T('حرقت');
     $('hsBurn').textContent = burn != null ? fmt(burn) : '—';
-    $('netRow').classList.toggle('hidden', burn == null);
-    if (burn != null) {
-      const expB = b.expectedBurnKcal;
-      if (b.burnIsPartialDay && expB) {
-        // Early in the day burn is still accumulating: show progress toward the expected full-day burn, not a net.
-        $('netL').textContent = T('الحرق حتى الآن');
-        $('netV').textContent = fmt(burn);
-        $('netU').textContent = L`من ~${fmt(expB)} سعرة متوقعة`;
-        $('netT').textContent = expB - target > 0 ? L`لو أكلت ميزانيتك (${fmt(target)}) يكون عجزك حوالي ${fmt(expB - target)} سعرة نهاية اليوم` : T('الحرق يتراكم خلال اليوم');
-      } else {
-        const net = eaten - burn;
-        $('netL').textContent = T('صافي اليوم');
-        $('netV').textContent = `${net > 0 ? '+' : net < 0 ? '−' : ''}${fmt(Math.abs(net))}`;
-        $('netU').textContent = T('سعرة');
-        $('netT').textContent = net <= 0 ? T('حرقت أكثر مما أكلت') : T('أكلت أكثر مما حرقت');
-      }
+    const expB = b.expectedBurnKcal;
+    const partial = burn != null && b.burnIsPartialDay && expB;
+    $('hsBurnU').textContent = partial ? L`من ~${fmt(expB)}` : T('سعرة');
+    $('hsBurnBar').classList.toggle('hidden', !partial);
+    if (partial) $('hsBurnBar').firstElementChild.style.width = `${Math.min(100, (burn / expB) * 100)}%`;
+    // the net line only for finished days (during the day burn is still adding up)
+    $('netRow').classList.toggle('hidden', burn == null || !!partial);
+    if (burn != null && !partial) {
+      const net = eaten - burn;
+      $('netL').textContent = T('صافي اليوم');
+      $('netV').textContent = `${net > 0 ? '+' : net < 0 ? '−' : ''}${fmt(Math.abs(net))}`;
+      $('netU').textContent = T('سعرة');
+      $('netT').textContent = '';
     }
     const pw = (b.macroTargets || {}).protein_g || 0, ph = b.intake.protein_g || 0;
     $('protHave').textContent = fmt(ph);

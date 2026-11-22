@@ -9,6 +9,8 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"من ~{}": "of ~{}",
+"في الطريق لهدف الزيادة": "On the way to your gain target",
 "✓ التنبيهات مفعّلة على هذا الجهاز": "✓ Notifications are on for this device",
 "التنبيهات غير مفعّلة على هذا الجهاز — اضغط \"تفعيل التنبيهات\" في بطاقة التذكيرات فوق، وإلا لن يصلك تذكير الدواء.": "Notifications are off on this device — tap \"Enable notifications on this device\" in the Reminders card above, otherwise medicine reminders won't arrive.",
 "هذا المتصفح لا يدعم التنبيهات. على الآيفون: أضف التطبيق للشاشة الرئيسية وافتحه منها.": "This browser doesn't support notifications. On iPhone: add the app to your Home Screen and open it from there.",
