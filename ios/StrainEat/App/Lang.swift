@@ -48,7 +48,7 @@ let appThemeKey = "appTheme"
 }
 
 struct ThemePicker: View {
-    @AppStorage(appThemeKey) private var theme = "light"
+    @AppStorage(appThemeKey) private var theme = "dark"
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Picker(t("Appearance", "المظهر"), selection: $theme) {

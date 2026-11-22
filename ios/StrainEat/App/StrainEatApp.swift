@@ -5,7 +5,7 @@ struct StrainEatApp: App {
     @State private var store = AppStore()
     @Environment(\.scenePhase) private var phase
     @AppStorage(appLanguageKey) private var lang = "en"
-    @AppStorage(appThemeKey) private var theme = "light"
+    @AppStorage(appThemeKey) private var theme = "dark"
 
     init() { styleTabBar() }
 

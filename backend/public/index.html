@@ -9,7 +9,7 @@
   var mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
   function apply() {
     var pref = 'system';
-    try { pref = localStorage.getItem('ns_theme') || 'light'; } catch (e) {}
+    try { pref = localStorage.getItem('ns_theme') || 'dark'; } catch (e) {}
     var dark = pref === 'dark' || (pref === 'system' && mq && mq.matches);
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
     var m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = dark ? '#0d1411' : '#f4f2ec';
@@ -898,41 +898,14 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       <button class="btn ghost" id="editPlan">تعديل الهدف والخطة</button>
     </div>
 
-    <div class="card" id="manualCard">
-      <h3>الحرق اليوم (إدخال يدوي)</h3>
-      <p class="small muted" style="margin-top:-4px">لمن لا يستخدم WHOOP: انقلي الأرقام من تطبيق "صحتي".</p>
-      <div class="grid2">
-        <div><label for="eActive">نشط</label><input id="eActive" type="number" inputmode="numeric" placeholder="450"></div>
-        <div><label for="eBasal">أساسي</label><input id="eBasal" type="number" inputmode="numeric" placeholder="1400"></div>
-      </div>
+    <div class="card" id="schSettings">
+      <h3>جدول الوجبات</h3>
+      <p class="small muted" style="margin-top:-4px">نذكّرك قبل كل وجبة بـ10 دقائق، وإذا لم تسجّل الوجبة بعد ساعة. القهوة والمشروبات لا تُحسب كوجبة.</p>
+      <div class="langsw" role="group" aria-label="جدول الوجبات" id="schMode" style="justify-content:flex-start"><button type="button" data-mode="auto">تلقائي</button><button type="button" data-mode="custom">أوقاتي</button></div>
+      <p class="small muted" id="schAutoNote" style="margin:8px 0 0">تلقائي = من عدد وجباتك وأوقات أكلك المعتادة.</p>
+      <div id="schRows" class="hidden" style="margin-top:8px"></div>
       <div style="height:12px"></div>
-      <button class="btn ghost" id="eSave">حفظ الحرق</button>
-    </div>
-
-    <div class="card">
-      <h3>حسابي</h3>
-      <div class="kv"><div><span class="muted">الاسم</span><b id="acName">—</b></div><div><span class="muted">البريد</span><b id="acEmail" style="direction:ltr">—</b></div><div><span class="muted">الصلاحية</span><b id="acRole">—</b></div></div>
-      <div id="acClaim" class="hidden" style="margin-top:12px">
-        <p class="small muted">أنشئ دخولاً بالبريد لبياناتك الحالية حتى لا تحتاج مفتاح الخادم على أجهزتك.</p>
-        <div class="grid2"><div><label for="clEmail">البريد</label><input id="clEmail" type="email"></div><div><label for="clPass">كلمة مرور</label><input id="clPass" type="password" autocomplete="new-password"></div></div>
-        <div style="height:10px"></div><button class="btn ghost" id="clBtn">ربط البريد بحسابي</button>
-      </div>
-    </div>
-
-    <div class="card hidden" id="invCard">
-      <h3>دعوة مستخدمين</h3>
-      <p class="small muted" style="margin-top:-4px">كل دعوة لشخص واحد وتنتهي بعد 14 يوماً. لكل مستخدم حد يومي: 20 تحليل وجبة و12 طلب للمدرب.</p>
-      <button class="btn ghost" id="invBtn">إنشاء رمز دعوة</button>
-      <div id="invList" style="margin-top:8px"></div>
-    </div>
-
-    <div class="card">
-      <h3>التذكيرات <span class="small" id="pushState">—</span></h3>
-      <p class="small muted" style="margin-top:-4px">نذكّرك في أوقات وجباتك المعتادة إذا لم تسجّل، وبقياس الوزن صباحاً. على الآيفون: أضف التطبيق للشاشة الرئيسية أولاً.</p>
-      <label class="check"><input type="checkbox" id="rmMeals" checked> تذكير الوجبات</label>
-      <label class="check"><input type="checkbox" id="rmWeight" checked> تذكير الوزن الصباحي</label>
-      <button class="btn ghost" id="pushBtn">تفعيل التنبيهات على هذا الجهاز</button>
-      <button class="btn ghost hidden" id="pushTest">إرسال تنبيه تجريبي</button>
+      <button class="btn ghost" id="schSave">حفظ الجدول</button>
     </div>
 
     <div class="card" id="medCard">
@@ -964,6 +937,40 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       </div>
       <div style="height:12px"></div>
       <button class="btn ghost" id="rmSave">حفظ</button>
+    </div>
+
+    <div class="card">
+      <h3>موقعك للاقتراحات</h3>
+      <p class="small muted" style="margin-top:-4px">نقترح مطاعم موجودة في إمارتك ومنطقتك.</p>
+      <div class="grid2">
+        <div><label for="locCity" style="margin-top:0">الإمارة</label><select id="locCity"><option value="">—</option><option>Abu Dhabi</option><option>Dubai</option><option>Sharjah</option><option>Ajman</option><option>Umm Al Quwain</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Al Ain</option></select></div>
+        <div><label for="locArea" style="margin-top:0">المنطقة</label><input id="locArea" placeholder="مثال: النخيل"></div>
+      </div>
+      <div style="height:12px"></div>
+      <button class="btn ghost" id="locSave">حفظ الموقع</button>
+    </div>
+
+  </section>
+
+  <section id="v-settings" class="hidden fade">
+    <div class="greet"><em class="acc">الإعدادات</em></div>
+    <div class="card">
+      <h3>حسابي</h3>
+      <div class="kv"><div><span class="muted">الاسم</span><b id="acName">—</b></div><div><span class="muted">البريد</span><b id="acEmail" style="direction:ltr">—</b></div><div><span class="muted">الصلاحية</span><b id="acRole">—</b></div></div>
+      <div id="acClaim" class="hidden" style="margin-top:12px">
+        <p class="small muted">أنشئ دخولاً بالبريد لبياناتك الحالية حتى لا تحتاج مفتاح الخادم على أجهزتك.</p>
+        <div class="grid2"><div><label for="clEmail">البريد</label><input id="clEmail" type="email"></div><div><label for="clPass">كلمة مرور</label><input id="clPass" type="password" autocomplete="new-password"></div></div>
+        <div style="height:10px"></div><button class="btn ghost" id="clBtn">ربط البريد بحسابي</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>التذكيرات <span class="small" id="pushState">—</span></h3>
+      <p class="small muted" style="margin-top:-4px">نذكّرك في أوقات وجباتك المعتادة إذا لم تسجّل، وبقياس الوزن صباحاً. على الآيفون: أضف التطبيق للشاشة الرئيسية أولاً.</p>
+      <label class="check"><input type="checkbox" id="rmMeals" checked> تذكير الوجبات</label>
+      <label class="check"><input type="checkbox" id="rmWeight" checked> تذكير الوزن الصباحي</label>
+      <button class="btn ghost" id="pushBtn">تفعيل التنبيهات على هذا الجهاز</button>
+      <button class="btn ghost hidden" id="pushTest">إرسال تنبيه تجريبي</button>
     </div>
 
     <div class="card" id="srcCard">
@@ -1005,25 +1012,15 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       </div>
     </div>
 
-    <div class="card" id="schSettings">
-      <h3>جدول الوجبات</h3>
-      <p class="small muted" style="margin-top:-4px">نذكّرك قبل كل وجبة بـ10 دقائق، وإذا لم تسجّل الوجبة بعد ساعة. القهوة والمشروبات لا تُحسب كوجبة.</p>
-      <div class="langsw" role="group" aria-label="جدول الوجبات" id="schMode" style="justify-content:flex-start"><button type="button" data-mode="auto">تلقائي</button><button type="button" data-mode="custom">أوقاتي</button></div>
-      <p class="small muted" id="schAutoNote" style="margin:8px 0 0">تلقائي = من عدد وجباتك وأوقات أكلك المعتادة.</p>
-      <div id="schRows" class="hidden" style="margin-top:8px"></div>
-      <div style="height:12px"></div>
-      <button class="btn ghost" id="schSave">حفظ الجدول</button>
-    </div>
-
-    <div class="card">
-      <h3>موقعك للاقتراحات</h3>
-      <p class="small muted" style="margin-top:-4px">نقترح مطاعم موجودة في إمارتك ومنطقتك.</p>
+    <div class="card" id="manualCard">
+      <h3>الحرق اليوم (إدخال يدوي)</h3>
+      <p class="small muted" style="margin-top:-4px">لمن لا يستخدم WHOOP: انقلي الأرقام من تطبيق "صحتي".</p>
       <div class="grid2">
-        <div><label for="locCity" style="margin-top:0">الإمارة</label><select id="locCity"><option value="">—</option><option>Abu Dhabi</option><option>Dubai</option><option>Sharjah</option><option>Ajman</option><option>Umm Al Quwain</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Al Ain</option></select></div>
-        <div><label for="locArea" style="margin-top:0">المنطقة</label><input id="locArea" placeholder="مثال: النخيل"></div>
+        <div><label for="eActive">نشط</label><input id="eActive" type="number" inputmode="numeric" placeholder="450"></div>
+        <div><label for="eBasal">أساسي</label><input id="eBasal" type="number" inputmode="numeric" placeholder="1400"></div>
       </div>
       <div style="height:12px"></div>
-      <button class="btn ghost" id="locSave">حفظ الموقع</button>
+      <button class="btn ghost" id="eSave">حفظ الحرق</button>
     </div>
 
     <div class="card">
@@ -1035,6 +1032,13 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     <div class="card">
       <h3>Language · اللغة</h3>
       <div class="langsw" role="group" aria-label="Language"><button type="button" data-lang="en">English</button><button type="button" data-lang="ar">العربية</button></div>
+    </div>
+
+    <div class="card hidden" id="invCard">
+      <h3>دعوة مستخدمين</h3>
+      <p class="small muted" style="margin-top:-4px">كل دعوة لشخص واحد وتنتهي بعد 14 يوماً. لكل مستخدم حد يومي: 20 تحليل وجبة و12 طلب للمدرب.</p>
+      <button class="btn ghost" id="invBtn">إنشاء رمز دعوة</button>
+      <div id="invList" style="margin-top:8px"></div>
     </div>
 
     <div class="card">
@@ -1051,7 +1055,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     <button data-v="progress"><svg width="24" height="24"><use href="#i-chart"/></svg>التقدم</button>
     <button data-v="snap" class="snap" aria-label="صوّري وجبة"><span class="ci"><svg width="28" height="28"><use href="#i-camera"/></svg></span>صوّري</button>
     <button data-v="plan"><svg width="24" height="24"><use href="#i-target"/></svg>خطتي</button>
-    <button data-v="plan-settings"><svg width="24" height="24"><use href="#i-gear"/></svg>الإعدادات</button>
+    <button data-v="settings"><svg width="24" height="24"><use href="#i-gear"/></svg>الإعدادات</button>
   </div>
 </nav>
 <div id="ptr" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5"/></svg></div>
@@ -1123,22 +1127,22 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   }
 
   // ---------------- navigation ----------------
-  const VIEWS = ['setup', 'onb', 'today', 'progress', 'snap', 'review', 'plan'];
+  const VIEWS = ['setup', 'onb', 'today', 'progress', 'snap', 'review', 'plan', 'settings'];
   function show(v) {
     let scrollTo = 0;
-    if (v === 'plan-settings') { v = 'plan'; scrollTo = 1; }
+    if (v === 'plan-settings') v = 'settings';
     if (v !== 'snap' && typeof stopScan === 'function') { try { stopScan(); } catch {} }
     for (const s of VIEWS) $(`v-${s}`).classList.toggle('hidden', s !== v);
     $('nav').classList.toggle('hidden', v === 'setup' || v === 'onb');
     $('askFab').classList.toggle('hidden', v === 'setup' || v === 'onb');
-    curView = scrollTo ? 'plan-settings' : v;
+    curView = v;
     $('dayNav').style.visibility = v === 'today' ? 'visible' : 'hidden';
     document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
     window.scrollTo(0, 0);
     if (v === 'today') loadToday();
     if (v === 'progress') loadProgress();
     if (v === 'plan') { loadLocation(); loadScheduleSettings(); }
-    if (v === 'plan') loadPlan().then(() => { if (scrollTo) $('eSave').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+    if (v === 'plan' || v === 'settings') loadPlan();
   }
   document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
 
@@ -2321,7 +2325,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
 
   // ---------------- appearance ----------------
   function paintThemeSw() {
-    let cur = 'light'; try { cur = localStorage.getItem('ns_theme') || 'light'; } catch {}
+    let cur = 'light'; try { cur = localStorage.getItem('ns_theme') || 'dark'; } catch {}
     document.querySelectorAll('#themeSw button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.themeOpt === cur)));
   }
   document.querySelectorAll('#themeSw button').forEach((b) => (b.onclick = () => {
@@ -2563,7 +2567,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
         histCache = null; planCache = null;
         const v = document.querySelector('nav button.on')?.dataset.v || 'today';
         if (v === 'progress') { await autoSyncWhoop(); await loadProgress(); }
-        else if (v === 'plan' || v === 'plan-settings') { await autoSyncWhoop(); await loadPlan(); }
+        else if (v === 'plan' || v === 'settings') { await autoSyncWhoop(); await loadPlan(); }
         else await loadToday();
         toast(T('تم التحديث ✓'));
       } catch (e) { toast(e.message); }
@@ -2660,7 +2664,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       const r = await api(`assistant/actions/${id}/${ok ? 'confirm' : 'dismiss'}`, { method: 'POST' });
       for (const m of askMsgs) (m.actions || []).forEach((a, i) => { if (a.id === id) m.actions[i] = r.action; });
       renderAsk();
-      if (ok && r.action.status === 'done') { planCache = null; if (curView === 'today') loadToday(); if (curView === 'progress') loadProgress(); if (curView === 'plan' || curView === 'plan-settings') loadPlan(); }
+      if (ok && r.action.status === 'done') { planCache = null; if (curView === 'today') loadToday(); if (curView === 'progress') loadProgress(); if (curView === 'plan' || curView === 'settings') loadPlan(); }
     } catch (e) { toast(e.message, 4000); renderAsk(); }
   }
   $('askFab').onclick = openAsk;
