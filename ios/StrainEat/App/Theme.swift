@@ -3,12 +3,12 @@ import UIKit
 
 /// Same palette as the web app (light + dark).
 enum Theme {
-    static let bg = dyn(0xFFFFFF, 0x0B0B0C)
-    static let card = dyn(0xF1F1F2, 0x1C1C1E)
-    static let card2 = dyn(0xFFFFFF, 0x2A2A2D)
+    static let bg = dyn(0xFFFFFF, 0x13181B)
+    static let card = dyn(0xF1F1F2, 0x262D32)
+    static let card2 = dyn(0xFFFFFF, 0x323A40)
     static let ink = dyn(0x111113, 0xF5F5F7)
-    static let muted = dyn(0x6E6E73, 0xA1A1A6)
-    static let line = dyn(0xE3E3E6, 0x2F2F33)
+    static let muted = dyn(0x6E6E73, 0x9BA6AD)
+    static let line = dyn(0xE3E3E6, 0x39424A)
     static let brand = dyn(0x111113, 0xF3EF9E)
     static let brand2 = dyn(0x3B2A78, 0xC9BDE8)
     static let brandSoft = dyn(0xECE8F8, 0x2B2540)
@@ -34,7 +34,7 @@ enum Theme {
     static let bad = dyn(0xD23B2A, 0xFF7B6B)
     static let badSoft = dyn(0xFDE4E0, 0x3D1B16)
     static let warn = dyn(0x8A6D00, 0xF0D36A)
-    static let ringTrack = dyn(0xE6E6E9, 0x2C2C30)
+    static let ringTrack = dyn(0xE6E6E9, 0x3A434A)
 
     /// Green when within / on the good side of the target, red when over / negative.
     static func status(_ ok: Bool) -> Color { ok ? good : bad }
@@ -65,16 +65,16 @@ struct Card<Content: View>: View {
             if title != nil || trailing != nil {
                 HStack(spacing: 6) {
                     if let icon { Image(systemName: icon).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.muted) }
-                    if let title { Text(title).font(.title3.weight(.heavy)).tracking(-0.3).foregroundStyle(Theme.ink) }
+                    if let title { Text(appLang == .ar ? title : title.uppercased()).font(appLang == .ar ? .headline.weight(.heavy) : .subheadline.weight(.heavy)).tracking(appLang == .ar ? 0 : 1.6).foregroundStyle(Theme.ink) }
                     Spacer()
                     if let trailing { trailing }
                 }
             }
             content
         }
-        .padding(18)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
 
@@ -208,7 +208,14 @@ func sportIcon(_ kind: String?) -> String {
 }
 
 extension View {
-    func screenBackground() -> some View { background(Theme.bg.ignoresSafeArea()) }
+    /// Light: plain white. Dark: WHOOP-style slate gradient.
+    func screenBackground() -> some View {
+        background {
+            LinearGradient(colors: [Color(UIColor(dynamicProvider: { $0.userInterfaceStyle == .dark ? UIColor(hex: 0x2C363C) : .white })), Theme.bg],
+                           startPoint: .top, endPoint: .init(x: 0.5, y: 0.45))
+                .ignoresSafeArea()
+        }
+    }
 }
 
 // MARK: Quick links (pastel tiles, like the web app)

@@ -551,6 +551,48 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
 .tile .tv { font-size: 30px; font-weight: 800; letter-spacing: -0.04em; margin: 8px 0 10px; white-space: nowrap; }
 .tile .tv small { font-size: 14px; font-weight: 600; letter-spacing: 0; margin-inline-start: 3px; }
 .chip2 { margin-top: auto; align-self: flex-start; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 9px; }
+
+/* ================= WHOOP-scale sizing + WHOOP-style dark theme ================= */
+html[data-theme="dark"] {
+  --bg: #13181b; --card: #262d32; --card-2: #323a40; --ink: #f2f5f6; --muted: #9ba6ad; --line: #39424a;
+  --ring-track: #3a434a; --brand-soft: #2f3640; --mint-soft: #233028; --accent-soft: #3a3720;
+}
+html[data-theme="dark"] body { background: linear-gradient(180deg, #2c363c 0, #1a2024 360px, #101417 100%) fixed; }
+html[data-theme="dark"] nav { background: rgba(38,45,50,.92); }
+.card { border-radius: 18px; padding: 16px; margin: 12px 0; }
+.card h3 { font-size: 15px; font-weight: 800; margin-bottom: 12px; }
+html[dir="ltr"] .card h3 > span:first-child, html[dir="ltr"] .card h3:not(:has(> span)) { text-transform: uppercase; letter-spacing: .12em; font-size: 13.5px; }
+html[dir="ltr"] .card h3 .small, html[dir="ltr"] .card h3 .chip { text-transform: none; letter-spacing: 0; }
+#v-today .greet { font-size: 28px; margin: 8px 0 4px; }
+.tchip, .tchips .streak { font-size: 13px; padding: 5px 11px; }
+.h3row { gap: 16px; }
+.bigring, .bigring svg { width: 128px; height: 128px; }
+.bigring .v b { font-size: 30px; }
+.bigring .v span { font-size: 12px; }
+.hstats { gap: 8px; }
+.hstats button > span { font-size: 12px; }
+.hstats b { font-size: 18px; }
+.netrow { font-size: 13px; padding: 10px 12px; border-radius: 12px; }
+.netrow .num { font-size: 16px; }
+.protrow .row { font-size: 14px; }
+.hero3 { gap: 14px; }
+.hero3 .status, .status { font-size: 14px; padding: 10px 12px; border-radius: 12px; }
+.tip { font-size: 14px; border-radius: 14px; }
+.nx b { font-size: 16px; } .nx .small { font-size: 14px; }
+.tl .ic, .meal .ic { width: 40px; height: 40px; border-radius: 11px; }
+.tl .t b, .meal .t b { font-size: 15px; }
+.meal .k b { font-size: 15px; }
+.tlx .acts { padding-inline-start: 52px; }
+.tlx .acts button { min-height: 40px; font-size: 13px; padding: 0 16px; }
+.well3 button { border-radius: 12px; padding: 10px; }
+.well3 button b { font-size: 20px; }
+.btn { min-height: 48px; font-size: 15px; }
+html[data-theme="dark"] .netrow { background: #22374a; color: #d6e8f7; }
+html[data-theme="dark"] .status.good { background: #1f3a2a; color: #9fe3b5; }
+html[data-theme="dark"] .status.bad { background: #44221d; color: #ffb4a6; }
+html[data-theme="dark"] .status.pending { background: #3d3720; color: #f0d36a; }
+html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
+
 </style>
 </head>
 <body>

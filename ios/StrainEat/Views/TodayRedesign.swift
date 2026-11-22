@@ -79,13 +79,13 @@ struct TodayHero: View {
                             .stroke(over ? Theme.bad : ringGreen, style: StrokeStyle(lineWidth: 14, lineCap: .round)).rotationEffect(.degrees(-90))
                             .animation(.easeOut(duration: 0.6), value: frac)
                         VStack(spacing: 2) {
-                            Text("\(left < 0 ? "+" : "")\(fmt(abs(left)))").font(.system(size: 32, weight: .heavy)).monospacedDigit()
+                            Text("\(left < 0 ? "+" : "")\(fmt(abs(left)))").font(.system(size: 30, weight: .heavy)).monospacedDigit()
                                 .contentTransition(.numericText()).minimumScaleFactor(0.6).lineLimit(1)
                             Text(left < 0 ? t("over target", "فوق الهدف") : t("kcal left", "سعرة متبقية")).font(.caption).foregroundStyle(Theme.muted)
                         }
                         .padding(18)
                     }
-                    .frame(width: 148, height: 148)
+                    .frame(width: 128, height: 128)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(t("\(fmt(left)) kcal left of \(fmt(target)). Open details", "متبقي \(fmt(left)) من \(fmt(target)) سعرة. افتح التفاصيل"))
@@ -153,8 +153,8 @@ struct TodayHero: View {
             }
             statusLine(b, checks: checks)
         }
-        .padding(20)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .padding(16)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .sheet(item: $detail) { d in OverviewDetailView(kind: d, balance: b, isToday: isToday) }
     }
 
