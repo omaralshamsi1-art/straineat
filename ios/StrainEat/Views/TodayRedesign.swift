@@ -26,15 +26,17 @@ struct TodayChips: View {
         default: ""
         }
         let gd = balance?.goalDeltaKcal ?? 0
-        let delta = gd < 0 ? t("\(fmt(-gd)) kcal/day deficit", "عجز \(fmt(-gd)) سعرة يومياً") : gd > 0 ? t("\(fmt(gd)) kcal/day surplus", "فائض \(fmt(gd)) سعرة يومياً") : ""
+        let delta = gd < 0 ? t("\(fmt(-gd)) kcal/day deficit", "عجز \(fmt(-gd))/يوم") : gd > 0 ? t("\(fmt(gd)) kcal/day surplus", "فائض \(fmt(gd))/يوم") : ""
         var parts: [String] = []
-        if let s = motivation?.streak, s.current > 0 { parts.append(t("\(s.current) \(s.current == 1 ? "day" : "days") in a row", "\(s.current) \(s.current == 1 ? "يوم" : "أيام") متتالية")) }
-        if let c = motivation?.challenge { parts.append(c.done ? t("Weekly challenge: done", "تحدي الأسبوع: أنجزته") : t("\(fmt(c.progress))/\(fmt(c.target)) this week", "\(fmt(c.progress)) من \(fmt(c.target)) هذا الأسبوع")) }
+        if let s = motivation?.streak, s.current > 0 { parts.append(t("\(s.current) \(s.current == 1 ? "day" : "days")", "\(s.current) \(s.current == 1 ? "يوم" : "أيام")")) }
+        if let c = motivation?.challenge { parts.append(c.done ? t("Weekly challenge ✓", "تحدي الأسبوع ✓") : t("\(fmt(c.progress))/\(fmt(c.target)) this week", "\(fmt(c.progress))/\(fmt(c.target)) هذا الأسبوع")) }
         let goalChip = [goalName, delta].filter { !$0.isEmpty }.joined(separator: " · ")
         let motChip = parts.joined(separator: " · ")
-        return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) { chips(goalChip, motChip) }
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) { chips(goalChip, motChip); Spacer(minLength: 0) }
+            VStack(alignment: .leading, spacing: 6) { chips(goalChip, motChip) }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder private func chips(_ goal: String, _ mot: String) -> some View {
@@ -400,8 +402,9 @@ struct TipRow: View {
         Button { withAnimation(.easeOut(duration: 0.2)) { open.toggle() } } label: {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "lightbulb").foregroundStyle(Theme.warn)
-                Text(open || head == text ? text : head + " ›").font(.subheadline).foregroundStyle(Theme.ink)
+                Text(open || head == text ? text : head).font(.subheadline).foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
+                if !open && head != text { Image(systemName: "chevron.forward").font(.caption.weight(.bold)).foregroundStyle(Theme.muted).padding(.top, 3) }
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 12).padding(.vertical, 10)

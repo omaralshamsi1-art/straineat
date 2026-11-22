@@ -560,8 +560,7 @@ button.navcard span { font-size: 20px; }
 .tipc .h b { color: var(--muted); }
 .bbar { display: block; height: 4px; border-radius: 99px; background: var(--ring-track); margin-top: 5px; overflow: hidden; max-width: 150px; }
 .bbar > i { display: block; height: 100%; background: #1e90e8; border-radius: 99px; }
-.tchips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-.tchips::-webkit-scrollbar { display: none; }
+.tchips { flex-wrap: wrap; }
 /* ================= WHOOP-scale sizing + WHOOP-style dark theme ================= */
 html[data-theme="dark"] {
   --bg: #13181b; --card: #262d32; --card-2: #323a40; --ink: #f2f5f6; --muted: #9ba6ad; --line: #39424a;
@@ -1630,7 +1629,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       const b = await api(`balance?date=${isoDay(day)}`);
       if (b.onboarded === false && isoDay(day) === isoDay(new Date())) { startOnboarding(await api('profile')); return; }
       const gd = b.goalDeltaKcal;
-      $('goalLine').textContent = (GOAL_AR[b.goal] || '') + (gd ? ' · ' + (gd < 0 ? L`عجز ${fmt(-gd)} سعرة يومياً` : L`فائض ${fmt(gd)} سعرة يومياً`) : '');
+      $('goalLine').textContent = (GOAL_AR[b.goal] || '') + (gd ? ' · ' + (gd < 0 ? L`عجز ${fmt(-gd)}/يوم` : L`فائض ${fmt(gd)}/يوم`) : '');
       const eaten = b.intake.calories, target = b.targetIntakeKcal;
       const isTodayV = isoDay(day) === isoDay(new Date());
       const st = dayState(b.goal, eaten, target, b.meals.length, isTodayV);
@@ -1643,7 +1642,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       $('tips').innerHTML = (b.tips || []).map((t) => {
         const full = tx(t, 'text'), head = full.split(/ — |: |\. /)[0];
         return head.length < full.length
-          ? `<button class="tip tipc fade"><svg width="20" height="20"><use href="#i-bulb"/></svg><span class="h">${esc(head)} <b>${LANG === 'ar' ? '‹' : '›'}</b></span><span class="f">${esc(full)}</span></button>`
+          ? `<button class="tip tipc fade"><svg width="20" height="20"><use href="#i-bulb"/></svg><span class="h">${esc(head)} <svg width="12" height="12" style="vertical-align:-1px;color:var(--muted)${LANG === 'ar' ? '' : ';transform:scaleX(-1)'}"><use href="#i-chev-l"/></svg></span><span class="f">${esc(full)}</span></button>`
           : `<div class="tip fade"><svg width="20" height="20"><use href="#i-bulb"/></svg><div>${esc(full)}</div></div>`;
       }).join('');
       $('tips').querySelectorAll('.tipc').forEach((el) => (el.onclick = () => el.classList.toggle('open')));
@@ -1669,8 +1668,8 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       const st = m.streak;
       const c = m.challenge;
       const parts = [];
-      if (st.current) parts.push(L`${st.current} ${st.current === 1 ? T('يوم') : T('أيام')} متتالية`);
-      if (c) parts.push(c.done ? T('تحدي الأسبوع: أنجزته') : L`${c.progress} من ${c.target} هذا الأسبوع`);
+      if (st.current) parts.push(L`${st.current} ${st.current === 1 ? T('يوم') : T('أيام')}`);
+      if (c) parts.push(c.done ? T('تحدي الأسبوع ✓') : L`${c.progress}/${c.target} هذا الأسبوع`);
       $('streakChip').innerHTML = parts.length ? `<span class="streak" title="${esc(tx(c || {}, 'title') || '')}"><svg width="14" height="14"><use href="#i-flame"/></svg>${parts.join(' · ')}</span>` : '';
     } catch (e) { console.warn(e); }
   }

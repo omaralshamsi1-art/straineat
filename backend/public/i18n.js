@@ -9,6 +9,11 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"عجز {}/يوم": "{} kcal/day deficit",
+"فائض {}/يوم": "{} kcal/day surplus",
+"{} {}": "{} {}",
+"تحدي الأسبوع ✓": "Weekly challenge ✓",
+"{}/{} هذا الأسبوع": "{}/{} this week",
 "من ~{}": "of ~{}",
 "في الطريق لهدف الزيادة": "On the way to your gain target",
 "✓ التنبيهات مفعّلة على هذا الجهاز": "✓ Notifications are on for this device",
