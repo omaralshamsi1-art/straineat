@@ -181,6 +181,11 @@ struct OverviewDetailView: View {
             case .left:
                 Text(t("LEFT TODAY", "متبقي لك اليوم")).font(.caption.weight(.heavy)).tracking(0.8)
                 Text("\(fmt(b.remainingKcal ?? 0)) \(t("kcal", "سعرة"))").font(.system(size: 34, weight: .heavy)).monospacedDigit()
+                if let bonus = b.burnBonusKcal, bonus > 0, let base = b.baseTargetKcal {
+                    Text(t("Your budget is \(fmt(base)) + \(fmt(bonus)) because you burned more than expected today (we add back only half — watch calorie estimates are rough).",
+                           "ميزانيتك \(fmt(base)) + \(fmt(bonus)) لأن حرقك اليوم أكثر من المتوقع (نضيف نصف الزيادة فقط لأن تقدير الساعة تقريبي)."))
+                        .font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
+                }
             case .burn:
                 Text(t("BURN · LAST 7 DAYS", "الحرق آخر 7 أيام")).font(.caption.weight(.heavy)).tracking(0.8)
                 Text(pickedLabel).font(.caption).foregroundStyle(Theme.muted)

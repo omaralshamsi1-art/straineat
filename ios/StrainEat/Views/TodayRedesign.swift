@@ -449,7 +449,8 @@ struct TodayRings: View {
         let burn = b.burn?.totalKcal, expB = b.expectedBurnKcal ?? 0
         HStack(spacing: 8) {
             ring(left < 0 ? 1 : left / target, left < 0 && b.goal != "gain" ? Theme.bad : ringGreen,
-                 "\(left < 0 ? "+" : "")\(fmt(abs(left)))", left < 0 ? t("OVER", "فوق الهدف") : t("LEFT", "متبقي"), t("kcal", "سعرة")) { detail = .left }
+                 "\(left < 0 ? "+" : "")\(fmt(abs(left)))", left < 0 ? t("OVER", "فوق الهدف") : t("LEFT", "متبقي"),
+                 (b.burnBonusKcal ?? 0) > 0 ? t("+\(fmt(b.burnBonusKcal!)) from burn", "+\(fmt(b.burnBonusKcal!)) من الحرق") : t("kcal", "سعرة")) { detail = .left }
             ring(pw > 0 ? ph / pw : 0, Theme.protein, fmt(ph), t("PROTEIN", "بروتين"), pw > 0 ? t("of \(fmt(pw)) g", "من \(fmt(pw)) غ") : t("g", "غ")) { detail = .eaten }
             ring(burn != nil && expB > 0 ? burn! / expB : 0, Color(red: 0.12, green: 0.56, blue: 0.91), burn.map { fmt($0) } ?? "—",
                  t("BURN", "حرق"), burn != nil && b.burnIsPartialDay && expB > 0 ? t("of ~\(fmt(expB))", "من ~\(fmt(expB))") : t("kcal", "سعرة")) { detail = .burn }
@@ -490,13 +491,17 @@ struct InsightStack: View {
     @State private var drag: CGFloat = 0
     @State private var pos = 0
 
-    struct Item: Identifiable { let id: String; let icon: String; let title: String; let sub: String; var acts: [(String, Bool, () -> Void)] = [] }
+    struct Item: Identifiable { let id: String; let icon: String; let title: String; let sub: String; var acts: [(String, Bool, () -> Void)] = []; var tone = "mid" }
 
     private var key: String { "dis-" + (isToday ? Date() : Date.distantPast).formatted(.iso8601.year().month().day()) }
 
     private var items: [Item] {
         var out: [Item] = []
         let b = balance
+        for c in b.cards ?? [] {
+            out.append(Item(id: c.id, icon: c.kind == "morning" ? "sun.max" : "bolt.heart", title: c.title, sub: c.lines.joined(separator: "\n"),
+                            acts: c.kind == "workout" ? [(t("Suggest a post-workout meal", "اقترح وجبة بعد التمرين"), true, onSuggest)] : [], tone: c.tone))
+        }
         if isToday, let d = schedule {
             if let nx = d.slots.first(where: { $0.status == "now" || $0.status == "upcoming" }) {
                 let mins = max(0, hhmm(nx.time) - minutesOf(Date()))
@@ -573,7 +578,7 @@ struct InsightStack: View {
     private func card(_ c: Item, index: Int, count: Int) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
-                Image(systemName: c.icon).foregroundStyle(Theme.warn)
+                Image(systemName: c.icon).foregroundStyle(c.tone == "good" ? Theme.good : c.tone == "low" ? Theme.bad : c.tone == "info" ? Color(red: 0.12, green: 0.56, blue: 0.91) : Theme.warn)
                 Text(c.title).font(.headline).lineLimit(2)
                 Spacer()
                 if count > 1 { Text("\(index)/\(count)").font(.caption).foregroundStyle(Theme.muted).monospacedDigit() }

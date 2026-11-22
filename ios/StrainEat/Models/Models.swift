@@ -160,6 +160,23 @@ struct Balance: Codable {
     let onboarded: Bool?
     let activity: DayActivity?
     let meals: [MealRow]
+    /** plan target before the extra-burn allowance, the allowance, and the projected full-day burn */
+    var baseTargetKcal: Double?
+    var burnBonusKcal: Double?
+    var projectedBurnKcal: Double?
+    /** morning plan + after-workout note (server-built, both languages) */
+    var cards: [InsightCard]?
+}
+
+struct InsightCard: Codable, Hashable, Identifiable {
+    let id: String
+    let kind: String
+    let tone: String
+    let titleAr: String; let titleEn: String
+    let linesAr: [String]; let linesEn: [String]
+    var title: String { appLang == .ar ? titleAr : titleEn }
+    var lines: [String] { appLang == .ar ? linesAr : linesEn }
+    enum CodingKeys: String, CodingKey { case id, kind, tone; case titleAr = "title_ar", titleEn = "title_en", linesAr = "lines_ar", linesEn = "lines_en" }
 }
 
 struct RamadanView: Codable {
