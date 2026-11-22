@@ -250,4 +250,5 @@ struct QuickTile: View {
 extension Notification.Name {
     static let openAssistant = Notification.Name("openAssistant")
     static let openProgress = Notification.Name("openProgress")
+    static let openPlan = Notification.Name("openPlan")
 }

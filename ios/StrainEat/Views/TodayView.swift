@@ -10,17 +10,9 @@ struct TodayView: View {
             ScrollView {
                 VStack(spacing: 14) {
                     header
-                    if store.isToday {
-                        HStack(spacing: 10) {
-                            QuickTile(title: t("Log meal", "سجّل وجبة"), icon: "camera.fill", color: Theme.yellow, action: onLog)
-                            QuickTile(title: t("Favourites", "المفضلة"), icon: "heart.fill", color: Theme.lavender, action: onFavourites)
-                            QuickTile(title: t("Progress", "التقدّم"), icon: "chart.line.uptrend.xyaxis", color: Theme.sky) { NotificationCenter.default.post(name: .openProgress, object: nil) }
-                            QuickTile(title: t("Ask AI", "المساعد"), icon: "sparkles", color: Theme.pink) { NotificationCenter.default.post(name: .openAssistant, object: nil) }
-                        }
-                    }
+                    TodayChips(balance: store.balance, motivation: store.motivation)
                     if let b = store.balance {
-                        OverviewSection(balance: b, isToday: store.isToday)
-                        if store.isToday { WellnessCard() }
+                        TodayHero(balance: b, isToday: store.isToday)
                         if b.pendingDrafts.calories > 0 {
                             Notice(text: t("You have draft meals (\(fmt(b.pendingDrafts.calories)) kcal) not counted yet — open and confirm them.", "لديك وجبات مسودة (\(fmt(b.pendingDrafts.calories)) سعرة) لم تُحسب بعد — افتحها وأكّدها."), level: "warn")
                         }
@@ -28,11 +20,11 @@ struct TodayView: View {
                         if let tips = b.tips, !tips.isEmpty, store.isToday {
                             VStack(spacing: 8) { ForEach(tips, id: \.self) { Notice(text: $0.text, level: $0.kind == "over" ? "warn" : "info") } }
                         }
-                        if store.isToday, let c = store.motivation?.challenge { ChallengeCard(challenge: c) }
-                        if store.isToday { ScheduleCard() }
-                        if store.isToday { SuggestCard() }
-                        if let a = b.activity { ActivityCard(activity: a) }
-                        MealsCard(meals: b.meals, onLog: onLog)
+                        if store.isToday { SuggestCard(showNext: true, next: schedule?.slots.first { $0.status == "now" || $0.status == "upcoming" }) }
+                        TimelineCard(meals: b.meals, schedule: store.isToday ? schedule : nil, onLog: onLog,
+                                     onSchedule: { schedule = $0 },
+                                     onEditTimes: { NotificationCenter.default.post(name: .openPlan, object: nil) })
+                        BodyTodayCard(activity: b.activity, isToday: store.isToday)
                     } else if let e = store.error {
                         Card { VStack(spacing: 10) {
                             Image(systemName: "wifi.exclamationmark").font(.largeTitle).foregroundStyle(Theme.muted)
@@ -50,7 +42,15 @@ struct TodayView: View {
             .refreshable { await store.refresh(force: true) }
             .navigationDestination(for: String.self) { MealLoaderView(mealId: $0) }
             .toolbar(.hidden, for: .navigationBar)
+            .task(id: store.refreshTick) { await loadSchedule() }
         }
+    }
+
+    @State private var schedule: DaySchedule?
+    private func loadSchedule() async {
+        guard let d = try? await APIClient.shared.schedule() else { return }
+        schedule = d
+        await MealNotifications.sync(d)
     }
 
     private var header: some View {
@@ -62,9 +62,6 @@ struct TodayView: View {
                     .font(.subheadline).foregroundStyle(Theme.muted)
             }
             Spacer()
-            if let s = store.motivation?.streak, s.current > 0 {
-                Chip(text: "\(s.current) \(s.current == 1 ? t("day", "يوم") : t("days", "أيام"))", icon: "flame.fill", fg: Theme.onPastel, bg: Theme.yellow)
-            }
             HStack(spacing: 0) {
                 Button { store.shiftDay(-1) } label: { Image(systemName: "chevron.backward").frame(width: 36, height: 36) }
                 Button { store.shiftDay(1) } label: { Image(systemName: "chevron.forward").frame(width: 36, height: 36) }
@@ -298,10 +295,13 @@ struct SuggestCard: View {
     @State private var error: String?
     @State private var logged: Set<String> = []
     @State private var openRecipe: String?
+    var showNext = false
+    var next: DaySchedule.Slot? = nil
 
     var body: some View {
-        Card(title: t("What should I eat now?", "ماذا آكل الآن؟"), icon: "sparkles",
+        Card(title: showNext ? t("Next up", "التالي") : t("What should I eat now?", "ماذا آكل الآن؟"), icon: showNext ? nil : "sparkles",
              trailing: data == nil ? nil : AnyView(Button { Task { await load(force: true) } } label: { Image(systemName: "arrow.clockwise") })) {
+            if showNext { NextUpHeader(slot: next) }
             if busy && data != nil { ProgressView().frame(maxWidth: .infinity) }
             if let data, !busy {
                 if !data.introAr.isEmpty { Text(data.introAr).font(.subheadline).foregroundStyle(Theme.muted) }
@@ -325,9 +325,9 @@ struct SuggestCard: View {
                     }
                 }
             } else if data == nil {
-                Text(t("Suggestions that fit the calories and protein you have left today.", "اقتراحات تناسب ما تبقى من سعراتك وبروتينك اليوم.")).font(.footnote).foregroundStyle(Theme.muted)
+                if !showNext { Text(t("Suggestions that fit the calories and protein you have left today.", "اقتراحات تناسب ما تبقى من سعراتك وبروتينك اليوم.")).font(.footnote).foregroundStyle(Theme.muted) }
                 Button { Task { await load() } } label: {
-                    if busy { ProgressView() } else { Label(t("Suggest something", "اقترح عليّ"), systemImage: "wand.and.stars") }
+                    if busy { ProgressView() } else { Label(showNext ? t("Suggest a meal that fits", "اقترح وجبة تناسب الباقي") : t("Suggest something", "اقترح عليّ"), systemImage: "wand.and.stars") }
                 }
                 .buttonStyle(SoftButtonStyle()).disabled(busy)
             }

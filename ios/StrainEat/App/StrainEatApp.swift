@@ -64,6 +64,7 @@ struct RootView: View {
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .openAssistant)) { _ in showAssistant = true }
                 .onReceive(NotificationCenter.default.publisher(for: .openProgress)) { _ in tab = 1 }
+                .onReceive(NotificationCenter.default.publisher(for: .openPlan)) { _ in tab = 3 }
                 .sheet(isPresented: $showAssistant) {
                     AssistantView(screen: screenName, onChanged: { Task { await store.refresh() } })
                         .environment(\.layoutDirection, appLayoutDirection)
