@@ -230,8 +230,14 @@ struct TimelineCard: View {
         var rows: [Row] = meals.map { .meal($0) }
         for s in schedule?.slots ?? [] where s.items.isEmpty && !drafts.contains(where: { abs($0 - hhmm(s.time)) <= 180 }) { rows.append(.slot(s)) }
         rows.sort { $0.at < $1.at }
-        return Card(title: t("Today's meals", "وجبات اليوم"),
-                    trailing: schedule == nil ? nil : AnyView(Button(t("Edit times", "تعديل الأوقات"), action: onEditTimes).font(.subheadline.weight(.semibold)))) {
+        return Card {
+            HStack(spacing: 6) {
+                if !meals.isEmpty { Text(t("\(meals.count) meals ·", "\(meals.count) وجبات ·")) }
+                if schedule != nil { Button(t("Edit times", "تعديل الأوقات"), action: onEditTimes).fontWeight(.semibold).foregroundStyle(Theme.brand2) }
+                Spacer()
+                Text(t("kcal", "سعرة"))
+            }
+            .font(.caption).foregroundStyle(Theme.muted)
             if rows.isEmpty {
                 Text(t("No meals yet.", "لا وجبات بعد.")).font(.footnote).foregroundStyle(Theme.muted)
                 Button(action: onLog) { Label(t("Log your meal", "سجّل وجبتك"), systemImage: "camera.fill") }.buttonStyle(SoftButtonStyle())
@@ -246,28 +252,40 @@ struct TimelineCard: View {
         }
     }
 
-    private func icon(_ name: String, bg: Color, fg: Color, dashed: Bool = false) -> some View {
-        Image(systemName: name).font(.body.weight(.semibold)).foregroundStyle(fg)
-            .frame(width: 44, height: 44)
-            .background(dashed ? Color.clear : bg, in: RoundedRectangle(cornerRadius: 12))
-            .overlay { if dashed { RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.muted.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])) } }
+    private func icon(_ name: String, bg: Color = Theme.card2, fg: Color = Theme.muted, dashed: Bool = false) -> some View {
+        Image(systemName: name).font(.subheadline.weight(.semibold)).foregroundStyle(fg)
+            .frame(width: 34, height: 34)
+            .background(dashed ? Color.clear : bg, in: RoundedRectangle(cornerRadius: 10))
+            .overlay { if dashed { RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.muted.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])) } }
+    }
+
+    /// Name the meal by the plan slot it counted toward; eaten far from any slot = snack.
+    private func label(_ m: Balance.MealRow) -> (String, String) {
+        if m.kind == "drink" { return (t("Drink", "مشروب"), "cup.and.saucer") }
+        if let d = schedule, m.status == "confirmed" {
+            if let s = d.slots.first(where: { $0.items.contains { $0.id == m.id } }) {
+                return (s.label, s.kind == "snack" ? "carrot" : ["breakfast", "suhoor"].contains(s.id) ? "sun.max" : ["dinner", "iftar", "evening"].contains(s.id) ? "moon" : "fork.knife")
+            }
+            return (t("Snack", "سناك"), "carrot")
+        }
+        if m.kind == "snack" { return (t("Snack", "سناك"), "carrot") }
+        return (kindLabel(m.kind), "fork.knife")
     }
 
     private func mealRow(_ m: Balance.MealRow) -> some View {
-        NavigationLink(value: m.id) {
+        let (lbl, sym) = label(m)
+        return NavigationLink(value: m.id) {
             HStack(spacing: 12) {
-                let (sym, bg, fg): (String, Color, Color) = m.kind == "drink" ? ("cup.and.saucer.fill", Theme.sky, Theme.onPastel)
-                    : m.status == "confirmed" ? ("checkmark", Theme.mintSoft, Theme.good) : ("hourglass", Theme.accentSoft, Theme.warn)
-                icon(sym, bg: bg, fg: fg)
+                icon(sym)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(m.displayName).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink).lineLimit(1)
-                    Text([kindLabel(m.kind), m.eatenAt.arTime, m.restaurant].compactMap { $0 }.joined(separator: " · "))
+                    Text(m.displayName).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink).lineLimit(2)
+                    Text(([lbl, m.eatenAt.arTime, m.restaurant].compactMap { $0 } + (m.status == "confirmed" ? [] : [t("Draft", "مسودة")])).joined(separator: " · "))
                         .font(.caption).foregroundStyle(Theme.muted).lineLimit(1)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(fmt(m.calories)).font(.subheadline.weight(.bold)).monospacedDigit().foregroundStyle(Theme.ink)
-                    if let p = m.proteinG { Text(t("\(fmt(p)) g protein", "\(fmt(p)) غ بروتين")).font(.caption2).foregroundStyle(Theme.muted) }
+                    Text(fmt(m.calories)).font(.headline).monospacedDigit().foregroundStyle(Theme.ink)
+                    if let p = m.proteinG { Text(t("\(fmt(p)) g protein", "\(fmt(p))غ بروتين")).font(.caption2).foregroundStyle(Theme.muted) }
                 }
             }
             .padding(.vertical, 2)
@@ -293,8 +311,9 @@ struct TimelineCard: View {
             head("\(t("Upcoming", "قادم")) · \(plan)", true)
         case "skipped":
             HStack {
-                head(t("Skipped", "تم التخطي"), false)
-                Button(t("Undo", "تراجع")) { Task { await skip(s.id, undo: true) } }.font(.subheadline.weight(.semibold)).disabled(busy != nil)
+                Text("\(s.label) · \(s.time) · \(t("skipped", "تخطيته"))").font(.caption).foregroundStyle(Theme.muted)
+                Spacer()
+                Button(t("Undo", "تراجع")) { Task { await skip(s.id, undo: true) } }.font(.caption.weight(.semibold)).disabled(busy != nil)
             }
         default:
             VStack(alignment: .leading, spacing: 10) {

@@ -9,6 +9,9 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"مشروب": "Drink",
+"{}غ بروتين": "{} g protein",
+"تخطيته": "skipped",
 "إظهار البطاقات المخفية ({})": "Show hidden cards ({})",
 "اقتراح وجبة": "Meal ideas",
 "{} {} متتالية سجّلت فيها وجباتك — استمر!": "{} {} in a row with meals logged — keep going!",

@@ -18,6 +18,8 @@ describe('meal kinds', () => {
   it('tells drinks, snacks and meals apart', () => {
     expect(classifyMeal(est('Spanish latte', 220))).toBe('drink');
     expect(classifyMeal(est('كرك', 120))).toBe('drink');
+    expect(classifyMeal(est('Cheese Kunafa (No Syrup)', 300))).toBe('snack');
+    expect(classifyMeal(est('كنافة بالجبن', 380))).toBe('snack');
     expect(classifyMeal(est('Orange juice', 140, ['juice'], 'ml'))).toBe('drink');
     expect(classifyMeal(est('Latte and croissant', 480, ['latte', 'croissant']))).toBe('meal');
     expect(classifyMeal(est('Ribeye steak', 650))).toBe('meal'); // "steak" is not "tea"

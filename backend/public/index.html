@@ -607,6 +607,15 @@ html[dir="rtl"] .mon2b .t i { transform: scaleX(-1); display: inline-block; }
 html, body { overscroll-behavior-y: none; }
 .dayhead h2 { margin: 0; font-size: 19px; font-weight: 800; }
 .dayhead .plus { width: 34px; height: 34px; border-radius: 11px; border: 0; background: var(--ink); color: var(--bg); font-size: 21px; font-weight: 600; cursor: pointer; line-height: 1; }
+/* meal list v2: calm icons, full names, numbers once */
+.meals { padding-top: 10px; }
+.mlhead { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); padding: 2px 0 6px; }
+.mlhead .lnk { border: 0; background: none; color: var(--brand-2); font: inherit; font-weight: 600; cursor: pointer; padding: 6px 0; }
+#mealList .meal .ic, #mealList .tl .ic { width: 34px; height: 34px; border-radius: 10px; background: var(--card-2); color: var(--muted); }
+#mealList .meal .t b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+#mealList .meal .k b { font-size: 16px; }
+#mealList .tl.skip { padding: 8px 0; justify-content: space-between; }
+#mealList .tl.skip .undo { padding: 6px 4px; font-size: 13px; }
 /* ================= WHOOP-scale sizing + WHOOP-style dark theme ================= */
 html[data-theme="dark"] {
   --bg: #13181b; --card: #262d32; --card-2: #323a40; --ink: #f2f5f6; --muted: #9ba6ad; --line: #39424a;
@@ -662,6 +671,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v2M12 20v2M4 12H2M22 12h-2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></symbol>
     <symbol id="i-bowl" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 11h18a9 9 0 0 1-18 0zM8 7c0-2 2-2 2-4M13 7c0-2 2-2 2-4"/></symbol>
     <symbol id="i-moon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 14A8 8 0 1 1 10 4a6 6 0 0 0 10 10z"/></symbol>
+    <symbol id="i-cup" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3"/></symbol>
     <symbol id="i-apple" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 8c-3-2-7 0-7 5s3 8 5 8c1 0 1.5-.5 2-.5s1 .5 2 .5c2 0 5-3 5-8s-4-7-7-5zM12 8c0-2 1-4 3-5"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v16M6 14l6 6 6-6"/></symbol>
     <symbol id="i-up" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 20V4M6 10l6-6 6 6"/></symbol>
@@ -759,8 +769,8 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     </div>
 
     <div class="dayhead"><h2>يومي</h2><div style="display:flex;gap:8px;align-items:center"><button class="chip src ideas" id="dayIdeas"><svg width="15" height="15"><use href="#i-bulb"/></svg>اقتراح وجبة</button><button class="plus" id="dayPlus" aria-label="سجّل وجبة">+</button></div></div>
-    <div class="card">
-      <h3><span>وجبات اليوم <span class="small" id="mealCount"></span></span> <button class="chip src" id="schEdit" style="cursor:pointer">تعديل الأوقات</button></h3>
+    <div class="card meals">
+      <div class="mlhead"><span><span id="mealCount"></span> <button class="lnk" id="schEdit">تعديل الأوقات</button></span><span>سعرة</span></div>
       <div id="mealList"></div>
     </div>
 
@@ -1617,12 +1627,22 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   const hmToMin = (t) => { const [h, m] = String(t).split(':').map(Number); return h * 60 + (m || 0); };
   const minOf = (iso) => { const d = new Date(iso); return d.getHours() * 60 + d.getMinutes(); };
   const nowMinLocal = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
-  function mealRow(m) {
-    const [slot, icon] = m.kind === 'drink' ? [T('☕ مشروب'), 'i-bolt'] : m.kind === 'snack' ? [T('سناك'), 'i-apple'] : mealSlot(m.eatenAt);
+  function mealLabel(m, d) {
+    if (m.kind === 'drink') return [T('مشروب'), 'i-cup'];
+    if (d && m.status === 'confirmed') {
+      const slot = d.slots.find((x) => x.items.some((it) => it.id === m.id));
+      if (slot) return [LANG === 'en' ? slot.label_en : slot.label_ar, slotIcon(slot)];
+      return [T('سناك'), 'i-apple'];
+    }
+    if (m.kind === 'snack') return [T('سناك'), 'i-apple'];
+    return mealSlot(m.eatenAt);
+  }
+  function mealRow(m, d) {
+    const [slot, icon] = mealLabel(m, d);
     const time = new Date(m.eatenAt).toLocaleTimeString(LOC, { hour: 'numeric', minute: '2-digit' });
-    return L`<button class="meal" data-id="${esc(m.id)}"><span class="ic k-${esc(m.kind || 'meal')}"><svg width="22" height="22"><use href="#${icon}"/></svg></span>
-      <span class="t"><b>${esc(nameOf(m))}</b><span class="small muted">${slot} · ${time}${m.restaurant ? ` · ${esc(m.restaurant)}` : ''}</span></span>
-      <span class="k"><b class="num">${fmt(m.calories)}</b> <span class="small muted">سعرة</span><div class="small muted num">${fmt(m.protein_g)} غ بروتين</div>${m.status !== 'confirmed' ? T('<span class="pill draft">مسودة</span>') : ''}</span></button>`;
+    return `<button class="meal" data-id="${esc(m.id)}"><span class="ic"><svg width="18" height="18"><use href="#${icon}"/></svg></span>
+      <span class="t"><b>${esc(nameOf(m))}</b><span class="small muted">${slot} · ${time}${m.restaurant ? ` · ${esc(m.restaurant)}` : ''}${m.status !== 'confirmed' ? ` · <span class="pill draft">${T('مسودة')}</span>` : ''}</span></span>
+      <span class="k"><b class="num">${fmt(m.calories)}</b><div class="small muted num">${L`${fmt(m.protein_g)}غ بروتين`}</div></span></button>`;
   }
   function slotIcon(s) { return s.kind === 'snack' ? 'i-apple' : ['breakfast', 'suhoor'].includes(s.id) ? 'i-sun' : ['dinner', 'iftar', 'evening'].includes(s.id) ? 'i-moon' : 'i-bowl'; }
   function slotRow(s) {
@@ -1630,16 +1650,16 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     const plan = L`المخطط ~${fmt(s.targetKcal)} سعرة`;
     const head = (cls, sub) => `<div class="tl"><span class="ic ${cls}"><svg width="22" height="22"><use href="#${slotIcon(s)}"/></svg></span><span class="t"><b>${esc(lbl)} · <span class="num" dir="ltr">${esc(s.time)}</span></b><span class="small muted">${sub}</span></span>`;
     if (s.status === 'upcoming') return head('up', `${T('قادم')} · ${plan}`) + '</div>';
-    if (s.status === 'skipped') return head('', T('تم التخطي')) + `<button class="undo" data-unskip="${esc(s.id)}">${T('تراجع')}</button></div>`;
+    if (s.status === 'skipped') return `<div class="tl skip"><span class="small muted">${esc(lbl)} · <span class="num" dir="ltr">${esc(s.time)}</span> · ${T('تخطيته')}</span><button class="undo" data-unskip="${esc(s.id)}">${T('تراجع')}</button></div>`;
     const sub = `${s.status === 'now' ? T('الآن') : T('لم تُسجّل')} · ${plan}`;
     return `<div class="tlx">${head('', sub)}</div><div class="acts"><button class="go" data-slot-log>${T('سجّلها')}</button><button data-skip="${esc(s.id)}">${T('تخطيتها')}</button></div></div>`;
   }
   function renderTimeline(b, d) {
-    const rows = b.meals.map((m) => ({ at: minOf(m.eatenAt), html: mealRow(m) }));
+    const rows = b.meals.map((m) => ({ at: minOf(m.eatenAt), html: mealRow(m, d) }));
     const drafts = b.meals.filter((m) => m.status !== 'confirmed').map((m) => minOf(m.eatenAt));
     if (d) d.slots.filter((s) => !s.items.length && !drafts.some((x) => Math.abs(x - hmToMin(s.time)) <= 180)).forEach((s) => rows.push({ at: hmToMin(s.time), html: slotRow(s) }));
     rows.sort((x, y) => x.at - y.at);
-    $('mealCount').textContent = b.meals.length ? L`${b.meals.length} وجبات` : '';
+    $('mealCount').textContent = b.meals.length ? `${L`${b.meals.length} وجبات`} ·` : '';
     $('schEdit').classList.toggle('hidden', !d);
     $('mealList').innerHTML = rows.length ? rows.map((r) => r.html).join('') : T('<div class="empty">لا توجد وجبات بعد.<br>اضغطي زر الكاميرا لتسجيل وجبتك الأولى.</div>');
     $('mealList').querySelectorAll('.meal').forEach((el) => (el.onclick = async () => openReview(await api(`meals/${el.dataset.id}`))));

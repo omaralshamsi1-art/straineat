@@ -32,7 +32,8 @@ const FOODISH = [
   'لحم', 'سمك', 'معكرونة', 'باستا', 'بيتزا', 'راب', 'زبادي', 'بان كيك', 'شوربة', 'فول', 'حمص', 'شاورما',
 ];
 const SNACK = ['bar', 'nuts', 'almond', 'fruit', 'apple', 'banana', 'dates', 'chips', 'biscuit', 'yogurt', 'popcorn', 'cookie', 'chocolate',
-  'تمر', 'مكسرات', 'لوز', 'فاكهة', 'تفاح', 'موز', 'شيبس', 'بسكويت', 'زبادي', 'بوب كورن', 'شوكولاتة', 'بار'];
+  'تمر', 'مكسرات', 'لوز', 'فاكهة', 'تفاح', 'موز', 'شيبس', 'بسكويت', 'زبادي', 'بوب كورن', 'شوكولاتة', 'بار',
+  'kunafa', 'knafeh', 'dessert', 'ice cream', 'donut', 'brownie', 'كنافة', 'حلا', 'حلى', 'آيس كريم', 'دونات', 'لقيمات'];
 
 /** Latin words match whole words (so "steak" is not "tea"); Arabic words match as substrings. */
 const has = (text: string, words: string[]) =>
