@@ -17,9 +17,9 @@ struct TodayView: View {
                         if let r = b.ramadan, r.active || r.needsChoice { RamadanCard(view: r) }
                         TodayMonitors(balance: b, isToday: store.isToday)
                         HStack {
-                            Text(t("My day", "يومي")).font(.title2.weight(.heavy))
+                            Text(t("My day", "يومي")).font(.title3.weight(.heavy))
                             Spacer()
-                            Button(action: onLog) { Image(systemName: "plus").font(.title3.weight(.bold)).foregroundStyle(Theme.bg).frame(width: 44, height: 44).background(Theme.ink, in: RoundedRectangle(cornerRadius: 14)) }
+                            Button(action: onLog) { Image(systemName: "plus").font(.headline.weight(.bold)).foregroundStyle(Theme.bg).frame(width: 34, height: 34).background(Theme.ink, in: RoundedRectangle(cornerRadius: 11)).contentShape(Rectangle().inset(by: -5)) }
                                 .accessibilityLabel(t("Log a meal", "سجّل وجبة"))
                         }
                         .padding(.top, 8)
@@ -67,7 +67,7 @@ struct TodayView: View {
                     .font(.caption).foregroundStyle(Theme.muted)
             }
             if let st = store.motivation?.streak, st.current > 0 {
-                Label("\(st.current)", systemImage: "flame.fill").font(.footnote.weight(.bold)).monospacedDigit()
+                Label(t("\(st.current) \(st.current == 1 ? "day" : "days")", "\(st.current) \(st.current == 1 ? "يوم" : "أيام")"), systemImage: "flame.fill").font(.footnote.weight(.bold)).monospacedDigit()
                     .padding(.horizontal, 10).padding(.vertical, 5)
                     .background(Theme.card, in: Capsule())
                     .foregroundStyle(Theme.ink)

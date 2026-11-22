@@ -564,7 +564,7 @@ button.navcard span { font-size: 20px; }
 /* ---- Today v4: WHOOP-style rings, swipe cards, monitors ---- */
 .brand #streakChip:empty { display: none; }
 .top { gap: 8px; } .top .brand { min-width: 0; } .top .daynav { flex: none; }
-.brand .streak { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; background: var(--card); border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 3px 9px; margin-inline-start: 8px; white-space: nowrap; }
+.brand .streak { cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; background: var(--card); border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 3px 9px; margin-inline-start: 8px; white-space: nowrap; }
 .brand .streak svg { color: #ff7a45; }
 .rings3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 6px; }
 .rings3 button { border: 0; background: none; color: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 0; }
@@ -600,9 +600,11 @@ html[dir="ltr"] .mon2b .t { text-transform: uppercase; letter-spacing: .1em; fon
 html[dir="rtl"] .mon2b .t i { transform: scaleX(-1); display: inline-block; }
 .mon2b .v { font-size: 16px; font-weight: 800; }
 .mon2b small { font-size: 12px; color: var(--muted); }
-.dayhead { display: flex; align-items: center; justify-content: space-between; margin: 20px 2px 4px; }
-.dayhead h2 { margin: 0; font-size: 24px; font-weight: 800; }
-.dayhead .plus { width: 44px; height: 44px; border-radius: 14px; border: 0; background: var(--ink); color: var(--bg); font-size: 26px; font-weight: 600; cursor: pointer; line-height: 1; }
+.dayhead { display: flex; align-items: center; justify-content: space-between; margin: 16px 2px 2px; }
+/* stop iOS rubber-band: it drags the fixed nav and button with the page */
+html, body { overscroll-behavior-y: none; }
+.dayhead h2 { margin: 0; font-size: 19px; font-weight: 800; }
+.dayhead .plus { width: 34px; height: 34px; border-radius: 11px; border: 0; background: var(--ink); color: var(--bg); font-size: 21px; font-weight: 600; cursor: pointer; line-height: 1; }
 /* ================= WHOOP-scale sizing + WHOOP-style dark theme ================= */
 html[data-theme="dark"] {
   --bg: #13181b; --card: #262d32; --card-2: #323a40; --ink: #f2f5f6; --muted: #9ba6ad; --line: #39424a;
@@ -1782,7 +1784,8 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       const st = m.streak;
       const c = m.challenge;
       // header shows only the streak number (like WHOOP); the weekly challenge is an insight card
-      $('streakChip').innerHTML = st.current ? `<span class="streak" title="${esc(L`${st.current} ${st.current === 1 ? T('يوم') : T('أيام')}`)}"><svg width="13" height="13"><use href="#i-flame"/></svg><b class="num">${st.current}</b></span>` : '';
+      $('streakChip').innerHTML = st.current ? `<button class="streak" id="streakBtn"><svg width="13" height="13"><use href="#i-flame"/></svg><b class="num">${st.current}</b> ${st.current === 1 ? T('يوم') : T('أيام')}</button>` : '';
+      const sb = $('streakBtn'); if (sb) sb.onclick = () => toast(L`${st.current} ${st.current === 1 ? T('يوم') : T('أيام')} متتالية سجّلت فيها وجباتك — استمر!`);
       void c; renderStack();
     } catch (e) { console.warn(e); }
   }

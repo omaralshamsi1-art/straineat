@@ -9,6 +9,7 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"{} {} متتالية سجّلت فيها وجباتك — استمر!": "{} {} in a row with meals logged — keep going!",
 "تحدي الأسبوع: {}/{}": "Weekly challenge: {}/{}",
 "متبقي": "Left",
 "الحرق": "Burn",
