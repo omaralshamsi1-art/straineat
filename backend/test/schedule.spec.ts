@@ -123,6 +123,13 @@ describe('schedule service + reminders', () => {
     await svc.tick(now);
     await svc.tick(new Date('2026-11-21T09:28:00Z'));
     expect(sent).toEqual(['🍽️ وقت الغداء']);
+    // medicine reminder: sent once at its time (Asia/Dubai), even when other reminders are off
+    await profiles.update('u', { reminders: { meals: false, weight: false }, medReminders: [{ id: 'p', name: 'Pred', dose: '5 mg', times: ['14:00'] }] } as any);
+    sent.length = 0;
+    await svc.tick(new Date('2026-11-21T09:59:00Z'));
+    await svc.tick(new Date('2026-11-21T10:00:30Z'));
+    await svc.tick(new Date('2026-11-21T10:01:30Z'));
+    expect(sent).toEqual(['💊 وقت Pred']);
   });
 });
 

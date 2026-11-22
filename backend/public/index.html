@@ -910,24 +910,6 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       <button class="btn ghost" id="schSave">حفظ الجدول</button>
     </div>
 
-    <div class="card" id="medCard">
-      <h3>الأدوية والفيتامينات <span class="small" id="medCount"></span></h3>
-      <p class="small muted" style="margin-top:-4px">نرسل لك تنبيهاً في كل وقت تحدده. هذه تذكيرات فقط — اتبع جرعات طبيبك أو الصيدلي.</p>
-      <div id="medList"></div>
-      <details id="medAdd" style="margin-top:10px">
-        <summary class="btn ghost" style="list-style:none">+ إضافة تذكير</summary>
-        <label for="medName">الاسم</label><input id="medName" maxlength="60" placeholder="مثال: فيتامين د">
-        <div class="grid2">
-          <div><label for="medDose">الجرعة (اختياري)</label><input id="medDose" maxlength="40" placeholder="مثال: حبة واحدة"></div>
-          <div><label for="medKind">النوع</label><select id="medKind"><option value="medicine">دواء</option><option value="vitamin">فيتامين</option><option value="supplement">مكمل غذائي</option><option value="other">أخرى</option></select></div>
-        </div>
-        <label>الأوقات</label>
-        <div id="medTimes" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-        <button type="button" class="chip src" id="medAddTime" style="cursor:pointer;margin-top:8px">+ وقت آخر</button>
-        <button class="btn" id="medSave" style="margin-top:12px">حفظ التذكير</button>
-      </details>
-    </div>
-
     <div class="card">
       <h3>وضع رمضان والصيام</h3>
       <p class="small muted" style="margin-top:-4px">يتفعّل تلقائياً في رمضان (حسب تقويم أم القرى). يمكنك تفعيله يدوياً لأيام الصيام الأخرى.</p>
@@ -973,6 +955,25 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       <label class="check"><input type="checkbox" id="rmWeight" checked> تذكير الوزن الصباحي</label>
       <button class="btn ghost" id="pushBtn">تفعيل التنبيهات على هذا الجهاز</button>
       <button class="btn ghost hidden" id="pushTest">إرسال تنبيه تجريبي</button>
+    </div>
+
+    <div class="card" id="medCard">
+      <h3>الأدوية والفيتامينات <span class="small" id="medCount"></span></h3>
+      <p class="small muted" style="margin-top:-4px">نرسل لك تنبيهاً في كل وقت تحدده. هذه تذكيرات فقط — اتبع جرعات طبيبك أو الصيدلي.</p>
+      <p class="small" id="medPush" style="margin:0 0 8px"></p>
+      <div id="medList"></div>
+      <details id="medAdd" style="margin-top:10px">
+        <summary class="btn ghost" style="list-style:none">+ إضافة تذكير</summary>
+        <label for="medName">الاسم</label><input id="medName" maxlength="60" placeholder="مثال: فيتامين د">
+        <div class="grid2">
+          <div><label for="medDose">الجرعة (اختياري)</label><input id="medDose" maxlength="40" placeholder="مثال: حبة واحدة"></div>
+          <div><label for="medKind">النوع</label><select id="medKind"><option value="medicine">دواء</option><option value="vitamin">فيتامين</option><option value="supplement">مكمل غذائي</option><option value="other">أخرى</option></select></div>
+        </div>
+        <label>الأوقات</label>
+        <div id="medTimes" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <button type="button" class="chip src" id="medAddTime" style="cursor:pointer;margin-top:8px">+ وقت آخر</button>
+        <button class="btn" id="medSave" style="margin-top:12px">حفظ التذكير</button>
+      </details>
     </div>
 
     <div class="card" id="srcCard">
@@ -1983,10 +1984,11 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       $('rmMeals').checked = rm.meals; $('rmWeight').checked = rm.weight;
       meds = prof.medReminders || []; renderMeds();
       const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-      if (!supported) { $('pushState').textContent = T('غير مدعوم هنا'); $('pushBtn').disabled = true; return; }
+      if (!supported) { $('pushState').textContent = T('غير مدعوم هنا'); $('pushBtn').disabled = true; $('medPush').textContent = T('هذا المتصفح لا يدعم التنبيهات. على الآيفون: أضف التطبيق للشاشة الرئيسية وافتحه منها.'); return; }
       const reg = await navigator.serviceWorker.getRegistration('./');
       const sub = reg && (await reg.pushManager.getSubscription());
       $('pushState').textContent = sub ? T('مفعّلة ✓') : Notification.permission === 'denied' ? T('محظورة من الإعدادات') : T('غير مفعّلة');
+      $('medPush').innerHTML = sub ? `<span style="color:var(--good)">${T('✓ التنبيهات مفعّلة على هذا الجهاز')}</span>` : `<span style="color:var(--bad)">${T('التنبيهات غير مفعّلة على هذا الجهاز — اضغط "تفعيل التنبيهات" في بطاقة التذكيرات فوق، وإلا لن يصلك تذكير الدواء.')}</span>`;
       $('pushBtn').textContent = sub ? T('إيقاف التنبيهات على هذا الجهاز') : T('تفعيل التنبيهات على هذا الجهاز');
       $('pushBtn').dataset.on = sub ? '1' : '';
       $('pushTest').classList.toggle('hidden', !sub);

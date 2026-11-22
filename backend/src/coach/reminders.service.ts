@@ -103,7 +103,7 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     if (!this.enabled || this.config.get('NODE_ENV') === 'test') return;
-    this.timer = setInterval(() => this.tick().catch((e) => this.log.warn(`reminder tick: ${e?.message ?? e}`)), 5 * 60_000);
+    this.timer = setInterval(() => this.tick().catch((e) => this.log.warn(`reminder tick: ${e?.message ?? e}`)), 60_000);
     this.timer.unref?.();
   }
   onModuleDestroy() {
@@ -149,11 +149,20 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
     return n;
   }
 
-  /** Runs every 5 minutes. Each reminder is sent at most once per user per day. */
+  /** Runs every minute. Each reminder is sent at most once per user per day; one user's error never blocks the others. */
   async tick(now = new Date()) {
     const users = [...new Set((await this.repo.listPushSubs()).map((s) => s.userId))];
     let sent = 0;
     for (const userId of users) {
+      try { sent += await this.tickUser(userId, now); } catch (e: any) { this.log.warn(`reminders for ${userId}: ${e?.message ?? e}`); }
+    }
+    if (sent) this.log.log(`reminders sent: ${sent}`);
+    return { users: users.length, sent };
+  }
+
+  private async tickUser(userId: string, now: Date) {
+    let sent = 0;
+    {
       const p = await this.profiles.get(userId);
       const tz = p.timezone;
       const today = localDate(now, tz);
@@ -173,11 +182,11 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
         prefs: { meals: false, weight: prefs.weight },
         lang,
       });
+      due.push(...dueMedReminders(p.medReminders ?? [], nowMin, lang === 'ar' ? 'ar' : 'en'));
       if (prefs.meals && this.schedule) {
         const day = await this.schedule.day(userId, undefined, now);
         due.push(...dueSlotReminders(day.slots, toMin(`${Math.floor(nowMin / 60)}:${nowMin % 60}`), lang, { fasting }));
       }
-      due.push(...dueMedReminders(p.medReminders ?? [], nowMin, lang === 'ar' ? 'ar' : 'en'));
       for (const r of due) {
         const key = `reminder:${today}:${r.key}`;
         if (await this.repo.getCache(userId, key)) continue;
@@ -185,6 +194,6 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
         sent += await this.notify(userId, r);
       }
     }
-    return { users: users.length, sent };
+    return sent;
   }
 }
