@@ -30,22 +30,29 @@ struct TodayChips: View {
         var parts: [String] = []
         if let s = motivation?.streak, s.current > 0 { parts.append(t("\(s.current) \(s.current == 1 ? "day" : "days") in a row", "\(s.current) \(s.current == 1 ? "يوم" : "أيام") متتالية")) }
         if let c = motivation?.challenge { parts.append(c.done ? t("Weekly challenge: done", "تحدي الأسبوع: أنجزته") : t("\(fmt(c.progress))/\(fmt(c.target)) this week", "\(fmt(c.progress)) من \(fmt(c.target)) هذا الأسبوع")) }
-        return HStack(spacing: 8) {
-            if !goalName.isEmpty {
-                Label([goalName, delta].filter { !$0.isEmpty }.joined(separator: " · "), systemImage: "scope")
-                    .font(.footnote.weight(.medium)).lineLimit(1).minimumScaleFactor(0.8)
+        let goalChip = [goalName, delta].filter { !$0.isEmpty }.joined(separator: " · ")
+        let motChip = parts.joined(separator: " · ")
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) { chips(goalChip, motChip); Spacer(minLength: 0) }
+            VStack(alignment: .leading, spacing: 8) { chips(goalChip, motChip) }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder private func chips(_ goal: String, _ mot: String) -> some View {
+            if !goal.isEmpty {
+                Label(goal, systemImage: "scope")
+                    .font(.footnote.weight(.medium)).lineLimit(1).fixedSize()
                     .padding(.horizontal, 12).padding(.vertical, 7)
                     .background(Theme.card, in: Capsule())
             }
-            if !parts.isEmpty {
-                Label(parts.joined(separator: " · "), systemImage: "flame.fill")
-                    .font(.footnote.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+            if !mot.isEmpty {
+                Label(mot, systemImage: "flame.fill")
+                    .font(.footnote.weight(.semibold)).lineLimit(1).fixedSize()
                     .foregroundStyle(Theme.onPastel)
                     .padding(.horizontal, 12).padding(.vertical, 7)
                     .background(Theme.yellow, in: Capsule())
             }
-            Spacer(minLength: 0)
-        }
     }
 }
 
@@ -96,9 +103,8 @@ struct TodayHero: View {
                         HStack {
                             Text(t("Net so far", "الصافي حتى الآن")).font(.subheadline.weight(.bold))
                             Spacer()
-                            (Text("\(net > 0 ? "+" : net < 0 ? "−" : "")\(fmt(abs(net)))").font(.headline.weight(.heavy)).monospacedDigit()
-                             + Text(" " + t("kcal", "سعرة")).font(.subheadline))
-                                .environment(\.layoutDirection, .leftToRight)
+                            Text("\u{2066}\(net > 0 ? "+" : net < 0 ? "−" : "")\(fmt(abs(net)))\u{2069}").font(.headline.weight(.heavy)).monospacedDigit()
+                            Text(t("kcal", "سعرة")).font(.subheadline)
                         }
                         Text(net <= 0 ? t("burned more than eaten", "حرقت أكثر مما أكلت") : t("ate more than burned", "أكلت أكثر مما حرقت"))
                             .font(.caption).opacity(0.8)
