@@ -1676,7 +1676,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   function renderBadges(m) {
     $('bdgCount').textContent = L`${m.earnedCount} من ${m.badges.length}`;
     $('bestStreak').textContent = `${m.streak.best} ${m.streak.best === 1 ? T('يوم') : T('أيام')}`;
-    $('badges').innerHTML = m.badges.map((b) => `<div class="badge ${b.earned ? 'on' : ''}" title="${esc(tx(b, 'desc'))}"><div class="ico">${BADGE_ICON[b.id] || '⭐'}</div><b>${esc(tx(b, 'title'))}</b><span>${b.earned ? esc(tx(b, 'desc')) : `${fmt1(b.progress)} / ${fmt1(b.target)}`}</span></div>`).join('');
+    $('badges').innerHTML = m.badges.map((b) => `<div class="badge ${b.earned ? 'on' : ''}" title="${esc(tx(b, 'desc'))}"><div class="ico">${BADGE_ICON[b.id] || '⭐'}</div><b>${esc(tx(b, 'title'))}</b><span>${b.earned ? esc(tx(b, 'desc')) : `<span dir="ltr">${fmt1(b.progress)} / ${fmt1(b.target)}</span>`}</span></div>`).join('');
   }
 
   // ---------------- Ramadan ----------------
@@ -1843,7 +1843,9 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       $('hChart').innerHTML = barChart(h.days);
       api('motivation').then(renderBadges).catch(() => {});
       $('hAvg').textContent = h.avgIntakeKcal ? fmt(h.avgIntakeKcal) : '—';
-      $('hOn').textContent = `${h.daysOnTarget}/${h.loggedDays || 0}`;
+      // same rule as the bar colours, so the number matches the green bars
+      const okDay = (d) => planGoal === 'gain' ? d.intakeKcal >= d.targetKcal * 0.95 && d.intakeKcal <= d.targetKcal * 1.15 : d.intakeKcal <= d.targetKcal;
+      $('hOn').textContent = `${h.days.filter((d) => d.meals && okDay(d)).length}/${h.loggedDays || 0}`;
       $('hLogged').textContent = `${h.loggedDays}/7`;
     } catch (e) { toast(e.message); }
   }
@@ -2555,6 +2557,10 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   }
   function closeDetail() { $('det').classList.add('hidden'); document.body.style.overflow = ''; }
   $('detBack').onclick = closeDetail;
+  // Arabic labels inside charts: give each SVG <text> its own RTL direction (Safari breaks the letters otherwise)
+  const AR_RE = /[\u0600-\u06FF]/;
+  const fixSvgText = (root) => root.querySelectorAll && root.querySelectorAll('svg text').forEach((t) => { if (AR_RE.test(t.textContent) && t.getAttribute('direction') !== 'rtl') { t.setAttribute('direction', 'rtl'); t.setAttribute('unicode-bidi', 'embed'); t.style.direction = 'rtl'; t.style.unicodeBidi = 'embed'; } });
+  new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && (n.matches?.('svg text') ? fixSvgText(n.parentNode) : fixSvgText(n))))).observe(document.body, { childList: true, subtree: true });
   document.addEventListener('click', (e) => { const el = e.target.closest && e.target.closest('[data-det]'); if (el && !el.closest('#det')) openDetail(el.dataset.det); });
   
 
