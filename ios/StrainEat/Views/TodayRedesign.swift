@@ -96,12 +96,33 @@ struct TodayHero: View {
                          burn.map { fmt($0) } ?? "—", t("kcal", "سعرة"), burnBlue) { detail = .burn }
                 }
             }
-            if let burn {
+            if let burn, b.burnIsPartialDay, let expB = b.expectedBurnKcal, expB > 0 {
+                // Burn is still adding up today: show progress toward the expected full-day burn, not a net.
+                Button { detail = .burn } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(t("Burned so far", "الحرق حتى الآن")).font(.subheadline.weight(.bold))
+                            Spacer()
+                            Text(fmt(burn)).font(.headline.weight(.heavy)).monospacedDigit()
+                            Text(t("of ~\(fmt(expB)) expected", "من ~\(fmt(expB)) متوقعة")).font(.caption)
+                        }
+                        if expB - target > 0 {
+                            Text(t("Eat your budget (\(fmt(target))) and you'll end the day ~\(fmt(expB - target)) kcal in deficit",
+                                   "لو أكلت ميزانيتك (\(fmt(target))) يكون عجزك حوالي \(fmt(expB - target)) سعرة نهاية اليوم"))
+                                .font(.caption).opacity(0.8)
+                        }
+                    }
+                    .foregroundStyle(Color(red: 0.07, green: 0.25, blue: 0.44))
+                    .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.sky, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            } else if let burn {
                 let net = eaten - burn
                 Button { detail = .burn } label: {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack {
-                            Text(t("Net so far", "الصافي حتى الآن")).font(.subheadline.weight(.bold))
+                            Text(t("Net for the day", "صافي اليوم")).font(.subheadline.weight(.bold))
                             Spacer()
                             Text("\u{2066}\(net > 0 ? "+" : net < 0 ? "−" : "")\(fmt(abs(net)))\u{2069}").font(.headline.weight(.heavy)).monospacedDigit()
                             Text(t("kcal", "سعرة")).font(.subheadline)

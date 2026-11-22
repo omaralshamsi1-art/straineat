@@ -29,6 +29,8 @@ enum Theme {
     static let fiber = dyn(0x2F8F5B, 0x6CC995)
     static let good = dyn(0x1D7A3E, 0x7FD69A)
     static let goodSoft = dyn(0xDFF2DF, 0x1A2E1F)
+    static let dangerText = dyn(0xB3261E, 0xFFB4A6)
+    static let dangerSoft = dyn(0xFDE4E0, 0x4A1C15)
     static let bad = dyn(0xD23B2A, 0xFF7B6B)
     static let badSoft = dyn(0xFDE4E0, 0x3D1B16)
     static let warn = dyn(0x8A6D00, 0xF0D36A)

@@ -125,7 +125,9 @@ struct MealReviewView: View {
                 Button { Task { await confirm() } } label: {
                     HStack { Spacer(); if busy { ProgressView() } else { Text(meal.isConfirmed ? t("Save changes", "حفظ التعديلات") : t("Confirm and add to today", "تأكيد وإضافة لليوم")).bold().foregroundStyle(Theme.brand2) }; Spacer() }
                 }.disabled(busy || items.isEmpty)
-                Button(role: .destructive) { Task { await remove() } } label: { HStack { Spacer(); Text(t("Delete meal", "حذف الوجبة")); Spacer() } }
+                Button(role: .destructive) { Task { await remove() } } label: { HStack { Spacer(); Text(t("Delete meal", "حذف الوجبة")).bold(); Spacer() } }
+                    .foregroundStyle(Theme.dangerText)
+                    .listRowBackground(Theme.dangerSoft)
             }
         }
         .scrollContentBackground(.hidden)

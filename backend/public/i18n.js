@@ -9,6 +9,11 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"الحرق حتى الآن": "Burned so far",
+"من ~{} سعرة متوقعة": "of ~{} kcal expected",
+"لو أكلت ميزانيتك ({}) يكون عجزك حوالي {} سعرة نهاية اليوم": "Eat your budget ({}) and you'll end the day ~{} kcal in deficit",
+"الحرق يتراكم خلال اليوم": "Burn keeps adding up through the day",
+"صافي اليوم": "Net for the day",
 "عجز {} سعرة يومياً": "{} kcal/day deficit",
 "فائض {} سعرة يومياً": "{} kcal/day surplus",
 "ميزانية اليوم": "Daily budget",

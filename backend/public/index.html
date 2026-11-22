@@ -378,7 +378,9 @@ html[dir="rtl"] em.acc, html[dir="rtl"] .acc { font-style: normal; font-family: 
 html[data-theme="dark"] .btn { color: #111113; }
 .btn.ghost { background: var(--card-2); color: var(--ink); border: 1px solid var(--line); }
 .card .btn.ghost { background: var(--card-2); }
-.btn.text { color: #c2412d; }
+.btn.text { color: #b3261e; background: #fde4e0; font-weight: 700; }
+html[data-theme="dark"] .btn.text { color: #ffb4a6; background: #4a1c15; }
+html[data-theme="dark"] .btn.ghost { color: var(--ink); }
 .chip.src { background: var(--card-2); border-color: var(--line); color: var(--ink); font-weight: 600; padding: 5px 12px; }
 .chip { border-radius: 999px; }
 input, select, textarea { border-radius: 16px; background: var(--card-2); }
@@ -643,7 +645,7 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
           <button data-det="burn"><span id="hsBurnL">حرقت</span><b class="burn"><span class="num" id="hsBurn">—</span> <small>سعرة</small></b></button>
         </div>
       </div>
-      <button class="netrow hidden" id="netRow" data-det="burn"><b>الصافي حتى الآن</b><span><b class="num" id="netV" dir="ltr"></b> سعرة</span><small id="netT"></small></button>
+      <button class="netrow hidden" id="netRow" data-det="burn"><b id="netL">الحرق حتى الآن</b><span><b class="num" id="netV" dir="ltr"></b> <span id="netU">سعرة</span></span><small id="netT"></small></button>
       <div class="protrow"><div class="row"><b>البروتين</b><span class="muted"><b class="num" id="protHave">—</b> <span id="protOf"></span></span></div><div class="bar"><i id="protBar" style="width:0;background:var(--p)"></i></div></div>
       <div class="status" id="dayStatus" role="status"></div>
       <div id="kPendRow" class="hidden small" style="margin:8px 4px 0;color:var(--warn)">مسودات غير مؤكدة: <b class="num" id="kPend">—</b> سعرة</div>
@@ -2335,9 +2337,20 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
     $('hsBurn').textContent = burn != null ? fmt(burn) : '—';
     $('netRow').classList.toggle('hidden', burn == null);
     if (burn != null) {
-      const net = eaten - burn;
-      $('netV').textContent = `${net > 0 ? '+' : net < 0 ? '−' : ''}${fmt(Math.abs(net))}`;
-      $('netT').textContent = net <= 0 ? T('حرقت أكثر مما أكلت') : T('أكلت أكثر مما حرقت');
+      const expB = b.expectedBurnKcal;
+      if (b.burnIsPartialDay && expB) {
+        // Early in the day burn is still accumulating: show progress toward the expected full-day burn, not a net.
+        $('netL').textContent = T('الحرق حتى الآن');
+        $('netV').textContent = fmt(burn);
+        $('netU').textContent = L`من ~${fmt(expB)} سعرة متوقعة`;
+        $('netT').textContent = expB - target > 0 ? L`لو أكلت ميزانيتك (${fmt(target)}) يكون عجزك حوالي ${fmt(expB - target)} سعرة نهاية اليوم` : T('الحرق يتراكم خلال اليوم');
+      } else {
+        const net = eaten - burn;
+        $('netL').textContent = T('صافي اليوم');
+        $('netV').textContent = `${net > 0 ? '+' : net < 0 ? '−' : ''}${fmt(Math.abs(net))}`;
+        $('netU').textContent = T('سعرة');
+        $('netT').textContent = net <= 0 ? T('حرقت أكثر مما أكلت') : T('أكلت أكثر مما حرقت');
+      }
     }
     const pw = (b.macroTargets || {}).protein_g || 0, ph = b.intake.protein_g || 0;
     $('protHave').textContent = fmt(ph);
