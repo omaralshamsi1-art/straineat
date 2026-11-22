@@ -19,6 +19,11 @@ struct TodayView: View {
                         HStack {
                             Text(t("My day", "يومي")).font(.title3.weight(.heavy))
                             Spacer()
+                            Button { showIdeas = true } label: {
+                                Label(t("Meal ideas", "اقتراح وجبة"), systemImage: "lightbulb").font(.subheadline.weight(.semibold))
+                                    .padding(.horizontal, 12).frame(minHeight: 34).background(Theme.card, in: Capsule())
+                            }
+                            .buttonStyle(.plain)
                             Button(action: onLog) { Image(systemName: "plus").font(.headline.weight(.bold)).foregroundStyle(Theme.bg).frame(width: 34, height: 34).background(Theme.ink, in: RoundedRectangle(cornerRadius: 11)).contentShape(Rectangle().inset(by: -5)) }
                                 .accessibilityLabel(t("Log a meal", "سجّل وجبة"))
                         }

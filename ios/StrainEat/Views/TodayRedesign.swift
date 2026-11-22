@@ -469,6 +469,7 @@ struct InsightStack: View {
     var onSchedule: (DaySchedule) -> Void
     @State private var gone: [String] = []
     @State private var drag: CGFloat = 0
+    @State private var pos = 0
 
     struct Item: Identifiable { let id: String; let icon: String; let title: String; let sub: String; var acts: [(String, Bool, () -> Void)] = [] }
 
@@ -514,19 +515,22 @@ struct InsightStack: View {
     }
 
     var body: some View {
-        let list = items
+        let all = items
+        let n = all.count, i0 = n > 0 ? ((pos % n) + n) % n : 0
+        let list = n > 0 ? Array(all[i0...] + all[..<i0]) : []
+        VStack(spacing: 10) {
         ZStack {
             if list.count > 1 {
                 RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.card).opacity(0.55)
                     .padding(.horizontal, 12).offset(y: 9)
             }
             if let c = list.first {
-                card(c, count: list.count)
+                card(c, index: i0 + 1, count: n)
                     .offset(x: drag).rotationEffect(.degrees(Double(drag / 25)))
                     .gesture(DragGesture(minimumDistance: 12)
                         .onChanged { drag = $0.translation.width }
                         .onEnded { v in
-                            if abs(v.translation.width) > 80 { fly(c.id, dir: v.translation.width > 0 ? 1 : -1) }
+                            if abs(v.translation.width) > 80 && n > 1 { fly(c.id, dir: v.translation.width > 0 ? 1 : -1, hide: false) }
                             else { withAnimation(.spring(duration: 0.25)) { drag = 0 } }
                         })
                     .id(c.id)
@@ -536,17 +540,25 @@ struct InsightStack: View {
                     .font(.footnote).foregroundStyle(Theme.muted).padding(10)
             }
         }
+        if !gone.isEmpty {
+            Button { gone = []; pos = 0; UserDefaults.standard.set(gone, forKey: key) } label: {
+                Label(t("Show hidden cards (\(gone.count))", "إظهار البطاقات المخفية (\(gone.count))"), systemImage: "arrow.counterclockwise")
+                    .font(.caption).foregroundStyle(Theme.muted)
+            }
+            .buttonStyle(.plain)
+        }
+        }
         .onAppear { gone = UserDefaults.standard.stringArray(forKey: key) ?? [] }
     }
 
-    private func card(_ c: Item, count: Int) -> some View {
+    private func card(_ c: Item, index: Int, count: Int) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Image(systemName: c.icon).foregroundStyle(Theme.warn)
                 Text(c.title).font(.headline).lineLimit(2)
                 Spacer()
-                if count > 1 { Text("1/\(count)").font(.caption).foregroundStyle(Theme.muted).monospacedDigit() }
-                Button { fly(c.id, dir: appLang == .ar ? -1 : 1) } label: { Image(systemName: "xmark").font(.caption.weight(.bold)).foregroundStyle(Theme.muted).padding(6) }
+                if count > 1 { Text("\(index)/\(count)").font(.caption).foregroundStyle(Theme.muted).monospacedDigit() }
+                Button { fly(c.id, dir: appLang == .ar ? -1 : 1, hide: true) } label: { Image(systemName: "xmark").font(.caption.weight(.bold)).foregroundStyle(Theme.muted).padding(6) }
                     .accessibilityLabel(t("Hide", "إخفاء"))
             }
             if !c.sub.isEmpty { Text(c.sub).font(.subheadline).foregroundStyle(Theme.muted).padding(.leading, 30) }
@@ -554,7 +566,7 @@ struct InsightStack: View {
                 HStack(spacing: 8) {
                     ForEach(Array(c.acts.enumerated()), id: \.offset) { _, a in
                         Button(a.0, action: a.2).font(.subheadline.weight(.bold))
-                            .foregroundStyle(a.1 ? .white : Theme.ink)
+                            .foregroundStyle(a.1 ? Color(red: 0.09, green: 0.07, blue: 0.12) : Theme.ink)
                             .padding(.horizontal, 16).frame(minHeight: 38)
                             .background(a.1 ? Theme.brand2 : Theme.card2, in: Capsule())
                     }
@@ -568,10 +580,12 @@ struct InsightStack: View {
         .shadow(color: .black.opacity(0.18), radius: 9, y: 4)
     }
 
-    private func fly(_ id: String, dir: CGFloat) {
+    /// Swipe = next card (they cycle); × = hide for today (restorable).
+    private func fly(_ id: String, dir: CGFloat, hide: Bool) {
         withAnimation(.easeIn(duration: 0.22)) { drag = dir * 420 }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-            gone.append(id); UserDefaults.standard.set(gone, forKey: key); drag = 0
+            if hide { gone.append(id); UserDefaults.standard.set(gone, forKey: key) } else { pos += 1 }
+            drag = 0
         }
     }
 
