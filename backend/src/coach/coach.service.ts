@@ -129,6 +129,10 @@ export class CoachService {
     const seenKey = `suggest6-seen:${today}`;
     const seen: string[] = ((await this.repo.getCache(userId, seenKey))?.payload as any)?.items ?? [];
     const place = [profile.area, profile.city].filter(Boolean).join(', ') || 'the UAE';
+    const wh = ((await this.repo.getCache(userId, `whoop-day:${today}`))?.payload ?? null) as any;
+    const whoopLine = wh && (wh.recovery != null || wh.sleepMin != null)
+      ? `WHOOP today: ${wh.recovery != null ? `recovery ${wh.recovery}% (${wh.recovery < 34 ? 'LOW' : wh.recovery < 67 ? 'moderate' : 'high'})` : ''}${wh.sleepMin != null ? `, slept ${Math.floor(wh.sleepMin / 60)}h${wh.sleepMin % 60}m${wh.sleepNeededMin ? ` of ${Math.floor(wh.sleepNeededMin / 60)}h${wh.sleepNeededMin % 60}m needed` : ''}` : ''}${wh.strain != null ? `, day strain ${wh.strain}/21` : ''}.`
+      : '';
     const result = await this.cached(userId, key, opts.force ? 0 : minutes(45), async () => {
       const system = `You are StrainEat's nutrition coach. Give the user 6 options for their next meal, in three groups:
 - home: 2 home recipes (one serving each) with exact ingredient amounts (g, ml, spoons, pieces), 3–6 short steps and prep minutes. Everyday ingredients sold in UAE supermarkets; vary cuisines (Gulf, Levantine, Indian, Asian, Western).
@@ -144,6 +148,8 @@ Every option needs realistic kcal, protein, carbs and fat for what is described.
         ram.active && ram.split ? `Ramadan mode: suhoor ≈${ram.split.suhoor}, iftar ≈${ram.split.iftar}, evening ≈${ram.split.evening} kcal.` : '',
         `avoidRestriction: ${!!profile.screening?.edHistory}. medicalSupervision: ${!!profile.screening?.medicalSupervision}.`,
         dietLine(profile.dietStyle, profile.conditions),
+        whoopLine,
+        whoopLine ? 'If recovery is LOW or sleep was short (under ~6h): prefer easy, protein-rich, hydrating options with complex carbs, mention cravings gently in "why", and never push extra restriction. High strain: make sure options refuel (carbs + protein).' : '',
         profile.mealsPerDay ? `The user usually eats ${profile.mealsPerDay} meal(s) a day — size the options for that.` : '',
         favourites.length ? `Recent meals the user enjoyed:\n- ${favourites.join('\n- ')}` : 'No meal history yet.',
         seen.length ? `Already suggested today — give DIFFERENT recipes and different restaurants this time:\n- ${seen.slice(-24).join('\n- ')}` : '',

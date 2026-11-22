@@ -11,7 +11,7 @@ import { REPOSITORY, Repository } from '../../storage/repository';
 const AUTH_URL = 'https://api.prod.whoop.com/oauth/oauth2/auth';
 const TOKEN_URL = 'https://api.prod.whoop.com/oauth/oauth2/token';
 const API_BASE = 'https://api.prod.whoop.com/developer';
-const SCOPES = 'offline read:cycles read:workout read:profile read:body_measurement';
+const SCOPES = 'offline read:cycles read:workout read:profile read:body_measurement read:recovery read:sleep';
 const KJ_PER_KCAL = 4.184;
 
 
@@ -90,6 +90,7 @@ export class WhoopService {
 
     // A WHOOP cycle runs sleep-onset → next sleep-onset; attribute it to the local date of its midpoint.
     const byDate = new Map<string, number>();
+    const strainByDate = new Map<string, number>();
     for (const c of cycles) {
       if (c.score_state !== 'SCORED' || !c.score) continue;
       const s = new Date(c.start).getTime();
@@ -97,6 +98,19 @@ export class WhoopService {
       const date = localDate(new Date((s + e) / 2), profile.timezone);
       if (date < from || date > to) continue;
       byDate.set(date, Math.max(byDate.get(date) ?? 0, c.score.kilojoule / KJ_PER_KCAL));
+      if (c.score.strain != null) strainByDate.set(date, Math.round(c.score.strain * 10) / 10);
+    }
+    // Recovery + sleep (needs read:recovery / read:sleep — older connections must reconnect once)
+    let wellness = 0;
+    try {
+      wellness = await this.syncWellness(userId, start, end, profile.timezone, from, to, strainByDate);
+      await this.repo.setCache({ userId, key: 'whoop-wellness-scope', payload: { ok: true }, createdAt: new Date().toISOString() });
+    } catch (e: any) {
+      const msg = String(e?.message ?? e);
+      this.log.warn(`WHOOP recovery/sleep skipped: ${msg.slice(0, 200)}`);
+      if (/WHOOP API (401|403)/.test(msg)) {
+        await this.repo.setCache({ userId, key: 'whoop-wellness-scope', payload: { ok: false }, createdAt: new Date().toISOString() });
+      }
     }
     // Workouts (activity type, strain, HR, zones)
     let workouts = 0;
@@ -129,7 +143,88 @@ export class WhoopService {
         [...byDate].map(([date, kcal]) => ({ date, source: 'whoop' as const, totalKcal: Math.round(kcal) })),
       );
     }
-    return { cycles: cycles.length, workouts, weightKg, days: Object.fromEntries([...byDate].map(([d, k]) => [d, Math.round(k)])) };
+    return { cycles: cycles.length, workouts, wellness, weightKg, days: Object.fromEntries([...byDate].map(([d, k]) => [d, Math.round(k)])) };
+  }
+
+  /** Recovery (HRV, resting HR, SpO2, skin temp) + main sleep per wake-up day, stored as `whoop-day:<date>`. */
+  private async syncWellness(userId: string, start: Date, end: Date, tz: string, from: string, to: string, strain: Map<string, number>): Promise<number> {
+    // fetch a bit earlier so last night's sleep (started before `from`) is included
+    const s0 = new Date(start.getTime() - 18 * 3600 * 1000);
+    const sleeps = await this.collect(userId, '/v2/activity/sleep', s0, end);
+    const recs = await this.collect(userId, '/v2/recovery', s0, end);
+    const days = new Map<string, Record<string, unknown>>();
+    const day = (d: string) => days.get(d) ?? (days.set(d, {}), days.get(d)!);
+    const min = (ms: unknown) => (typeof ms === 'number' ? Math.round(ms / 60000) : null);
+    const sleepDate = new Map<string, string>();
+    for (const sl of sleeps) {
+      if (!sl?.end || sl.nap || sl.score_state !== 'SCORED' || !sl.score) continue;
+      const d = localDate(new Date(sl.end), tz);
+      sleepDate.set(String(sl.id), d);
+      const st = sl.score.stage_summary ?? {};
+      const asleep = (st.total_light_sleep_time_milli ?? 0) + (st.total_slow_wave_sleep_time_milli ?? 0) + (st.total_rem_sleep_time_milli ?? 0);
+      const need = sl.score.sleep_needed ?? {};
+      const needMs = (need.baseline_milli ?? 0) + (need.need_from_sleep_debt_milli ?? 0) + (need.need_from_recent_strain_milli ?? 0) + (need.need_from_recent_nap_milli ?? 0);
+      const prev = day(d);
+      if ((prev.sleepMin as number | undefined) != null && (prev.sleepMin as number) >= Math.round(asleep / 60000)) continue; // keep the longest
+      Object.assign(prev, {
+        sleepStart: sl.start, sleepEnd: sl.end,
+        sleepMin: Math.round(asleep / 60000), inBedMin: min(st.total_in_bed_time_milli), awakeMin: min(st.total_awake_time_milli),
+        lightMin: min(st.total_light_sleep_time_milli), deepMin: min(st.total_slow_wave_sleep_time_milli), remMin: min(st.total_rem_sleep_time_milli),
+        sleepNeededMin: needMs ? Math.round(needMs / 60000) : null,
+        sleepPerformance: sl.score.sleep_performance_percentage ?? null, sleepEfficiency: sl.score.sleep_efficiency_percentage != null ? Math.round(sl.score.sleep_efficiency_percentage) : null,
+        sleepConsistency: sl.score.sleep_consistency_percentage ?? null, respiratoryRate: sl.score.respiratory_rate != null ? Math.round(sl.score.respiratory_rate * 10) / 10 : null,
+        disturbances: st.disturbance_count ?? null,
+      });
+    }
+    for (const r of recs) {
+      if (r?.score_state !== 'SCORED' || !r.score) continue;
+      const d = sleepDate.get(String(r.sleep_id)) ?? localDate(new Date(r.created_at ?? r.updated_at ?? Date.now()), tz);
+      Object.assign(day(d), {
+        recovery: r.score.recovery_score ?? null,
+        restingHr: r.score.resting_heart_rate ?? null,
+        hrv: r.score.hrv_rmssd_milli != null ? Math.round(r.score.hrv_rmssd_milli) : null,
+        spo2: r.score.spo2_percentage != null ? Math.round(r.score.spo2_percentage * 10) / 10 : null,
+        skinTemp: r.score.skin_temp_celsius != null ? Math.round(r.score.skin_temp_celsius * 10) / 10 : null,
+        calibrating: !!r.score.user_calibrating,
+      });
+    }
+    for (const [d, v] of strain) day(d).strain = v;
+    let n = 0;
+    for (const [d, v] of days) {
+      if (d < addDaysIso(from, -1) || d > to) continue;
+      const key = `whoop-day:${d}`;
+      const old = ((await this.repo.getCache(userId, key))?.payload as Record<string, unknown>) ?? {};
+      await this.repo.setCache({ userId, key, payload: { ...old, ...v, date: d }, createdAt: new Date().toISOString() });
+      n++;
+    }
+    return n;
+  }
+
+  private async collect(userId: string, path: string, start: Date, end: Date): Promise<any[]> {
+    const out: any[] = [];
+    let nextToken: string | undefined;
+    for (let page = 0; page < 6; page++) {
+      const q = new URLSearchParams({ start: start.toISOString(), end: end.toISOString(), limit: '25' });
+      if (nextToken) q.set('nextToken', nextToken);
+      const body = await this.api(userId, `${path}?${q}`);
+      out.push(...(body.records ?? []));
+      nextToken = body.next_token ?? undefined;
+      if (!nextToken) break;
+    }
+    return out;
+  }
+
+  /** Recovery / sleep / strain for each of the last `days` local days (from the sync cache). */
+  async wellness(userId: string, date: string, days = 7) {
+    const out: Record<string, unknown>[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = addDaysIso(date, -i);
+      const hit = await this.repo.getCache(userId, `whoop-day:${d}`);
+      out.push({ date: d, ...((hit?.payload as object) ?? {}) });
+    }
+    const scope = (await this.repo.getCache(userId, 'whoop-wellness-scope'))?.payload as { ok?: boolean } | undefined;
+    const connected = !!(await this.repo.getTokens(userId, 'whoop'));
+    return { connected, needsReconnect: connected && scope?.ok === false, today: out[out.length - 1], days: out };
   }
 
   private async syncWorkouts(userId: string, start: Date, end: Date, tz: string): Promise<number> {
@@ -272,4 +367,10 @@ export class WhoopService {
     if (!v) throw new BadRequestException(`${key} is not configured`);
     return v;
   }
+}
+
+function addDaysIso(d: string, n: number) {
+  const x = new Date(`${d}T12:00:00Z`);
+  x.setUTCDate(x.getUTCDate() + n);
+  return x.toISOString().slice(0, 10);
 }

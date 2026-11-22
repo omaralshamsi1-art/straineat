@@ -74,6 +74,11 @@ const TOOLS: ChatTool[] = [
     parameters: { type: 'object', properties: { date: { type: 'string', description: 'YYYY-MM-DD (optional)' } } },
   },
   {
+    name: 'get_wellness',
+    description: 'WHOOP recovery (score, HRV, resting HR, SpO2, skin temp), sleep (duration, stages, performance, need) and day strain for the last N days (1–14). Use to connect eating advice with recovery, sleep and training load.',
+    parameters: { type: 'object', properties: { days: { type: 'integer' } } },
+  },
+  {
     name: 'get_favorites',
     description: "The user's most-logged meals.",
     parameters: { type: 'object', properties: {} },
@@ -251,6 +256,16 @@ ${APP_GUIDE}`;
           return this.motivation.summary(userId);
         case 'get_schedule':
           return this.schedule ? this.schedule.day(userId, isIsoDate(args.date) ? args.date : undefined) : { error: 'schedule unavailable' };
+        case 'get_wellness': {
+          const n = Math.min(Math.max(Number(args.days) || 7, 1), 14);
+          const days = [];
+          for (let i = n - 1; i >= 0; i--) {
+            const d = addDays(today, -i);
+            const hit = await this.repo.getCache(userId, `whoop-day:${d}`);
+            days.push({ date: d, ...((hit?.payload as object) ?? {}) });
+          }
+          return days.some((x: any) => x.recovery != null || x.sleepMin != null) ? { days } : { note: 'No WHOOP recovery/sleep data (not connected or needs reconnect in Settings → Burn source).' };
+        }
         case 'get_favorites':
           return ((await this.meals.favorites(userId)) as any[]).slice(0, 15);
         case 'propose_log_meal': {

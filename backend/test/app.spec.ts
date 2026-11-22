@@ -279,6 +279,19 @@ describe('WHOOP', () => {
           ],
         });
       }
+      if (url.includes('/v2/activity/sleep')) {
+        return json({ records: [
+          { id: 's-1', start: '2026-11-14T20:10:00Z', end: '2026-11-15T03:05:00Z', nap: false, score_state: 'SCORED',
+            score: { stage_summary: { total_in_bed_time_milli: 24900000, total_awake_time_milli: 1500000, total_light_sleep_time_milli: 11700000, total_slow_wave_sleep_time_milli: 5400000, total_rem_sleep_time_milli: 6300000, disturbance_count: 9 },
+              sleep_needed: { baseline_milli: 27000000, need_from_sleep_debt_milli: 1800000, need_from_recent_strain_milli: 600000, need_from_recent_nap_milli: 0 },
+              respiratory_rate: 15.92, sleep_performance_percentage: 72, sleep_consistency_percentage: 64, sleep_efficiency_percentage: 93.9 } },
+          { id: 's-nap', start: '2026-11-15T10:00:00Z', end: '2026-11-15T10:30:00Z', nap: true, score_state: 'SCORED', score: { stage_summary: {} } },
+        ] });
+      }
+      if (url.includes('/v2/recovery')) {
+        return json({ records: [{ cycle_id: 1, sleep_id: 's-1', created_at: '2026-11-15T03:10:00Z', score_state: 'SCORED',
+          score: { user_calibrating: false, recovery_score: 76, resting_heart_rate: 56, hrv_rmssd_milli: 37.4, spo2_percentage: 95.2, skin_temp_celsius: 33.71 } }] });
+      }
       if (url.includes('/v2/cycle')) {
         cycleCalls++;
         if (init.headers.Authorization === 'Bearer A1') return { ok: false, status: 401, text: async () => 'expired' };
@@ -307,6 +320,27 @@ describe('WHOOP', () => {
     expect(b.activity.workouts[0]).toMatchObject({ sport: 'running', sportAr: 'جري', kind: 'run', durationMin: 45, kcal: 500, strain: 11.2, avgHr: 152, distanceM: 7012 });
     expect(b.activity.workouts[0].zonesMin).toEqual([0, 5, 10, 20, 9, 1]);
     expect(b.activity).toMatchObject({ totalMin: 45, totalKcal: 500, maxStrain: 11.2 });
+    expect(url.searchParams.get('scope')).toContain('read:recovery');
+    const w: any = await whoop.wellness('u1', '2026-11-15', 2);
+    expect(w.needsReconnect).toBe(false);
+    expect(w.today).toMatchObject({ date: '2026-11-15', recovery: 76, restingHr: 56, hrv: 37, spo2: 95.2, skinTemp: 33.7, strain: 10,
+      sleepMin: 390, deepMin: 90, remMin: 105, lightMin: 195, awakeMin: 25, sleepNeededMin: 490, sleepPerformance: 72, sleepEfficiency: 94, respiratoryRate: 15.9 });
+    expect(w.days).toHaveLength(2);
+  });
+
+  it('flags reconnect when recovery/sleep scopes are missing', async () => {
+    const s = setup();
+    const cfg = config({ WHOOP_CLIENT_ID: 'cid', WHOOP_CLIENT_SECRET: 'sec', WHOOP_REDIRECT_URI: 'https://api.test/cb' });
+    const fetchFn: any = vi.fn(async (u: string): Promise<any> => {
+      if (u.includes('/oauth2/token')) return json({ access_token: 'A', refresh_token: 'R', expires_in: 3600 });
+      if (u.includes('/v2/recovery') || u.includes('/v2/activity/sleep')) return { ok: false, status: 403, text: async () => 'scope' };
+      return json({ records: [] });
+    });
+    const whoop = new WhoopService(cfg, s.repo, s.energy, s.profiles, fetchFn);
+    const url = new URL(whoop.authorizeUrl('u2'));
+    await whoop.handleCallback('c', url.searchParams.get('state')!);
+    await whoop.sync('u2', '2026-11-15', '2026-11-15');
+    expect((await whoop.wellness('u2', '2026-11-15')).needsReconnect).toBe(true);
   });
 });
 

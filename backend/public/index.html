@@ -476,6 +476,15 @@ html[data-theme="dark"] .bub.me { background: #4a3a8c; }
 .ok-t { color: var(--good); } .hi-t { color: var(--warn); } .lo-t { color: #1f5fa8; }
 html[data-theme="dark"] .lo-t { color: #8cc1f2; }
 #dayStatus { border-radius: 16px; margin-top: 8px; }
+/* recovery & sleep card */
+.wcard { display: block; width: 100%; border: 0; text-align: start; background: var(--card); border-radius: 24px; padding: 16px; margin-top: 10px; cursor: pointer; color: var(--ink); }
+.wcard.hidden { display: none; }
+.wcard .mh { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 800; letter-spacing: .06em; }
+.wcard .mh span { color: var(--muted); font-size: 18px; line-height: 1; }
+.wrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.wrow .ws b { display: block; font-size: 24px; font-weight: 800; letter-spacing: -0.03em; }
+.wrow .ws span { font-size: 11.5px; font-weight: 700; color: var(--muted); letter-spacing: .05em; }
+.rec-hi { color: #16a34a; } .rec-mid { color: #ca8a04; } .rec-lo { color: #dc2626; }
 /* detail page */
 #det { position: fixed; inset: 0; z-index: 38; background: var(--bg); overflow-y: auto; }
 #det.hidden { display: none; }
@@ -596,6 +605,10 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
       <button class="mon" data-det="eaten"><div class="mh">مراقبة التغذية <span>›</span></div><div class="mb"><span class="badge2" id="monNutB">—</span><div><b id="monNutT">—</b><span class="small muted" id="monNutS"></span></div></div></button>
       <button class="mon" data-det="burn"><div class="mh">الطاقة <span>›</span></div><div class="mb"><span class="badge2" id="monEnB">—</span><div><b id="monEnT">—</b><span class="small muted" id="monEnS"></span></div></div></button>
     </div>
+    <button class="wcard hidden" id="wellCard" data-det="well">
+      <div class="mh">الاستشفاء والنوم · WHOOP <span>›</span></div>
+      <div class="wrow" id="wellRow"></div>
+    </button>
     <div id="kPendRow" class="hidden small" style="margin:8px 4px 0;color:var(--warn)">مسودات غير مؤكدة: <b class="num" id="kPend">—</b> سعرة</div>
 
     <div class="sect"><em class="acc">يومي</em></div>
@@ -1482,6 +1495,7 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
       renderRamadan(b.ramadan);
       _loadToday();
       loadSchedule();
+      loadWellness();
       ramCtx = b.ramadan;
       $('mealCount').textContent = b.meals.length ? L`${b.meals.length} وجبات` : '';
       $('mealList').innerHTML = b.meals.length ? b.meals.map((m) => {
@@ -2163,6 +2177,76 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
   }));
   paintThemeSw();
 
+  // ---------------- WHOOP recovery & sleep ----------------
+  let wellCache = null;
+  const hm = (m) => (m == null ? '—' : `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`);
+  const recCls = (r) => (r == null ? '' : r >= 67 ? 'rec-hi' : r >= 34 ? 'rec-mid' : 'rec-lo');
+  const recColor = (r) => (r >= 67 ? '#16a34a' : r >= 34 ? '#eab308' : '#dc2626');
+  async function loadWellness() {
+    const card = $('wellCard');
+    if (isoDay(day) !== isoDay(new Date())) { card.classList.add('hidden'); return; }
+    try {
+      const w = await api(`integrations/whoop/wellness?date=${isoDay(day)}`);
+      wellCache = w;
+      if (!w.connected) { card.classList.add('hidden'); return; }
+      card.classList.remove('hidden');
+      if (w.needsReconnect) {
+        $('wellRow').innerHTML = `<div style="grid-column:1/-1" class="small">${T('أعد ربط WHOOP مرة واحدة لإظهار الاستشفاء والنوم.')} <b style="color:var(--brand-2)">${T('إعادة الربط ›')}</b></div>`;
+        card.dataset.det = 'reconnect';
+        return;
+      }
+      card.dataset.det = 'well';
+      const t = w.today || {};
+      if (t.recovery == null && t.sleepMin == null && t.strain == null) {
+        $('wellRow').innerHTML = `<div style="grid-column:1/-1" class="small muted">${T('لا توجد بيانات اليوم بعد — اسحب الشاشة للتحديث.')}</div>`;
+        return;
+      }
+      $('wellRow').innerHTML =
+        `<div class="ws"><b class="num ${recCls(t.recovery)}" dir="ltr">${t.recovery != null ? t.recovery + '%' : '—'}</b><span>${T('الاستشفاء')}</span></div>` +
+        `<div class="ws"><b class="num" dir="ltr">${hm(t.sleepMin)}</b><span>${T('النوم')}</span></div>` +
+        `<div class="ws"><b class="num" dir="ltr" style="color:#1e90e8">${t.strain != null ? t.strain : '—'}</b><span>${T('الجهد')}</span></div>`;
+    } catch { card.classList.add('hidden'); }
+  }
+  function wellnessDetail() {
+    const w = wellCache; if (!w) return '';
+    const t = w.today || {}, past = w.days.slice(0, -1);
+    const avg = (k) => { const v = past.map((d) => d[k]).filter((x) => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+    const vs = (k, val, goodHigh, unit) => {
+      const a = avg(k); if (val == null || a == null) return ['', ''];
+      const diff = val - a, near = Math.abs(diff) <= Math.max(1, Math.abs(a) * 0.05);
+      if (near) return [L`✓ قريب من متوسطك ${fmt1(a)}`, 'ok'];
+      const better = goodHigh ? diff > 0 : diff < 0;
+      return [diff > 0 ? L`↑ أعلى من متوسطك ${fmt1(a)}` : L`↓ أقل من متوسطك ${fmt1(a)}`, better ? 'ok' : 'hi'];
+    };
+    const bars = (() => {
+      const W = 320, H = 120, n = w.days.length, bw = (W / n) * 0.56;
+      return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="margin-top:10px">${w.days.map((d, i) => {
+        const v = d.recovery || 0, bh = (v / 100) * (H - 18), x = (W / n) * i + (W / n - bw) / 2;
+        return `<rect x="${x}" y="${H - 14 - bh}" width="${bw}" height="${Math.max(bh, 2)}" rx="5" fill="${d.recovery != null ? recColor(d.recovery) : 'var(--ring-track)'}" opacity="${i === n - 1 ? 1 : 0.6}"/><text x="${(W / n) * i + W / n / 2}" y="${H - 1}" text-anchor="middle" font-size="9" fill="var(--muted)">${new Date(d.date + 'T12:00').toLocaleDateString(LOC, { weekday: 'narrow' })}</text>`;
+      }).join('')}</svg>`;
+    })();
+    const head = `<div class="dchart"><div class="t">${T('الاستشفاء آخر 7 أيام')}</div><div class="big num ${recCls(t.recovery)}">${t.recovery != null ? t.recovery + '%' : '—'}</div>${t.calibrating ? `<div class="small muted">${T('WHOOP ما زال يعاير قياساتك')}</div>` : ''}${bars}</div>`;
+    const [hrvC, hrvS] = vs('hrv', t.hrv, true), [rhrC, rhrS] = vs('restingHr', t.restingHr, false), [rrC, rrS] = vs('respiratoryRate', t.respiratoryRate, false);
+    const need = t.sleepNeededMin;
+    const tiles = [
+      tileHtml(T('تقلّب النبض HRV'), t.hrv ?? '—', ' ms', hrvC, hrvS),
+      tileHtml(T('نبض الراحة'), t.restingHr ?? '—', ' bpm', rhrC, rhrS),
+      tileHtml(T('أكسجين الدم'), t.spo2 ?? '—', '%', t.spo2 != null ? (t.spo2 >= 95 ? T('✓ ضمن 95–100%') : T('↓ أقل من 95%')) : '', t.spo2 >= 95 ? 'ok' : 'hi'),
+      tileHtml(T('حرارة الجلد'), t.skinTemp ?? '—', ' °C', '', ''),
+      tileHtml(T('معدل التنفس'), t.respiratoryRate ?? '—', ' rpm', rrC, rrS),
+      tileHtml(T('النوم'), hm(t.sleepMin), '', need ? L`الاحتياج ${hm(need)}` : '', t.sleepMin != null && need && t.sleepMin >= need * 0.85 ? 'ok' : 'hi'),
+      tileHtml(T('أداء النوم'), t.sleepPerformance ?? '—', '%', t.sleepPerformance != null ? (t.sleepPerformance >= 85 ? T('✓ ممتاز') : t.sleepPerformance >= 70 ? T('✓ جيد') : T('↓ ضعيف')) : '', t.sleepPerformance >= 70 ? 'ok' : 'hi'),
+      tileHtml(T('كفاءة النوم'), t.sleepEfficiency ?? '—', '%', '', ''),
+      tileHtml(T('نوم عميق'), hm(t.deepMin), '', '', ''),
+      tileHtml(T('نوم REM'), hm(t.remMin), '', '', ''),
+      tileHtml(T('نوم خفيف'), hm(t.lightMin), '', '', ''),
+      tileHtml(T('الجهد اليومي'), t.strain ?? '—', ' / 21', '', ''),
+    ].join('');
+    const tip = t.recovery != null && t.recovery < 34 || (t.sleepMin != null && t.sleepMin < 360)
+      ? `<div class="tip" style="margin-top:12px"><span>${T('استشفاء منخفض أو نوم قليل: الجوع والرغبة في الحلويات تزيد اليوم. ركّز على البروتين والماء والأكل البسيط، ولا تشدّ على نفسك.')}</span></div>` : '';
+    return head + `<div class="tiles">${tiles}</div>` + tip;
+  }
+
   // ---------------- overview rings + monitors + detail pages (WHOOP-style) ----------------
   let lastBal = null, histCache = null;
   const C = 314.2;
@@ -2230,6 +2314,12 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
   }
   const tileHtml = (label, value, unit, chip, cls) => `<div class="tile"><div class="tl">${label}</div><div class="tv num"><span dir="ltr" style="unicode-bidi:isolate">${value}${unit === '%' ? '<small>%</small>' : ''}</span>${unit === '%' ? '' : `<small>${unit || ''}</small>`}</div>${chip ? `<span class="chip2 ${cls || 'ok'}">${chip}</span>` : ''}</div>`;
   async function openDetail(kind) {
+    if (kind === 'reconnect') { try { const r = await api('integrations/whoop/connect?target=web'); location.href = r.url; } catch (e) { toast(e.message); } return; }
+    if (kind === 'well') {
+      $('det').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+      $('detBack').textContent = '‹'; $('detTitle').textContent = T('الاستشفاء والنوم');
+      $('detBody').innerHTML = wellnessDetail(); return;
+    }
     const b = lastBal; if (!b) return;
     $('det').classList.remove('hidden'); document.body.style.overflow = 'hidden';
     $('detBack').textContent = '‹'; // bidi-mirrored: shows › in Arabic
@@ -2292,6 +2382,7 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
   function closeDetail() { $('det').classList.add('hidden'); document.body.style.overflow = ''; }
   $('detBack').onclick = closeDetail;
   document.querySelectorAll('[data-det]').forEach((el) => (el.onclick = () => openDetail(el.dataset.det)));
+  
 
   // ---------------- pull to refresh (sync WHOOP + reload the screen) ----------------
   (() => {

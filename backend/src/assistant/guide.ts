@@ -78,6 +78,12 @@ After analysis the Review screen opens.
   Apple Health (iPhone app only: syncs burned energy, workouts and weight), Appearance (Auto / Light / Dark — Auto
   follows the phone), Language (English / العربية), sign out.
 
+## WHOOP recovery & sleep
+With WHOOP connected, Today shows a "Recovery & sleep" card (recovery %, sleep time vs need, day strain); tapping it
+opens details: HRV, resting HR, SpO2, skin temp, respiratory rate, sleep stages, performance and efficiency, with a
+7-day recovery chart. Older connections must tap "Reconnect WHOOP" once to allow recovery and sleep. Low recovery or
+short sleep → suggest easy, protein-rich, hydrating food and warn about cravings; no extra restriction.
+
 ## Apple Health on the website
 A website can't read Apple Health. Settings → Burn source → Apple Health offers an iPhone Shortcut: copy the personal
 sync link, build the Shortcut (Find Health Samples: Active Energy / Resting Energy, start date today → Calculate

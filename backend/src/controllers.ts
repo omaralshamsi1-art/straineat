@@ -20,7 +20,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { Public, Role, UserId, ViaApiKey } from './auth/auth.guard';
 import { AuthService, UsageService } from './auth/auth.service';
-import { isIsoDate } from './common/dates';
+import { isIsoDate, localDate } from './common/dates';
 import { Profile } from './common/types';
 import { EnergySampleInput, EnergyService } from './energy/energy.service';
 import { WhoopService } from './integrations/whoop/whoop.service';
@@ -170,6 +170,7 @@ export class WhoopController {
   constructor(
     private readonly whoop: WhoopService,
     private readonly config: ConfigService,
+    private readonly profiles: ProfileService,
   ) {}
 
   /** App calls this, then opens the returned URL in ASWebAuthenticationSession. */
@@ -191,6 +192,14 @@ export class WhoopController {
     } catch (e: any) {
       return res.redirect(`${app}?status=error&reason=${encodeURIComponent(e?.message ?? 'failed')}`);
     }
+  }
+
+  /** Recovery, sleep and day strain for the last 7 days (needs read:recovery/read:sleep — reconnect once). */
+  @Get('wellness')
+  async wellness(@UserId() userId: string, @Query('date') date?: string, @Query('days') days?: string) {
+    const p = await this.profiles.get(userId);
+    const d = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : localDate(new Date(), p.timezone);
+    return this.whoop.wellness(userId, d, Math.min(Math.max(Number(days) || 7, 1), 30));
   }
 
   @Get('status')
