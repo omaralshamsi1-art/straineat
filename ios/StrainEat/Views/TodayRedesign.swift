@@ -269,7 +269,7 @@ struct TimelineCard: View {
             return (t("Snack", "سناك"), "carrot")
         }
         if m.kind == "snack" { return (t("Snack", "سناك"), "carrot") }
-        return (kindLabel(m.kind), "fork.knife")
+        return (kindLabel(m.kind) ?? t("Meal", "وجبة"), "fork.knife")
     }
 
     private func mealRow(_ m: Balance.MealRow) -> some View {
