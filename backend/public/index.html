@@ -552,6 +552,8 @@ html[data-theme="dark"] .lo-t { color: #8cc1f2; }
 .tile .tv small { font-size: 14px; font-weight: 600; letter-spacing: 0; margin-inline-start: 3px; }
 .chip2 { margin-top: auto; align-self: flex-start; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 9px; }
 
+button.navcard { display: flex; width: 100%; align-items: center; justify-content: space-between; border: 0; color: var(--ink); font: inherit; font-size: 15px; cursor: pointer; text-align: start; min-height: 56px; }
+button.navcard span { font-size: 20px; }
 /* ================= WHOOP-scale sizing + WHOOP-style dark theme ================= */
 html[data-theme="dark"] {
   --bg: #13181b; --card: #262d32; --card-2: #323a40; --ink: #f2f5f6; --muted: #9ba6ad; --line: #39424a;
@@ -1034,12 +1036,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       <div class="langsw" role="group" aria-label="Language"><button type="button" data-lang="en">English</button><button type="button" data-lang="ar">العربية</button></div>
     </div>
 
-    <div class="card hidden" id="invCard">
-      <h3>دعوة مستخدمين</h3>
-      <p class="small muted" style="margin-top:-4px">كل دعوة لشخص واحد وتنتهي بعد 14 يوماً. لكل مستخدم حد يومي: 20 تحليل وجبة و12 طلب للمدرب.</p>
-      <button class="btn ghost" id="invBtn">إنشاء رمز دعوة</button>
-      <div id="invList" style="margin-top:8px"></div>
-    </div>
+    <button class="card hidden navcard" id="invCard"><b>دعوة مستخدمين</b><span class="muted">›</span></button>
 
     <div class="card">
       <button class="btn text" id="logout">تسجيل الخروج</button>
@@ -1914,7 +1911,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       if (me.name) ls.set('ns_name', me.name === 'meera' ? T('ميرا') : me.name);
       $('acClaim').classList.toggle('hidden', !(me.role === 'owner' && !me.account && key()));
       $('invCard').classList.toggle('hidden', me.role !== 'owner');
-      if (me.role === 'owner') loadInvites();
+      // invite list opens from the card (Settings › Invite users)
     } catch (e) { console.warn(e); }
   }
   $('clBtn').onclick = async () => {
@@ -1937,7 +1934,14 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       }));
     } catch (e) { $('invList').innerHTML = `<div class="empty small">${esc(e.message)}</div>`; }
   }
-  $('invBtn').onclick = async () => { try { await api('auth/invites', { method: 'POST' }); loadInvites(); } catch (e) { toast(e.message); } };
+  $('invCard').onclick = () => {
+    $('det').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+    $('detBack').textContent = '‹'; $('detTitle').textContent = T('دعوة مستخدمين');
+    $('detBody').innerHTML = `<p class="small muted" style="margin:0 0 12px">${T('كل دعوة لشخص واحد وتنتهي بعد 14 يوماً. لكل مستخدم حد يومي: 20 تحليل وجبة و12 طلب للمدرب.')}</p>
+      <button class="btn ghost" id="invBtn">${T('إنشاء رمز دعوة')}</button><div id="invList" style="margin-top:8px"><div class="loading"><div class="spinner"></div></div></div>`;
+    $('invBtn').onclick = async () => { try { await api('auth/invites', { method: 'POST' }); loadInvites(); } catch (e) { toast(e.message); } };
+    loadInvites();
+  };
 
   // ---------------- push reminders ----------------
   const b64ToU8 = (b64) => { const p = '='.repeat((4 - (b64.length % 4)) % 4); const r = atob((b64 + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(r, (c) => c.charCodeAt(0)); };
