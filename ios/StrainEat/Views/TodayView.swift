@@ -20,6 +20,7 @@ struct TodayView: View {
                     }
                     if let b = store.balance {
                         OverviewSection(balance: b, isToday: store.isToday)
+                        if store.isToday { WellnessCard() }
                         if b.pendingDrafts.calories > 0 {
                             Notice(text: t("You have draft meals (\(fmt(b.pendingDrafts.calories)) kcal) not counted yet — open and confirm them.", "لديك وجبات مسودة (\(fmt(b.pendingDrafts.calories)) سعرة) لم تُحسب بعد — افتحها وأكّدها."), level: "warn")
                         }
