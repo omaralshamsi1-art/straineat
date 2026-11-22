@@ -9,6 +9,7 @@ import { REPOSITORY, Repository } from '../storage/repository';
 import { ramadanView } from './coach-math';
 import { ScheduleService } from '../schedule/schedule.service';
 import { dueSlotReminders, toMin } from '../schedule/schedule';
+import { dueMedReminders } from '../meds/meds';
 
 export const PUSH_SENDER = Symbol('PUSH_SENDER');
 export type PushSender = (sub: PushSub, payload: string) => Promise<void>;
@@ -176,6 +177,7 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
         const day = await this.schedule.day(userId, undefined, now);
         due.push(...dueSlotReminders(day.slots, toMin(`${Math.floor(nowMin / 60)}:${nowMin % 60}`), lang, { fasting }));
       }
+      due.push(...dueMedReminders(p.medReminders ?? [], nowMin, lang === 'ar' ? 'ar' : 'en'));
       for (const r of due) {
         const key = `reminder:${today}:${r.key}`;
         if (await this.repo.getCache(userId, key)) continue;

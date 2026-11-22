@@ -935,6 +935,24 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       <button class="btn ghost hidden" id="pushTest">إرسال تنبيه تجريبي</button>
     </div>
 
+    <div class="card" id="medCard">
+      <h3>الأدوية والفيتامينات <span class="small" id="medCount"></span></h3>
+      <p class="small muted" style="margin-top:-4px">نرسل لك تنبيهاً في كل وقت تحدده. هذه تذكيرات فقط — اتبع جرعات طبيبك أو الصيدلي.</p>
+      <div id="medList"></div>
+      <details id="medAdd" style="margin-top:10px">
+        <summary class="btn ghost" style="list-style:none">+ إضافة تذكير</summary>
+        <label for="medName">الاسم</label><input id="medName" maxlength="60" placeholder="مثال: فيتامين د">
+        <div class="grid2">
+          <div><label for="medDose">الجرعة (اختياري)</label><input id="medDose" maxlength="40" placeholder="مثال: حبة واحدة"></div>
+          <div><label for="medKind">النوع</label><select id="medKind"><option value="medicine">دواء</option><option value="vitamin">فيتامين</option><option value="supplement">مكمل غذائي</option><option value="other">أخرى</option></select></div>
+        </div>
+        <label>الأوقات</label>
+        <div id="medTimes" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <button type="button" class="chip src" id="medAddTime" style="cursor:pointer;margin-top:8px">+ وقت آخر</button>
+        <button class="btn" id="medSave" style="margin-top:12px">حفظ التذكير</button>
+      </details>
+    </div>
+
     <div class="card">
       <h3>وضع رمضان والصيام</h3>
       <p class="small muted" style="margin-top:-4px">يتفعّل تلقائياً في رمضان (حسب تقويم أم القرى). يمكنك تفعيله يدوياً لأيام الصيام الأخرى.</p>
@@ -1059,7 +1077,12 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   translateDom(document);
   document.querySelectorAll('[data-lang]').forEach((b) => {
     b.setAttribute('aria-pressed', String(b.dataset.lang === LANG));
-    b.onclick = () => { if (b.dataset.lang !== LANG) setLang(b.dataset.lang); };
+    b.onclick = async () => {
+      const l = b.dataset.lang; if (l === LANG) return;
+      // Server-made text (weekly report, meal ideas, coach notes, reminders, assistant) follows the profile language.
+      try { if (token() || key()) { await api('profile', { method: 'PUT', json: { language: l } }); ls.set('ns_lang_sync', l); } } catch (e) { console.warn(e); }
+      setLang(l);
+    };
   });
   const $ = (id) => document.getElementById(id);
   const mem = {};
@@ -1588,6 +1611,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   }
 
   async function loadToday() {
+    if (ls.get('ns_lang_sync') !== LANG) api('profile', { method: 'PUT', json: { language: LANG } }).then(() => ls.set('ns_lang_sync', LANG)).catch(() => {});
     $('dayLabel').textContent = dayLabel();
     const nm = ls.get('ns_name') || (user() === 'meera' ? T('ميرا') : user());
     $('greet').innerHTML = `<em class="acc">${esc(greeting())}</em> ${esc(nm)}`;
@@ -1638,7 +1662,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   function renderBadges(m) {
     $('bdgCount').textContent = L`${m.earnedCount} من ${m.badges.length}`;
     $('bestStreak').textContent = `${m.streak.best} ${m.streak.best === 1 ? T('يوم') : T('أيام')}`;
-    $('badges').innerHTML = m.badges.map((b) => `<div class="badge ${b.earned ? 'on' : ''}" title="${esc(tx(b, 'desc'))}"><div class="ico">${BADGE_ICON[b.id] || '⭐'}</div><b>${esc(b.title_ar)}</b><span>${b.earned ? esc(b.desc_ar) : `${fmt1(b.progress)} / ${fmt1(b.target)}`}</span></div>`).join('');
+    $('badges').innerHTML = m.badges.map((b) => `<div class="badge ${b.earned ? 'on' : ''}" title="${esc(tx(b, 'desc'))}"><div class="ico">${BADGE_ICON[b.id] || '⭐'}</div><b>${esc(tx(b, 'title'))}</b><span>${b.earned ? esc(tx(b, 'desc')) : `${fmt1(b.progress)} / ${fmt1(b.target)}`}</span></div>`).join('');
   }
 
   // ---------------- Ramadan ----------------
@@ -1914,11 +1938,42 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   // ---------------- push reminders ----------------
   const b64ToU8 = (b64) => { const p = '='.repeat((4 - (b64.length % 4)) % 4); const r = atob((b64 + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(r, (c) => c.charCodeAt(0)); };
   async function swReg() { return 'serviceWorker' in navigator ? navigator.serviceWorker.register('sw.js', { scope: './' }) : null; }
+  // ---- medicine / vitamin reminders ----
+  let meds = [];
+  const MED_KIND = () => ({ medicine: T('دواء'), vitamin: T('فيتامين'), supplement: T('مكمل غذائي'), other: T('أخرى') });
+  function medTimeInput(v) { const i = document.createElement('input'); i.type = 'time'; i.value = v || ''; i.style.width = '120px'; i.className = 'medT'; return i; }
+  function resetMedForm() { $('medName').value = ''; $('medDose').value = ''; $('medKind').value = 'medicine'; $('medTimes').innerHTML = ''; $('medTimes').appendChild(medTimeInput('08:00')); }
+  function renderMeds() {
+    $('medCount').textContent = meds.length ? String(meds.length) : '';
+    $('medList').innerHTML = meds.length ? meds.map((m, i) => `<div class="tl"><span class="ic"><svg width="22" height="22"><use href="#${m.kind === 'medicine' || m.kind === 'other' ? 'i-bolt' : 'i-leaf'}"/></svg></span>
+      <span class="t"><b>${esc(m.name)}${m.dose ? ` · <span class="muted" style="font-weight:500">${esc(m.dose)}</span>` : ''}</b><span class="small muted">${esc(MED_KIND()[m.kind] || '')} · <span class="num" dir="ltr">${m.times.map(esc).join(' · ')}</span></span></span>
+      <label class="check" style="margin:0" title="${T('تفعيل')}"><input type="checkbox" data-med-on="${i}" ${m.enabled ? 'checked' : ''}></label>
+      <button class="undo" data-med-del="${i}" style="color:var(--bad)">${T('حذف')}</button></div>`).join('')
+      : `<p class="small muted" style="margin:0">${T('لا توجد تذكيرات بعد.')}</p>`;
+    $('medList').querySelectorAll('[data-med-on]').forEach((el) => (el.onchange = () => { meds[+el.dataset.medOn].enabled = el.checked; saveMeds(); }));
+    $('medList').querySelectorAll('[data-med-del]').forEach((el) => (el.onclick = () => { meds.splice(+el.dataset.medDel, 1); saveMeds(); }));
+  }
+  async function saveMeds() {
+    try { const p = await api('profile', { method: 'PUT', json: { medReminders: meds } }); meds = p.medReminders || meds; renderMeds(); toast(T('تم الحفظ ✓')); return true; }
+    catch (e) { toast(e.message); return false; }
+  }
+  resetMedForm();
+  $('medAddTime').onclick = () => { if ($('medTimes').children.length < 6) $('medTimes').appendChild(medTimeInput('')); };
+  $('medSave').onclick = async () => {
+    const name = $('medName').value.trim();
+    const times = [...$('medTimes').querySelectorAll('.medT')].map((i) => i.value).filter(Boolean);
+    if (!name) return toast(T('اكتب اسم الدواء أو الفيتامين'));
+    if (!times.length) return toast(T('اختر وقتاً واحداً على الأقل'));
+    meds.push({ name, dose: $('medDose').value.trim(), kind: $('medKind').value, times, enabled: true });
+    if (await saveMeds()) { resetMedForm(); $('medAdd').open = false; }
+    else meds.pop();
+  };
   async function loadPushState() {
     try {
       const prof = await api('profile');
       const rm = prof.reminders || { meals: true, weight: true };
       $('rmMeals').checked = rm.meals; $('rmWeight').checked = rm.weight;
+      meds = prof.medReminders || []; renderMeds();
       const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
       if (!supported) { $('pushState').textContent = T('غير مدعوم هنا'); $('pushBtn').disabled = true; return; }
       const reg = await navigator.serviceWorker.getRegistration('./');

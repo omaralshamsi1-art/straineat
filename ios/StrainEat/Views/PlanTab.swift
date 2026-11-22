@@ -16,6 +16,7 @@ struct PlanTab: View {
                     DevicesCard(profile: profile, onChange: { Task { await load() } })
                     if let profile { RamadanSettingsCard(profile: profile, onSaved: { Task { await load() } }) }
                     MealRemindersCard()
+                    if let profile { MedRemindersCard(profile: profile) }
                     if let profile { ScheduleSettingsCard(profile: profile) }
                     if let profile { LocationCard(profile: profile) }
                     Card(title: t("Appearance", "المظهر"), icon: "circle.lefthalf.filled") { ThemePicker() }
@@ -482,5 +483,91 @@ struct ScheduleSettingsCard: View {
             saved = true; error = nil
             if let d = try? await APIClient.shared.schedule() { await MealNotifications.sync(d) }
         } catch { self.error = error.localizedDescription }
+    }
+}
+
+// MARK: Medicine & vitamin reminders
+
+struct MedRemindersCard: View {
+    let profile: Profile
+    @State private var meds: [MedReminder] = []
+    @State private var adding = false
+    @State private var name = ""
+    @State private var dose = ""
+    @State private var kind = "medicine"
+    @State private var times: [Date] = [Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date()]
+    @State private var error: String?
+
+    private func kindName(_ k: String) -> String {
+        switch k {
+        case "vitamin": t("Vitamin", "فيتامين")
+        case "supplement": t("Supplement", "مكمل غذائي")
+        case "other": t("Other", "أخرى")
+        default: t("Medicine", "دواء")
+        }
+    }
+    private static let hm: DateFormatter = { let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "HH:mm"; return f }()
+
+    var body: some View {
+        Card(title: t("Medicines & vitamins", "الأدوية والفيتامينات"), icon: "pills") {
+            Text(t("We'll notify you at each time you set. These are reminders only — follow the dose from your doctor or pharmacist.",
+                   "نرسل لك تنبيهاً في كل وقت تحدده. هذه تذكيرات فقط — اتبع جرعات طبيبك أو الصيدلي."))
+                .font(.caption).foregroundStyle(Theme.muted)
+            if meds.isEmpty { Text(t("No reminders yet.", "لا توجد تذكيرات بعد.")).font(.footnote).foregroundStyle(Theme.muted) }
+            ForEach(meds) { m in
+                HStack(spacing: 10) {
+                    Image(systemName: m.kind == "vitamin" || m.kind == "supplement" ? "leaf" : "pills")
+                        .foregroundStyle(Theme.brand2).frame(width: 36, height: 36).background(Theme.card2, in: RoundedRectangle(cornerRadius: 10))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(m.dose.isEmpty ? m.name : "\(m.name) · \(m.dose)").font(.subheadline.weight(.semibold)).lineLimit(1)
+                        Text("\(kindName(m.kind)) · \(m.times.joined(separator: " · "))").font(.caption).foregroundStyle(Theme.muted)
+                    }
+                    Spacer()
+                    Toggle("", isOn: Binding(get: { m.enabled }, set: { v in if let j = meds.firstIndex(where: { $0.id == m.id }) { meds[j].enabled = v; Task { await save() } } })).labelsHidden().tint(Theme.brand2)
+                    Button(role: .destructive) { meds.removeAll { $0.id == m.id }; Task { await save() } } label: { Image(systemName: "trash") }
+                        .foregroundStyle(Theme.dangerText)
+                }
+            }
+            if adding {
+                TextField(t("Name (e.g. Vitamin D)", "الاسم (مثال: فيتامين د)"), text: $name).textFieldStyle(.roundedBorder)
+                TextField(t("Dose (optional)", "الجرعة (اختياري)"), text: $dose).textFieldStyle(.roundedBorder)
+                Picker(t("Type", "النوع"), selection: $kind) {
+                    ForEach(["medicine", "vitamin", "supplement", "other"], id: \.self) { Text(kindName($0)).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                ForEach(times.indices, id: \.self) { i in
+                    HStack {
+                        DatePicker(t("Time \(i + 1)", "الوقت \(i + 1)"), selection: $times[i], displayedComponents: .hourAndMinute)
+                        if times.count > 1 { Button { times.remove(at: i) } label: { Image(systemName: "minus.circle") } }
+                    }
+                }
+                if times.count < 6 { Button(t("+ Another time", "+ وقت آخر")) { times.append(times.last ?? Date()) }.font(.subheadline) }
+                HStack {
+                    Button(t("Cancel", "إلغاء")) { adding = false }.buttonStyle(SoftButtonStyle())
+                    Button(t("Save reminder", "حفظ التذكير")) { Task { await add() } }.buttonStyle(SoftButtonStyle())
+                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            } else {
+                Button { adding = true } label: { Label(t("Add reminder", "إضافة تذكير"), systemImage: "plus") }.buttonStyle(SoftButtonStyle())
+            }
+            if let error { Text(error).font(.caption).foregroundStyle(Theme.bad) }
+        }
+        .task { meds = profile.medReminders ?? []; await MedNotifications.sync(meds) }
+    }
+
+    private func add() async {
+        let ts = Array(Set(times.map { Self.hm.string(from: $0) })).sorted()
+        meds.append(MedReminder(id: "", name: name.trimmingCharacters(in: .whitespaces), dose: dose.trimmingCharacters(in: .whitespaces), kind: kind, times: ts, enabled: true))
+        if await save() { adding = false; name = ""; dose = ""; kind = "medicine" } else { meds.removeLast() }
+    }
+
+    @discardableResult private func save() async -> Bool {
+        do {
+            let p = try await APIClient.shared.updateProfile(["medReminders": meds.map(\.dict)])
+            meds = p.medReminders ?? meds
+            error = nil
+            await MedNotifications.sync(meds)
+            return true
+        } catch { self.error = error.localizedDescription; return false }
     }
 }

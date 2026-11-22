@@ -128,6 +128,8 @@ export interface Profile {
   /** Set by the system when measured burn shows the declared activity level was off. */
   ramadan: { enabled: boolean | null; suhoorTime: string; iftarTime: string };
   reminders: { meals: boolean; weight: boolean };
+  /** personal medicine / vitamin reminders (push at the set local times) */
+  medReminders?: { id: string; name: string; dose: string; kind: 'medicine' | 'vitamin' | 'supplement' | 'other'; times: string[]; enabled: boolean }[];
   /** UI + AI output language */
   language: Lang;
   /** onboarding extras used by the plan and the AI coach */

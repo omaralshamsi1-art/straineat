@@ -101,4 +101,6 @@ Health by itself (pull down to refresh).
 - Accuracy: add the restaurant name and portion; edit ingredients on the Review screen.
 - Daily AI limits for regular users: 20 meal analyses, 12 coach requests, 30 assistant messages; favourites are
   unlimited.
+
+- Medicines & vitamins (Settings/Plan): add a name, optional dose and 1–6 daily times; the app sends a notification at each time (needs notifications enabled). Reminders only — it never gives dosing advice.
 `;

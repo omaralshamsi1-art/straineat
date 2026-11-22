@@ -382,6 +382,17 @@ struct Profile: Codable {
     var conditions: [String]?
     var mealsPerDay: Int?
     var mealSchedule: MealScheduleSetting?
+    var medReminders: [MedReminder]?
+}
+
+struct MedReminder: Codable, Hashable, Identifiable {
+    var id: String
+    var name: String
+    var dose: String
+    var kind: String
+    var times: [String]
+    var enabled: Bool
+    var dict: [String: Any] { ["id": id, "name": name, "dose": dose, "kind": kind, "times": times, "enabled": enabled] }
 }
 
 struct EnergySample: Codable {
