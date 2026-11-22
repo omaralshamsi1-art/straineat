@@ -327,14 +327,15 @@ struct BodyTodayCard: View {
     @Environment(AppStore.self) private var store
     let activity: DayActivity?
     let isToday: Bool
+    var showWellness = true
     @State private var data: Wellness?
     @State private var open = false
 
     var body: some View {
         let workouts = activity?.workouts ?? []
-        Card(title: t("Your body today", "جسمك اليوم"),
+        Card(title: showWellness ? t("Your body today", "جسمك اليوم") : t("Activity", "النشاط"),
              trailing: workouts.isEmpty ? nil : AnyView(Text(t("\(fmt(activity?.totalMin ?? 0)) min · \(fmt(activity?.totalKcal ?? 0)) kcal", "\(fmt(activity?.totalMin ?? 0)) د · \(fmt(activity?.totalKcal ?? 0)) سعرة")).font(.caption).foregroundStyle(Theme.muted))) {
-            if isToday, let d = data, d.connected {
+            if showWellness, isToday, let d = data, d.connected {
                 if d.needsReconnect {
                     Button { Task { _ = try? await WhoopConnector.shared.connect(); await load() } } label: {
                         Text(t("Reconnect WHOOP once to show recovery and sleep. Tap here.", "أعد ربط WHOOP مرة واحدة لإظهار الاستشفاء والنوم. اضغط هنا."))
@@ -373,7 +374,7 @@ struct BodyTodayCard: View {
                 }
             }
         }
-        .task(id: store.refreshTick) { if isToday { await load() } }
+        .task(id: store.refreshTick) { if isToday && showWellness { await load() } }
     }
 
     private func tile(_ label: String, _ value: String, _ sub: String, _ color: Color) -> some View {
@@ -409,6 +410,215 @@ struct TipRow: View {
             }
             .padding(.horizontal, 12).padding(.vertical, 10)
             .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: Today v4 — WHOOP-style rings, swipeable insight cards, monitors
+
+/// Three rings: kcal left, protein, burn. Each opens its detail.
+struct TodayRings: View {
+    let balance: Balance
+    let isToday: Bool
+    @State private var detail: OverviewDetail?
+
+    var body: some View {
+        let b = balance
+        let target = max(b.targetIntakeKcal ?? 1, 1), left = b.remainingKcal ?? (target - b.intake.calories)
+        let pw = b.macroTargets?.proteinG ?? 0, ph = b.intake.proteinG
+        let burn = b.burn?.totalKcal, expB = b.expectedBurnKcal ?? 0
+        HStack(spacing: 8) {
+            ring(left < 0 ? 1 : left / target, left < 0 && b.goal != "gain" ? Theme.bad : ringGreen,
+                 "\(left < 0 ? "+" : "")\(fmt(abs(left)))", left < 0 ? t("OVER", "فوق الهدف") : t("LEFT", "متبقي"), t("kcal", "سعرة")) { detail = .left }
+            ring(pw > 0 ? ph / pw : 0, Theme.protein, fmt(ph), t("PROTEIN", "بروتين"), pw > 0 ? t("of \(fmt(pw)) g", "من \(fmt(pw)) غ") : t("g", "غ")) { detail = .eaten }
+            ring(burn != nil && expB > 0 ? burn! / expB : 0, Color(red: 0.12, green: 0.56, blue: 0.91), burn.map { fmt($0) } ?? "—",
+                 t("BURN", "حرق"), burn != nil && b.burnIsPartialDay && expB > 0 ? t("of ~\(fmt(expB))", "من ~\(fmt(expB))") : t("kcal", "سعرة")) { detail = .burn }
+        }
+        .sheet(item: $detail) { d in OverviewDetailView(kind: d, balance: b, isToday: isToday) }
+    }
+
+    private func ring(_ frac: Double, _ color: Color, _ value: String, _ label: String, _ unit: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                ZStack {
+                    Circle().stroke(Theme.ringTrack, lineWidth: 7)
+                    Circle().trim(from: 0, to: max(0, min(1, frac)))
+                        .stroke(color, style: StrokeStyle(lineWidth: 7, lineCap: .round)).rotationEffect(.degrees(-90))
+                        .animation(.easeOut(duration: 0.7), value: frac)
+                    Text(value).font(.system(size: 21, weight: .heavy)).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).padding(12)
+                }
+                .frame(maxWidth: 104).aspectRatio(1, contentMode: .fit)
+                Text(label).font(.caption.weight(.heavy)).tracking(appLang == .ar ? 0 : 1.4).padding(.top, 5)
+                Text(unit).font(.caption2).foregroundStyle(Theme.muted)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// One insight at a time; swipe it away (dismissed for the rest of the day).
+struct InsightStack: View {
+    let balance: Balance
+    let schedule: DaySchedule?
+    let motivation: Motivation?
+    let isToday: Bool
+    var onLog: () -> Void
+    var onSuggest: () -> Void
+    var onSchedule: (DaySchedule) -> Void
+    @State private var gone: [String] = []
+    @State private var drag: CGFloat = 0
+
+    struct Item: Identifiable { let id: String; let icon: String; let title: String; let sub: String; var acts: [(String, Bool, () -> Void)] = [] }
+
+    private var key: String { "dis-" + (isToday ? Date() : Date.distantPast).formatted(.iso8601.year().month().day()) }
+
+    private var items: [Item] {
+        var out: [Item] = []
+        let b = balance
+        if isToday, let d = schedule {
+            if let nx = d.slots.first(where: { $0.status == "now" || $0.status == "upcoming" }) {
+                let mins = max(0, hhmm(nx.time) - minutesOf(Date()))
+                let when = nx.status == "now" ? t("Now", "الآن") : mins >= 60 ? t("In \(Int((Double(mins) / 60).rounded())) h", "بعد \(Int((Double(mins) / 60).rounded())) س") : t("In \(mins) min", "بعد \(mins) د")
+                out.append(Item(id: "next:\(nx.id)", icon: "clock", title: "\(nx.label) · \(nx.time)",
+                                sub: t("Aim for about \(fmt(nx.targetKcal)) kcal", "هدفك حوالي \(fmt(nx.targetKcal)) سعرة") + " · " + when,
+                                acts: [(t("Suggest a meal", "اقترح وجبة"), true, onSuggest)]))
+            } else if (b.remainingKcal ?? 0) > 150 {
+                out.append(Item(id: "next:done", icon: "clock", title: t("Today's planned meals are done", "انتهت وجبات اليوم المخططة"),
+                                sub: t("\(fmt(b.remainingKcal ?? 0)) kcal left", "متبقي \(fmt(b.remainingKcal ?? 0)) سعرة"),
+                                acts: [(t("Suggest something light", "اقترح شيئاً خفيفاً"), true, onSuggest)]))
+            }
+            for s in d.slots where s.status == "missed" && s.items.isEmpty {
+                out.append(Item(id: "miss:\(s.id)", icon: "exclamationmark.circle", title: t("\(s.label) not logged", "\(s.label) لم تُسجّل"),
+                                sub: t("~\(fmt(s.targetKcal)) kcal planned", "المخطط ~\(fmt(s.targetKcal)) سعرة"),
+                                acts: [(t("Log it", "سجّلها"), true, onLog), (t("I skipped it", "تخطيتها"), false, { Task { await skip(s.id) } })]))
+            }
+        }
+        if b.goal != "gain", let target = b.targetIntakeKcal, b.intake.calories > target {
+            out.append(Item(id: "over", icon: "exclamationmark.circle", title: t("\(fmt(b.intake.calories - target)) kcal over today's target", "تجاوزت هدف اليوم بـ \(fmt(b.intake.calories - target)) سعرة"), sub: ""))
+        }
+        if b.pendingDrafts.calories > 0 {
+            out.append(Item(id: "drafts", icon: "hourglass", title: t("Drafts not counted: \(fmt(b.pendingDrafts.calories)) kcal", "مسودات لم تُحسب: \(fmt(b.pendingDrafts.calories)) سعرة"),
+                            sub: t("Open and confirm them so they count", "افتحها وأكّدها لتدخل في حسابك")))
+        }
+        if isToday, let c = motivation?.challenge, !c.done {
+            out.append(Item(id: "chal", icon: "flame", title: t("Weekly challenge: \(fmt(c.progress))/\(fmt(c.target))", "تحدي الأسبوع: \(fmt(c.progress))/\(fmt(c.target))"), sub: c.title))
+        }
+        for tip in b.tips ?? [] {
+            let head = tip.text.components(separatedBy: " — ").first?.components(separatedBy: ": ").first?.components(separatedBy: ". ").first ?? tip.text
+            let rest = head.count < tip.text.count ? String(tip.text.dropFirst(head.count)).trimmingCharacters(in: CharacterSet(charactersIn: " —:.")) : ""
+            out.append(Item(id: "tip:\(tip.text.hashValue)", icon: "lightbulb", title: head, sub: rest))
+        }
+        return out.filter { !gone.contains($0.id) }
+    }
+
+    var body: some View {
+        let list = items
+        ZStack {
+            if list.count > 1 {
+                RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.card).opacity(0.55)
+                    .padding(.horizontal, 12).offset(y: 9)
+            }
+            if let c = list.first {
+                card(c, count: list.count)
+                    .offset(x: drag).rotationEffect(.degrees(Double(drag / 25)))
+                    .gesture(DragGesture(minimumDistance: 12)
+                        .onChanged { drag = $0.translation.width }
+                        .onEnded { v in
+                            if abs(v.translation.width) > 80 { fly(c.id, dir: v.translation.width > 0 ? 1 : -1) }
+                            else { withAnimation(.spring(duration: 0.25)) { drag = 0 } }
+                        })
+                    .id(c.id)
+                    .transition(.opacity)
+            } else {
+                Label(t("Nothing new right now", "لا جديد الآن"), systemImage: "checkmark.circle")
+                    .font(.footnote).foregroundStyle(Theme.muted).padding(10)
+            }
+        }
+        .onAppear { gone = UserDefaults.standard.stringArray(forKey: key) ?? [] }
+    }
+
+    private func card(_ c: Item, count: Int) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: c.icon).foregroundStyle(Theme.warn)
+                Text(c.title).font(.headline).lineLimit(2)
+                Spacer()
+                if count > 1 { Text("1/\(count)").font(.caption).foregroundStyle(Theme.muted).monospacedDigit() }
+                Button { fly(c.id, dir: appLang == .ar ? -1 : 1) } label: { Image(systemName: "xmark").font(.caption.weight(.bold)).foregroundStyle(Theme.muted).padding(6) }
+                    .accessibilityLabel(t("Hide", "إخفاء"))
+            }
+            if !c.sub.isEmpty { Text(c.sub).font(.subheadline).foregroundStyle(Theme.muted).padding(.leading, 30) }
+            if !c.acts.isEmpty {
+                HStack(spacing: 8) {
+                    ForEach(Array(c.acts.enumerated()), id: \.offset) { _, a in
+                        Button(a.0, action: a.2).font(.subheadline.weight(.bold))
+                            .foregroundStyle(a.1 ? .white : Theme.ink)
+                            .padding(.horizontal, 16).frame(minHeight: 38)
+                            .background(a.1 ? Theme.brand2 : Theme.card2, in: Capsule())
+                    }
+                }
+                .buttonStyle(.plain).padding(.leading, 30)
+            }
+            if count > 1 { Text(t("Swipe for next", "اسحب للتالي")).font(.caption2).foregroundStyle(Theme.muted).frame(maxWidth: .infinity) }
+        }
+        .padding(14)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(color: .black.opacity(0.18), radius: 9, y: 4)
+    }
+
+    private func fly(_ id: String, dir: CGFloat) {
+        withAnimation(.easeIn(duration: 0.22)) { drag = dir * 420 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            gone.append(id); UserDefaults.standard.set(gone, forKey: key); drag = 0
+        }
+    }
+
+    private func skip(_ slot: String) async {
+        if let d: DaySchedule = try? await APIClient.shared.post("schedule/skip", ["slot": slot, "undo": false]) { onSchedule(d) }
+    }
+}
+
+/// Two small monitors under the cards (like WHOOP's Health / Stress monitors).
+struct TodayMonitors: View {
+    @Environment(AppStore.self) private var store
+    let balance: Balance
+    let isToday: Bool
+    @State private var well: Wellness?
+    @State private var detail: OverviewDetail?
+    @State private var openWell = false
+
+    var body: some View {
+        let b = balance, target = b.targetIntakeKcal ?? 0, eaten = b.intake.calories
+        let over = b.goal != "gain" && eaten > target
+        let rec = isToday && well?.connected == true && well?.needsReconnect != true ? well?.today?.recovery : nil
+        HStack(spacing: 10) {
+            tile(t("NUTRITION", "التغذية"), over ? t("Over target", "تجاوزت الهدف") : t("✓ Within target", "✓ ضمن الهدف"), over ? Theme.bad : Theme.good,
+                 t("Ate \(fmt(eaten)) of \(fmt(target))", "أكلت \(fmt(eaten)) من \(fmt(target))")) { detail = .eaten }
+            if let rec {
+                tile(t("BODY", "الجسم"), "\(Int(rec))%", recoveryColor(rec),
+                     t("Recovery", "الاستشفاء") + (well?.today?.sleepMin.map { " · " + t("sleep", "نوم") + " " + hmText($0) } ?? "")) { openWell = true }
+            } else {
+                let n = b.activity?.workouts.count ?? 0
+                tile(t("BODY", "الجسم"), n > 0 ? t("\(n) workout(s)", "\(n) تمرين") : t("No workout yet", "لا تمرين بعد"), Theme.ink,
+                     b.burn.map { t("Burned \(fmt($0.totalKcal)) kcal", "حرق \(fmt($0.totalKcal)) سعرة") } ?? t("Connect WHOOP or Apple Health", "اربط WHOOP أو Apple Health")) { detail = .burn }
+            }
+        }
+        .sheet(item: $detail) { d in OverviewDetailView(kind: d, balance: b, isToday: isToday) }
+        .sheet(isPresented: $openWell) { if let well { WellnessDetailView(data: well) } }
+        .task(id: store.refreshTick) { if isToday { well = try? await APIClient.shared.wellness() } }
+    }
+
+    private func tile(_ title: String, _ value: String, _ color: Color, _ sub: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack { Text(title).font(.caption.weight(.heavy)).tracking(appLang == .ar ? 0 : 1.2); Spacer(); Image(systemName: "chevron.forward").font(.caption2.weight(.bold)).foregroundStyle(Theme.muted) }
+                Text(value).font(.headline.weight(.heavy)).foregroundStyle(color).lineLimit(1).minimumScaleFactor(0.8)
+                Text(sub).font(.caption2).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(.plain)
     }

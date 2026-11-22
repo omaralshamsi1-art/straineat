@@ -10,21 +10,23 @@ struct TodayView: View {
             ScrollView {
                 VStack(spacing: 14) {
                     header
-                    TodayChips(balance: store.balance, motivation: store.motivation)
                     if let b = store.balance {
-                        TodayHero(balance: b, isToday: store.isToday)
-                        if b.pendingDrafts.calories > 0 {
-                            Notice(text: t("You have draft meals (\(fmt(b.pendingDrafts.calories)) kcal) not counted yet — open and confirm them.", "لديك وجبات مسودة (\(fmt(b.pendingDrafts.calories)) سعرة) لم تُحسب بعد — افتحها وأكّدها."), level: "warn")
-                        }
+                        TodayRings(balance: b, isToday: store.isToday)
+                        InsightStack(balance: b, schedule: store.isToday ? schedule : nil, motivation: store.motivation, isToday: store.isToday,
+                                     onLog: onLog, onSuggest: { showIdeas = true }, onSchedule: { schedule = $0 })
                         if let r = b.ramadan, r.active || r.needsChoice { RamadanCard(view: r) }
-                        if let tips = b.tips, !tips.isEmpty, store.isToday {
-                            VStack(spacing: 8) { ForEach(tips, id: \.self) { TipRow(text: $0.text) } }
+                        TodayMonitors(balance: b, isToday: store.isToday)
+                        HStack {
+                            Text(t("My day", "يومي")).font(.title2.weight(.heavy))
+                            Spacer()
+                            Button(action: onLog) { Image(systemName: "plus").font(.title3.weight(.bold)).foregroundStyle(Theme.bg).frame(width: 44, height: 44).background(Theme.ink, in: RoundedRectangle(cornerRadius: 14)) }
+                                .accessibilityLabel(t("Log a meal", "سجّل وجبة"))
                         }
-                        if store.isToday { SuggestCard(showNext: true, next: schedule?.slots.first { $0.status == "now" || $0.status == "upcoming" }) }
+                        .padding(.top, 8)
                         TimelineCard(meals: b.meals, schedule: store.isToday ? schedule : nil, onLog: onLog,
                                      onSchedule: { schedule = $0 },
                                      onEditTimes: { NotificationCenter.default.post(name: .openPlan, object: nil) })
-                        BodyTodayCard(activity: b.activity, isToday: store.isToday)
+                        BodyTodayCard(activity: b.activity, isToday: store.isToday, showWellness: false)
                     } else if let e = store.error {
                         Card { VStack(spacing: 10) {
                             Image(systemName: "wifi.exclamationmark").font(.largeTitle).foregroundStyle(Theme.muted)
@@ -43,8 +45,11 @@ struct TodayView: View {
             .navigationDestination(for: String.self) { MealLoaderView(mealId: $0) }
             .toolbar(.hidden, for: .navigationBar)
             .task(id: store.refreshTick) { await loadSchedule() }
+            .sheet(isPresented: $showIdeas) { NavigationStack { ScrollView { SuggestCard().padding(16) }.screenBackground().navigationTitle(t("Meal ideas", "اقتراحات وجبات")).navigationBarTitleDisplayMode(.inline) } }
         }
     }
+
+    @State private var showIdeas = false
 
     @State private var schedule: DaySchedule?
     private func loadSchedule() async {
@@ -57,9 +62,16 @@ struct TodayView: View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(store.isToday ? t("Today", "اليوم") : store.day.arWeekday)
-                    .font(.largeTitle.weight(.heavy)).tracking(-0.8).foregroundStyle(Theme.ink)
+                    .font(.title2.weight(.heavy)).foregroundStyle(Theme.ink)
                 Text(store.day.arDayMonth)
-                    .font(.subheadline).foregroundStyle(Theme.muted)
+                    .font(.caption).foregroundStyle(Theme.muted)
+            }
+            if let st = store.motivation?.streak, st.current > 0 {
+                Label("\(st.current)", systemImage: "flame.fill").font(.footnote.weight(.bold)).monospacedDigit()
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(Theme.card, in: Capsule())
+                    .foregroundStyle(Theme.ink)
+                    .accessibilityLabel(t("\(st.current)-day streak", "\(st.current) أيام متتالية"))
             }
             Spacer()
             HStack(spacing: 0) {
