@@ -48,9 +48,19 @@ export class ShortcutService {
     const hit = await this.repo.getCache(LOOKUP_USER, `tok:${hash(token.trim())}`);
     const userId = (hit?.payload as any)?.userId as string | undefined;
     if (!userId) throw new UnauthorizedException('Invalid sync token');
-    const active = kcalOf(body?.active ?? body?.activeKcal);
-    const basal = kcalOf(body?.basal ?? body?.basalKcal ?? body?.resting);
-    if (active == null && basal == null) throw new BadRequestException('Send active and/or basal kcal');
+    // Also accept the common Shortcuts mix-up where the Health number went into the Key column
+    // and the word "active"/"basal" into the value: { "612.4": "active" }.
+    const swapped: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(body ?? {})) {
+      const name = typeof v === 'string' ? v.trim().toLowerCase() : '';
+      if (['active', 'basal', 'resting'].includes(name) && kcalOf(k) != null) swapped[name] = k;
+    }
+    const active = kcalOf(body?.active ?? body?.activeKcal ?? swapped.active);
+    const basal = kcalOf(body?.basal ?? body?.basalKcal ?? body?.resting ?? swapped.basal ?? swapped.resting);
+    if (active == null && basal == null) {
+      const got = Object.keys(body ?? {}).slice(0, 5).join(', ') || 'nothing';
+      throw new BadRequestException(`Send JSON like {"active": 612, "basal": 1650}: Key = the word active / basal, value = the Health number. Received keys: ${got}`);
+    }
     const p = await this.profiles.get(userId);
     const date = isIsoDate(body?.date) ? (body.date as string) : localDate(new Date(), p.timezone);
     await this.energy.ingest(userId, [{ date, source: 'apple_health', activeKcal: active, basalKcal: basal } as any]);
