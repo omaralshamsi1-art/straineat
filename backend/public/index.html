@@ -179,6 +179,7 @@ input[type=time]::-webkit-date-and-time-value { text-align: start; }
 html[data-theme="dark"] .btn { color: #0d1411; }
 .btn.ghost { background: var(--brand-soft); color: var(--brand-2); }
 .btn.text { background: transparent; color: var(--danger); min-height: 44px; }
+.btn.quiet { background: transparent; color: var(--bad); min-height: 40px; padding: 8px; font-size: 15px; }
 .btn:disabled { opacity: .45; }
 .btn + .btn { margin-top: 10px; }
 .choices { display: grid; gap: 10px; }
@@ -381,6 +382,7 @@ html[data-theme="dark"] .btn { color: #111113; }
 .btn.text { color: #b3261e; background: #fde4e0; font-weight: 700; }
 html[data-theme="dark"] .btn.text { color: #ffb4a6; background: #4a1c15; }
 html[data-theme="dark"] .btn.ghost { color: var(--ink); }
+html[data-theme="dark"] .btn.quiet { color: var(--bad); background: transparent; }
 .chip.src { background: var(--card-2); border-color: var(--line); color: var(--ink); font-weight: 600; padding: 5px 12px; }
 .chip { border-radius: 999px; }
 input, select, textarea { border-radius: 16px; background: var(--card-2); }
@@ -1045,8 +1047,11 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       <div id="srcWhoop" class="band s" style="margin-top:14px">
         <div class="bh">WHOOP <span id="wStatus">—</span></div>
         <div style="padding:12px 14px;display:grid;gap:8px">
+          <div class="small hidden" id="wAcct" style="line-height:1.6"></div>
+          <div class="small hidden" id="wLast" style="line-height:1.6"></div>
           <button class="btn ghost" id="wConnect">ربط WHOOP</button>
           <button class="btn ghost hidden" id="wSync">مزامنة الآن</button>
+          <button class="btn quiet hidden" id="wOff">فصل WHOOP</button>
         </div>
       </div>
       <div id="srcApple" class="band p" style="margin-top:12px">
@@ -2069,7 +2074,21 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       $('wStatus').textContent = w.connected ? T('مربوط ✓') : T('غير مربوط');
       $('wConnect').textContent = w.connected ? T('إعادة الربط') : T('ربط WHOOP');
       $('wSync').classList.toggle('hidden', !w.connected);
+      $('wOff').classList.toggle('hidden', !w.connected);
+      paintWhoopInfo(w);
     } catch { $('wStatus').textContent = '—'; }
+  }
+  // which WHOOP account is linked + what the last sync brought (an empty account is obvious here)
+  function paintWhoopInfo(w) {
+    const a = w && w.connected ? w.account : null, ls0 = w && w.connected ? w.lastSync : null;
+    $('wAcct').classList.toggle('hidden', !a);
+    if (a) $('wAcct').innerHTML = `${T('حساب WHOOP المربوط:')} <b><bdi>${esc(a.name || '—')}</bdi></b>${a.email ? ` · <span dir="ltr">${esc(a.email)}</span>` : ''}`;
+    $('wLast').classList.toggle('hidden', !ls0);
+    if (!ls0) return;
+    const when = new Date(ls0.at).toLocaleString(LOC, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+    $('wLast').innerHTML = ls0.cycles
+      ? `${T('آخر مزامنة:')} ${esc(when)} · ${ls0.days === 1 ? T('يوم واحد') : L`${ls0.days} أيام`} · ${ls0.workouts === 1 ? T('تمرين واحد') : L`${ls0.workouts} تمارين`}${ls0.wellness ? ` · ${T('نوم واستشفاء ✓')}` : ''}`
+      : `<span style="color:var(--bad);font-weight:700">${T('WHOOP ما أرسل أي بيانات لهذا الحساب.')}</span> ${T('تأكد إنك دخلت بنفس حساب WHOOP اللي على السوار (نفس الإيميل في تطبيق WHOOP)، وإذا مو هو اضغط «فصل WHOOP» واربط من جديد.')}`;
   }
   // ---------------- account & invites ----------------
   async function loadAccount() {
@@ -2223,7 +2242,25 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       const r = await api(`integrations/whoop/sync?from=${isoDay(y)}&to=${isoDay(new Date())}`, { method: 'POST' });
       ls.set('ns_whoop_sync', String(Date.now()));
       const t = r.days && r.days[isoDay(new Date())];
-      toast(t ? L`تمت المزامنة ✓ — حرق اليوم ${fmt(t)} سعرة${r.weightKg ? L` · الوزن ${fmt1(r.weightKg)} كغ` : ''}` : T('تمت المزامنة ✓'), 3500);
+      if (!r.cycles) toast(T('WHOOP ما أرسل أي بيانات لهذا الحساب — تأكد من حساب WHOOP المربوط'), 4500);
+      else toast(t ? L`تمت المزامنة ✓ — حرق اليوم ${fmt(t)} سعرة${r.weightKg ? L` · الوزن ${fmt1(r.weightKg)} كغ` : ''}` : T('تمت المزامنة ✓'), 3500);
+      try { paintWhoopInfo(await api('integrations/whoop/status')); } catch {}
+    } catch (e) { toast(e.message); }
+  };
+  $('wOff').onclick = async () => {
+    const btn = $('wOff');
+    if (!btn.dataset.armed) { // tap twice to disconnect (no browser dialogs)
+      btn.dataset.armed = '1'; btn.textContent = T('اضغط مرة ثانية للتأكيد');
+      setTimeout(() => { delete btn.dataset.armed; btn.textContent = T('فصل WHOOP'); }, 4000);
+      return;
+    }
+    delete btn.dataset.armed; btn.textContent = T('فصل WHOOP');
+    try {
+      await api('integrations/whoop', { method: 'DELETE' });
+      ls.set('ns_whoop', '0');
+      $('wStatus').textContent = T('غير مربوط'); $('wConnect').textContent = T('ربط WHOOP');
+      ['wSync', 'wOff', 'wAcct', 'wLast'].forEach((id) => $(id).classList.add('hidden'));
+      toast(T('تم فصل WHOOP'));
     } catch (e) { toast(e.message); }
   };
 
@@ -2850,9 +2887,15 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   }
   if (location.hash.startsWith('#whoop')) {
     const ok = location.hash.includes('status=connected');
+    const why = !ok && (location.hash.match(/reason=([^&]+)/) || [])[1];
     history.replaceState(null, '', location.pathname);
     if (ok) { ls.set('ns_whoop', '1'); ls.del('ns_whoop_sync'); }
-    setTimeout(() => toast(ok ? T('تم ربط WHOOP ✓') : T('لم يكتمل ربط WHOOP'), 3000), 300);
+    setTimeout(async () => {
+      if (!ok) return toast(`${T('لم يكتمل ربط WHOOP')}${why ? ` — ${decodeURIComponent(why).slice(0, 140)}` : ''}`, 6000);
+      let w = null; try { w = await api('integrations/whoop/status'); } catch {}
+      if (w && w.lastSync && !w.lastSync.cycles) toast(T('تم الربط، لكن WHOOP ما أرسل أي بيانات لهذا الحساب — افتح الإعدادات › WHOOP'), 7000);
+      else toast(`${T('تم ربط WHOOP ✓')}${w && w.account && w.account.name ? ` — ${w.account.name}` : ''}`, 3500);
+    }, 600);
   }
   boot().catch((e) => toast(e.message));
 })();

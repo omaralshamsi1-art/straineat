@@ -9,6 +9,20 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"يوم واحد": "1 day",
+"تمرين واحد": "1 workout",
+"تم الربط، لكن WHOOP ما أرسل أي بيانات لهذا الحساب — افتح الإعدادات › WHOOP": "Connected, but WHOOP sent no data for this account — open Settings › WHOOP",
+"فصل WHOOP": "Disconnect WHOOP",
+"حساب WHOOP المربوط:": "Linked WHOOP account:",
+"آخر مزامنة:": "Last sync:",
+"{} أيام": "{} days",
+"{} تمارين": "{} workouts",
+"نوم واستشفاء ✓": "sleep & recovery ✓",
+"WHOOP ما أرسل أي بيانات لهذا الحساب.": "WHOOP sent no data for this account.",
+"تأكد إنك دخلت بنفس حساب WHOOP اللي على السوار (نفس الإيميل في تطبيق WHOOP)، وإذا مو هو اضغط «فصل WHOOP» واربط من جديد.": "Make sure you signed in with the same WHOOP account as the band (same email as in the WHOOP app); if not, tap “Disconnect WHOOP” and connect again.",
+"WHOOP ما أرسل أي بيانات لهذا الحساب — تأكد من حساب WHOOP المربوط": "WHOOP sent no data for this account — check which WHOOP account is linked",
+"اضغط مرة ثانية للتأكيد": "Tap again to confirm",
+"تم فصل WHOOP": "WHOOP disconnected",
 "ميزانيتك {} + {} لأن حرقك اليوم أكثر من المتوقع (نضيف نصف الزيادة فقط لأن تقدير الساعة تقريبي).": "Your budget is {} + {} because you burned more than expected today (we add back only half — watch calorie estimates are rough).",
 "+{} من الحرق": "+{} from burn",
 "اقترح وجبة بعد التمرين": "Suggest a post-workout meal",

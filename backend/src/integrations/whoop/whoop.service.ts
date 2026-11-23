@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Logger, Optional, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { dayBoundsUtc, localDate } from '../../common/dates';
@@ -13,6 +13,8 @@ const TOKEN_URL = 'https://api.prod.whoop.com/oauth/oauth2/token';
 const API_BASE = 'https://api.prod.whoop.com/developer';
 const SCOPES = 'offline read:cycles read:workout read:profile read:body_measurement read:recovery read:sleep';
 const KJ_PER_KCAL = 4.184;
+/** short, non-reversible user tag for logs */
+const short = (userId: string) => createHmac('sha256', 'log').update(userId).digest('hex').slice(0, 6);
 
 
 interface WhoopCycle {
@@ -67,7 +69,30 @@ export class WhoopService {
       redirect_uri: this.req('WHOOP_REDIRECT_URI'),
     });
     await this.repo.saveTokens(this.toTokens(userId, tokens));
+    // Which WHOOP account was linked (shown in Settings, so a wrong login is obvious), then a first sync.
+    await this.rememberAccount(userId).catch((e) => this.log.warn(`WHOOP profile skipped: ${e?.message ?? e}`));
+    try {
+      const p = await this.profiles.get(userId);
+      const today = localDate(new Date(), p.timezone);
+      await this.sync(userId, addDaysIso(today, -1), today);
+    } catch (e: any) {
+      this.log.warn(`WHOOP first sync failed for ${short(userId)}: ${String(e?.message ?? e).slice(0, 200)}`);
+    }
     return userId;
+  }
+
+  /** Name + masked email of the linked WHOOP account (read:profile). */
+  private async rememberAccount(userId: string) {
+    const b = await this.api(userId, '/v2/user/profile/basic');
+    const email = typeof b?.email === 'string' ? b.email : '';
+    const [local, domain] = email.split('@');
+    const payload = {
+      whoopUserId: b?.user_id ?? null,
+      name: [b?.first_name, b?.last_name ? `${String(b.last_name).charAt(0)}.` : ''].filter(Boolean).join(' ') || null,
+      email: local && domain ? `${local.charAt(0)}***@${domain}` : null,
+    };
+    await this.repo.setCache({ userId, key: 'whoop-account', payload, createdAt: new Date().toISOString() });
+    return payload;
   }
 
   async disconnect(userId: string) {
@@ -77,7 +102,9 @@ export class WhoopService {
 
   async status(userId: string) {
     const t = await this.repo.getTokens(userId, 'whoop');
-    return { connected: !!t, expiresAt: t?.expiresAt ?? null };
+    const account = t ? (await this.repo.getCache(userId, 'whoop-account'))?.payload ?? null : null;
+    const lastSync = t ? (await this.repo.getCache(userId, 'whoop-last-sync'))?.payload ?? null : null;
+    return { connected: !!t, expiresAt: t?.expiresAt ?? null, account, lastSync };
   }
 
   // ---------- Sync ----------
@@ -143,7 +170,13 @@ export class WhoopService {
         [...byDate].map(([date, kcal]) => ({ date, source: 'whoop' as const, totalKcal: Math.round(kcal) })),
       );
     }
-    return { cycles: cycles.length, workouts, wellness, weightKg, days: Object.fromEntries([...byDate].map(([d, k]) => [d, Math.round(k)])) };
+    // What came back — kept for Settings ("last sync") and the logs, so an empty WHOOP account is easy to spot.
+    const scored = cycles.filter((c) => c.score_state === 'SCORED').length;
+    const summary = { at: new Date().toISOString(), from, to, cycles: cycles.length, scored, days: byDate.size, wellness, workouts };
+    await this.repo.setCache({ userId, key: 'whoop-last-sync', payload: summary, createdAt: summary.at });
+    this.log.log(`WHOOP sync ${short(userId)} ${from}..${to}: cycles ${cycles.length} (scored ${scored}), days ${byDate.size}, wellness ${wellness}, workouts ${workouts}`);
+    if (!(await this.repo.getCache(userId, 'whoop-account'))) await this.rememberAccount(userId).catch(() => undefined);
+    return { cycles: cycles.length, scored, workouts, wellness, weightKg, days: Object.fromEntries([...byDate].map(([d, k]) => [d, Math.round(k)])) };
   }
 
   /** Recovery (HRV, resting HR, SpO2, skin temp) + main sleep per wake-up day, stored as `whoop-day:<date>`. */
@@ -296,18 +329,31 @@ export class WhoopService {
 
   private async validAccessToken(userId: string): Promise<string> {
     const t = await this.repo.getTokens(userId, 'whoop');
-    if (!t) throw new UnauthorizedException('WHOOP not connected');
+    if (!t) throw new ConflictException('WHOOP not connected — connect it in Settings');
     if (new Date(t.expiresAt).getTime() - Date.now() < 60_000) return (await this.refresh(userId)).accessToken;
     return t.accessToken;
   }
 
-  private async refresh(userId: string): Promise<OAuthTokens> {
-    const t = await this.repo.getTokens(userId, 'whoop');
-    if (!t?.refreshToken) throw new UnauthorizedException('WHOOP session expired — reconnect');
-    const fresh = await this.tokenRequest({ grant_type: 'refresh_token', refresh_token: t.refreshToken, scope: 'offline' });
-    const saved = this.toTokens(userId, fresh, t.refreshToken);
-    await this.repo.saveTokens(saved);
-    return saved;
+  /** One refresh per user at a time: the app, the background poll and a manual sync can overlap, and WHOOP rotates refresh tokens. */
+  private readonly refreshing = new Map<string, Promise<OAuthTokens>>();
+  private refresh(userId: string): Promise<OAuthTokens> {
+    const running = this.refreshing.get(userId);
+    if (running) return running;
+    const p = (async () => {
+      const t = await this.repo.getTokens(userId, 'whoop');
+      if (!t?.refreshToken) throw new ConflictException('WHOOP session expired — reconnect WHOOP in Settings');
+      try {
+        const fresh = await this.tokenRequest({ grant_type: 'refresh_token', refresh_token: t.refreshToken, scope: 'offline' });
+        const saved = this.toTokens(userId, fresh, t.refreshToken);
+        await this.repo.saveTokens(saved);
+        return saved;
+      } catch (e: any) {
+        this.log.warn(`WHOOP token refresh failed for ${short(userId)}: ${String(e?.message ?? e).slice(0, 160)}`);
+        throw e;
+      }
+    })().finally(() => this.refreshing.delete(userId));
+    this.refreshing.set(userId, p);
+    return p;
   }
 
   private async tokenRequest(params: Record<string, string>) {
@@ -320,7 +366,7 @@ export class WhoopService {
         client_secret: this.req('WHOOP_CLIENT_SECRET'),
       }),
     });
-    if (!res.ok) throw new UnauthorizedException(`WHOOP token error ${res.status}`);
+    if (!res.ok) throw new ConflictException(`WHOOP token error ${res.status}: ${(await res.text().catch(() => '')).slice(0, 120)} — reconnect WHOOP in Settings`);
     return (await res.json()) as { access_token: string; refresh_token?: string; expires_in: number; scope?: string };
   }
 
@@ -349,12 +395,12 @@ export class WhoopService {
 
   private verifyState(state: string): string {
     const [payload, sig] = (state ?? '').split('.');
-    if (!payload || !sig) throw new UnauthorizedException('Bad state');
+    if (!payload || !sig) throw new BadRequestException('Bad state');
     const expected = Buffer.from(this.hmac(payload));
     const given = Buffer.from(sig);
-    if (expected.length !== given.length || !timingSafeEqual(expected, given)) throw new UnauthorizedException('Bad state');
+    if (expected.length !== given.length || !timingSafeEqual(expected, given)) throw new BadRequestException('Bad state');
     const { u, t } = JSON.parse(Buffer.from(payload, 'base64url').toString());
-    if (Date.now() - t > 15 * 60_000) throw new UnauthorizedException('State expired');
+    if (Date.now() - t > 15 * 60_000) throw new BadRequestException('State expired — try connecting again');
     return u;
   }
 

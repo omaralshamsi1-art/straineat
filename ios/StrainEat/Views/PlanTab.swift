@@ -200,6 +200,7 @@ struct DevicesCard: View {
     @State private var loaded = false
     @State private var active = ""
     @State private var basal = ""
+    @State private var whoop: WhoopInfo?
     private let sources = [("", t("Automatic", "تلقائي")), ("whoop", "WHOOP"), ("apple_health", "Apple Health"), ("manual", t("Manual", "يدوي"))]
 
     private var showWhoop: Bool { source.isEmpty || source == "whoop" }
@@ -239,19 +240,37 @@ struct DevicesCard: View {
 
             if showWhoop {
                 if store.whoopConnected {
+                    if let a = whoop?.account, let name = a.name {
+                        // isolate the Latin name so its period doesn't jump sides in Arabic
+                        Text(t("Linked WHOOP account: ", "حساب WHOOP المربوط: ") + "\u{2068}\(name)\u{2069}" + (a.email.map { " · \u{2068}\($0)\u{2069}" } ?? ""))
+                            .font(.caption).foregroundStyle(Theme.muted)
+                    }
+                    if let s = whoop?.lastSync {
+                        if s.cycles == 0 {
+                            Text(t("WHOOP sent no data for this account. Make sure you signed in with the same WHOOP account as your band (same email as in the WHOOP app). If not, tap Disconnect and connect again.",
+                                   "WHOOP ما أرسل أي بيانات لهذا الحساب. تأكد إنك دخلت بنفس حساب WHOOP اللي على السوار (نفس الإيميل في تطبيق WHOOP)، وإذا مو هو اضغط «فصل» واربط من جديد."))
+                                .font(.caption.weight(.semibold)).foregroundStyle(Theme.dangerText)
+                        } else {
+                            Text(lastSyncLine(s)).font(.caption).foregroundStyle(Theme.muted)
+                        }
+                    }
                     HStack(spacing: 8) {
                         Button {
                             Task {
                                 busy = true; defer { busy = false }
                                 let from = Calendar.current.date(byAdding: .day, value: -3, to: Date())!
-                                do { try await APIClient.shared.whoopSync(from: from, to: Date()); message = t("WHOOP synced ✓", "تمت مزامنة WHOOP ✓") }
-                                catch { message = error.localizedDescription }
+                                do {
+                                    let cycles = try await APIClient.shared.whoopSync(from: from, to: Date())
+                                    message = cycles > 0 ? t("WHOOP synced ✓", "تمت مزامنة WHOOP ✓")
+                                        : t("WHOOP sent no data for this account — check the linked WHOOP account", "WHOOP ما أرسل أي بيانات لهذا الحساب — تأكد من حساب WHOOP المربوط")
+                                } catch { message = error.localizedDescription }
+                                whoop = try? await APIClient.shared.whoopInfo()
                                 await store.refresh()
                             }
                         } label: { Label(t("Sync WHOOP now", "مزامنة WHOOP الآن"), systemImage: "arrow.triangle.2.circlepath") }
                             .buttonStyle(SoftButtonStyle()).disabled(busy)
                         Button(role: .destructive) {
-                            Task { try? await APIClient.shared.whoopDisconnect(); store.setWhoop(false) }
+                            Task { try? await APIClient.shared.whoopDisconnect(); store.setWhoop(false); whoop = nil }
                         } label: { Text(t("Disconnect", "فصل")) }
                             .frame(width: 60)
                     }
@@ -286,7 +305,15 @@ struct DevicesCard: View {
             if let message { Text(message).font(.caption).foregroundStyle(Theme.brand2) }
         }
         .onAppear { if !loaded { source = profile?.preferredEnergySource ?? ""; DispatchQueue.main.async { loaded = true } } }
-        .task { if let c = try? await APIClient.shared.whoopStatus() { store.setWhoop(c) } }
+        .task { if let w = try? await APIClient.shared.whoopInfo() { whoop = w; store.setWhoop(w.connected) } }
+    }
+
+    private func lastSyncLine(_ s: WhoopInfo.LastSync) -> String {
+        var parts = [t("Last sync: ", "آخر مزامنة: ") + s.at.formatted(.dateTime.weekday(.abbreviated).hour().minute().locale(appLocale))]
+        parts.append(s.days == 1 ? t("1 day", "يوم واحد") : t("\(s.days) days", "\(s.days) أيام"))
+        parts.append(s.workouts == 1 ? t("1 workout", "تمرين واحد") : t("\(s.workouts) workouts", "\(s.workouts) تمارين"))
+        if s.wellness > 0 { parts.append(t("sleep & recovery ✓", "نوم واستشفاء ✓")) }
+        return parts.joined(separator: " · ")
     }
 
     private func connectWhoop() async {
@@ -294,7 +321,13 @@ struct DevicesCard: View {
             let ok = try await WhoopConnector.shared.connect()
             store.setWhoop(ok)
             message = ok ? t("WHOOP connected ✓", "تم ربط WHOOP ✓") : t("Connection didn't finish", "لم يكتمل الربط")
-            if ok { await store.refresh() }
+            if ok {
+                whoop = try? await APIClient.shared.whoopInfo()
+                if let s = whoop?.lastSync, s.cycles == 0 {
+                    message = t("Connected, but WHOOP sent no data for this account — check the linked account below", "تم الربط، لكن WHOOP ما أرسل أي بيانات لهذا الحساب — شوف الحساب المربوط تحت")
+                }
+                await store.refresh()
+            }
         } catch { message = error.localizedDescription }
     }
 }

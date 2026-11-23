@@ -295,6 +295,7 @@ describe('WHOOP', () => {
         return json({ records: [{ cycle_id: 1, sleep_id: 's-1', created_at: '2026-11-15T03:10:00Z', score_state: 'SCORED',
           score: { user_calibrating: false, recovery_score: 76, resting_heart_rate: 56, hrv_rmssd_milli: 37.4, spo2_percentage: 95.2, skin_temp_celsius: 33.71 } }] });
       }
+      if (url.includes('/v2/user/profile/basic')) return json({ user_id: 10129, email: 'meera@example.com', first_name: 'Meera', last_name: 'Ali' });
       if (url.includes('/v2/cycle')) {
         cycleCalls++;
         if (init.headers.Authorization === 'Bearer A1') return { ok: false, status: 401, text: async () => 'expired' };
@@ -312,10 +313,16 @@ describe('WHOOP', () => {
     const url = new URL(whoop.authorizeUrl('u1'));
     expect(url.searchParams.get('scope')).toContain('read:cycles');
     expect(await whoop.handleCallback('code', url.searchParams.get('state')!)).toBe('u1');
+    expect(cycleCalls).toBe(2); // first sync right after connecting: 401 then retry with refreshed token
     await expect(whoop.handleCallback('code', 'tampered.sig')).rejects.toThrow();
+    // Settings shows which WHOOP account is linked (masked) and what the last sync returned
+    const st: any = await whoop.status('u1');
+    expect(st.account).toEqual({ whoopUserId: 10129, name: 'Meera A.', email: 'm***@example.com' });
+    expect(st.lastSync).toMatchObject({ cycles: 2, scored: 1 });
 
+    cycleCalls = 0;
     const r = await whoop.sync('u1', '2026-11-15', '2026-11-15');
-    expect(cycleCalls).toBe(2); // 401 then retry with refreshed token
+    expect(cycleCalls).toBe(1); // token already refreshed
     expect(r.days).toEqual({ '2026-11-15': 2500 });
     const b = await s.energy.balance('u1', '2026-11-15');
     expect(b.burn).toMatchObject({ source: 'whoop', totalKcal: 2500 });
@@ -453,5 +460,30 @@ describe('workouts', () => {
     const w = (id: string, source: any, s: string, e: string) => ({ userId: 'u', id, source, sport: 'x', start: s, end: e, date: '2026-11-15', durationMin: 0, kcal: null, strain: null, avgHr: null, maxHr: null, distanceM: null, zonesMin: null, updatedAt: '' });
     const out = dedupeWorkouts([w('a', 'whoop', '2026-11-15T10:00:00Z', '2026-11-15T11:00:00Z'), w('b', 'apple_health', '2026-11-15T10:50:00Z', '2026-11-15T11:50:00Z')], null);
     expect(out).toHaveLength(2);
+  });
+});
+
+describe('WHOOP robustness', () => {
+  it('overlapping syncs share one token refresh, and a WHOOP problem is never a 401 (that would sign the user out)', async () => {
+    const s = setup();
+    const cfg = config({ WHOOP_CLIENT_ID: 'cid', WHOOP_CLIENT_SECRET: 'sec', WHOOP_REDIRECT_URI: 'https://api.test/cb' });
+    let refreshes = 0;
+    const fetchFn: any = vi.fn(async (u: string, init?: any): Promise<any> => {
+      if (u.includes('/oauth2/token')) {
+        refreshes++;
+        await new Promise((r) => setTimeout(r, 20));
+        return json({ access_token: 'A2', refresh_token: 'R2', expires_in: 3600 });
+      }
+      return json({ records: [] });
+    });
+    const whoop = new WhoopService(cfg, s.repo, s.energy, s.profiles, fetchFn);
+    // token about to expire → both syncs need a refresh at the same moment
+    await s.repo.saveTokens({ userId: 'u3', provider: 'whoop', accessToken: 'A1', refreshToken: 'R1', expiresAt: new Date(Date.now() + 10_000).toISOString(), scope: '' });
+    await Promise.all([whoop.sync('u3', '2026-11-15', '2026-11-15'), whoop.sync('u3', '2026-11-15', '2026-11-15')]);
+    expect(refreshes).toBe(1);
+    // empty WHOOP account: the summary says so
+    expect(((await whoop.status('u3')) as any).lastSync).toMatchObject({ cycles: 0, days: 0 });
+    // not connected → 409, not 401
+    await expect(whoop.sync('nobody', '2026-11-15', '2026-11-15')).rejects.toMatchObject({ status: 409 });
   });
 });

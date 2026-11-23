@@ -188,15 +188,16 @@ final class APIClient {
         let r: R = try await send(request("integrations/whoop/connect"))
         return r.url
     }
-    func whoopStatus() async throws -> Bool {
-        struct R: Decodable { let connected: Bool }
-        let r: R = try await send(request("integrations/whoop/status"))
-        return r.connected
-    }
-    func whoopSync(from: Date, to: Date) async throws {
+    func whoopStatus() async throws -> Bool { try await whoopInfo().connected }
+    /// Connection + which WHOOP account is linked + what the last sync brought back.
+    func whoopInfo() async throws -> WhoopInfo { try await send(request("integrations/whoop/status")) }
+    /// Returns how many WHOOP cycles came back (0 = WHOOP sent nothing for this account).
+    @discardableResult
+    func whoopSync(from: Date, to: Date) async throws -> Int {
         let f = DateFormatter.isoDay
         struct R: Decodable { let cycles: Int }
-        let _: R = try await send(request("integrations/whoop/sync?from=\(f.string(from: from))&to=\(f.string(from: to))", method: "POST"))
+        let r: R = try await send(request("integrations/whoop/sync?from=\(f.string(from: from))&to=\(f.string(from: to))", method: "POST"))
+        return r.cycles
     }
     func whoopDisconnect() async throws {
         struct R: Decodable { let connected: Bool }
@@ -274,4 +275,12 @@ extension UIImage {
         let format = UIGraphicsImageRendererFormat.default(); format.scale = 1
         return UIGraphicsImageRenderer(size: target, format: format).image { _ in draw(in: CGRect(origin: .zero, size: target)) }
     }
+}
+
+struct WhoopInfo: Decodable {
+    struct Account: Decodable { let name: String?; let email: String? }
+    struct LastSync: Decodable { let at: Date; let cycles: Int; let days: Int; let workouts: Int; let wellness: Int }
+    let connected: Bool
+    let account: Account?
+    let lastSync: LastSync?
 }
