@@ -164,6 +164,9 @@ describe('Apple Health via iPhone Shortcut', () => {
     expect((await sc.status('u')).last).toMatchObject({ active: 613 });
     await expect(sc.ingest('x'.repeat(24), { active: 1 })).rejects.toThrow('Invalid sync token');
     await expect(sc.ingest(token, {})).rejects.toThrow(/Key = the word active/);
+    await expect(sc.ingest(token, { active: '', basal: '' })).resolves.toMatchObject({ ok: true, skipped: true });
+    await expect(sc.ingest(token, { active: 'abc', basal: 'x' })).rejects.toThrow(/must be numbers/);
+    expect(kcalOf({ value: '120.4' })).toBe(120);
     // Key/value swapped in the Shortcut (number as key, word as value) still works
     await expect(sc.ingest(token, { '540.3 kcal': 'active', '1702': 'basal' })).resolves.toMatchObject({ activeKcal: 540, basalKcal: 1702 });
     const { token: t2 } = await sc.token('u', true);

@@ -19,6 +19,12 @@ export function kcalOf(v: unknown): number | null {
     const xs = v.map(kcalOf).filter((x): x is number => x != null);
     return xs.length ? xs.reduce((a, b) => a + b, 0) : null;
   }
+  if (typeof v === 'object') {
+    // a Health sample / dictionary sent by Shortcuts: { value | quantity | sum … }
+    const o = v as Record<string, unknown>;
+    for (const k of ['value', 'quantity', 'sum', 'kcal', 'Value', 'Quantity']) if (k in o) return kcalOf(o[k]);
+    return null;
+  }
   const n = typeof v === 'number' ? v : Number(String(v).replace(/[,٬]/g, '').replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x660)).match(/-?\d+(\.\d+)?/)?.[0]);
   return Number.isFinite(n) && n >= 0 && n < 20000 ? Math.round(n) : null;
 }
@@ -58,6 +64,16 @@ export class ShortcutService {
     const active = kcalOf(body?.active ?? body?.activeKcal ?? swapped.active);
     const basal = kcalOf(body?.basal ?? body?.basalKcal ?? body?.resting ?? swapped.basal ?? swapped.resting);
     if (active == null && basal == null) {
+      const raw = [body?.active, body?.basal];
+      const empty = (x: unknown) => x == null || x === '' || (Array.isArray(x) && x.length === 0);
+      if (('active' in (body ?? {}) || 'basal' in (body ?? {})) && raw.every(empty)) {
+        // fields are right but Health had nothing yet (e.g. just after midnight) — not an error
+        return { ok: true, skipped: true, message: 'Health has no energy recorded for today yet — try again later', messageAr: 'ما فيه حرق مسجّل في Health لليوم للحين — جرّب بعدين' };
+      }
+      if ('active' in (body ?? {}) || 'basal' in (body ?? {})) {
+        const show = (x: unknown) => JSON.stringify(x)?.slice(0, 60) ?? String(x);
+        throw new BadRequestException(`active/basal must be numbers (kcal). Received active=${show(body?.active)} basal=${show(body?.basal)} — in the Shortcut use "Calculate Statistics → Sum" on the Health samples and send that result.`);
+      }
       const got = Object.keys(body ?? {}).slice(0, 5).join(', ') || 'nothing';
       throw new BadRequestException(`Send JSON like {"active": 612, "basal": 1650}: Key = the word active / basal, value = the Health number. Received keys: ${got}`);
     }
