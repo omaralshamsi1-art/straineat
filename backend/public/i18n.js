@@ -9,6 +9,9 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"بياناته توصل عن طريق Apple Health: في تطبيق": "It reaches StrainEat through Apple Health: in the",
+"افتح Connections ← Apps and services ← Apple Health ← Get started، وفعّل السعرات النشطة والتمارين والنوم والوزن. بعدها StrainEat يقرأها من Apple Health، وطاقة الراحة نحسبها من وزنك وطولك وعمرك لأن Fitbit ما يرسلها.": "app open Connections → Apps and services → Apple Health → Get started, and turn on active calories, exercise, sleep and weight. StrainEat then reads it from Apple Health; resting energy is added from your weight, height and age because Fitbit doesn't send it.",
+"عندك Fitbit (مثل Fitbit Air)؟": "Have a Fitbit (like Fitbit Air)?",
 "يوم واحد": "1 day",
 "تمرين واحد": "1 workout",
 "تم الربط، لكن WHOOP ما أرسل أي بيانات لهذا الحساب — افتح الإعدادات › WHOOP": "Connected, but WHOOP sent no data for this account — open Settings › WHOOP",

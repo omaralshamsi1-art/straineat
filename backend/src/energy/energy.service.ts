@@ -3,7 +3,7 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { isIsoDate, localDate } from '../common/dates';
 import { sumNutrients } from '../common/nutrition-math';
 import { EnergyDay, EnergySource } from '../common/types';
-import { estimatedTdee, ProfileService } from '../profile/profile.service';
+import { bmrKcal, estimatedTdee, ProfileService } from '../profile/profile.service';
 import { pickEnergy, PlanService } from '../plan/plan.service';
 import { WorkoutsService } from '../workouts/workouts.service';
 import { ramadanTips, ramadanView } from '../coach/coach-math';
@@ -32,11 +32,19 @@ export class EnergyService {
   async ingest(userId: string, samples: EnergySampleInput[]) {
     if (!Array.isArray(samples) || !samples.length) throw new BadRequestException('samples[] required');
     const saved: EnergyDay[] = [];
+    let restFill: ((date: string) => number | null) | undefined;
     for (const s of samples) {
       if (!isIsoDate(s.date)) throw new BadRequestException(`Invalid date ${s.date}`);
       if (!VALID_SOURCES.has(s.source)) throw new BadRequestException(`Invalid source ${s.source}`);
       const active = num(s.activeKcal);
-      const basal = num(s.basalKcal);
+      let basal = num(s.basalKcal);
+      // Trackers that reach Apple Health through another app (Fitbit Air via Google Health, many
+      // bands) write active calories only; without an Apple Watch there is no resting energy, and
+      // the day's burn would be a few hundred kcal. Fill the resting part from the BMR formula.
+      if (s.source === 'apple_health' && num(s.totalKcal) == null && active != null && active > 0 && !(basal && basal > 0)) {
+        restFill ??= await this.restingFill(userId);
+        basal = restFill(s.date) ?? basal;
+      }
       const total = num(s.totalKcal) ?? (active != null || basal != null ? (active ?? 0) + (basal ?? 0) : null);
       if (total == null) throw new BadRequestException('Provide totalKcal or active/basal kcal');
       const day: EnergyDay = {
@@ -52,6 +60,15 @@ export class EnergyService {
       saved.push(day);
     }
     return { saved: saved.length };
+  }
+
+  /** BMR for a past day, or the share of it already elapsed today (null when the profile is incomplete). */
+  private async restingFill(userId: string, now = new Date()): Promise<(date: string) => number | null> {
+    const profile = await this.profiles.get(userId);
+    const bmr = bmrKcal(profile, now);
+    const today = localDate(now, profile.timezone);
+    const elapsed = localMinuteOfDay(now, profile.timezone) / 1440;
+    return (date) => (bmr == null || date > today ? null : Math.round(date === today ? bmr * elapsed : bmr));
   }
 
   async balance(userId: string, date?: string, now = new Date()) {

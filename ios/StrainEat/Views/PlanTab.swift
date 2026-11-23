@@ -236,6 +236,12 @@ struct DevicesCard: View {
                     }
                 } label: { Label(t("Sync Apple Health now", "مزامنة Apple Health الآن"), systemImage: "heart.fill") }
                     .buttonStyle(SoftButtonStyle()).disabled(busy)
+                DisclosureGroup(t("Have a Fitbit (like Fitbit Air)?", "عندك Fitbit (مثل Fitbit Air)؟")) {
+                    Text(t("It reaches StrainEat through Apple Health. In the Google Health app open Connections → Apps and services → Apple Health → Get started, and turn on active calories, exercise, sleep and weight. Fitbit doesn't send resting energy, so StrainEat adds it from your weight, height and age.",
+                           "بياناته توصل عن طريق Apple Health: في تطبيق Google Health افتح Connections ← Apps and services ← Apple Health ← Get started، وفعّل السعرات النشطة والتمارين والنوم والوزن. طاقة الراحة نحسبها من وزنك وطولك وعمرك لأن Fitbit ما يرسلها."))
+                        .font(.caption).foregroundStyle(Theme.muted).padding(.top, 4)
+                }
+                .font(.caption.weight(.semibold)).tint(Theme.muted)
             }
 
             if showWhoop {

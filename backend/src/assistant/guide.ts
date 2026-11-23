@@ -69,6 +69,9 @@ After analysis the Review screen opens.
   meals per day, Ramadan fasting.
 - Kidney, heart, diabetes and thyroid conditions, pregnancy/breastfeeding or an eating-disorder history make the plan
   "supervised": gentler targets and a reminder to follow the user's clinician.
+- Fitbit (incl. Fitbit Air): no direct link; it arrives through Apple Health. In the Google Health app (iPhone): Connections → Apps and
+  services → Apple Health → Get started, turn on active calories, exercise, sleep and weight; StrainEat then reads it like any Apple Health
+  data (iPhone app sync, or the Shortcut on the web). Fitbit doesn't send resting energy, so StrainEat adds it from the BMR formula.
 - Manual burn entry: for users without WHOOP/Apple Health — enter active and basal kcal from the Health app.
 
 ## Settings

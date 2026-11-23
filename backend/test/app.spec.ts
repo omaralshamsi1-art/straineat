@@ -247,6 +247,19 @@ describe('energy balance', () => {
     expect((await s.energy.balance('u1', date)).burn?.totalKcal).toBe(2200);
   });
 
+  it('fills resting energy from BMR when Apple Health only has active calories (Fitbit via Google Health)', async () => {
+    const s = setup();
+    await s.profiles.update('u1', { sex: 'female', birthYear: 2000, heightCm: 165, weightKg: 60, preferredEnergySource: 'apple_health' });
+    // BMR = 10*60 + 6.25*165 - 5*age - 161
+    const age = new Date().getFullYear() - 2000;
+    const bmr = Math.round(600 + 6.25 * 165 - 5 * age - 161);
+    await s.energy.ingest('u1', [{ date: '2026-11-10', source: 'apple_health', activeKcal: 400, basalKcal: 0 }]);
+    expect((await s.energy.balance('u1', '2026-11-10')).burn).toMatchObject({ basalKcal: bmr, totalKcal: 400 + bmr });
+    // a real resting value (Apple Watch) is kept as is
+    await s.energy.ingest('u1', [{ date: '2026-11-11', source: 'apple_health', activeKcal: 400, basalKcal: 1300 }]);
+    expect((await s.energy.balance('u1', '2026-11-11')).burn?.totalKcal).toBe(1700);
+  });
+
   it('targets maintenance from Mifflin-St Jeor when there is no device data', async () => {
     const s = setup();
     await s.profiles.update('u1', { sex: 'female', birthYear: 2000, heightCm: 165, weightKg: 60, activityLevel: 'light' });
