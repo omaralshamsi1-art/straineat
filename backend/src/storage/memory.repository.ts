@@ -1,4 +1,4 @@
-import { CacheEntry, EnergyDay, Invite, KnownMeal, Meal, OAuthTokens, Profile, PushSub, User, WeightEntry, Workout } from '../common/types';
+import { CacheEntry, EnergyDay, Invite, KnownMeal, Meal, OAuthTokens, Profile, PushSub, User, WeightEntry, Workout , WaterEntry } from '../common/types';
 import { rankKnown, Repository } from './repository';
 
 /** In-memory store for local development and tests. */
@@ -14,6 +14,7 @@ export class MemoryRepository implements Repository {
   private users = new Map<string, User>();
   private invites = new Map<string, Invite>();
   private pushSubs = new Map<string, PushSub>();
+  private water = new Map<string, WaterEntry>();
 
   async saveMeal(m: Meal) {
     this.meals.set(m.id, structuredClone(m));
@@ -66,6 +67,16 @@ export class MemoryRepository implements Repository {
 
   async listEnergyRange(userId: string, from: string, to: string) {
     return [...this.energy.values()].filter((d) => d.userId === userId && d.date >= from && d.date <= to);
+  }
+
+  async upsertWater(e: WaterEntry) {
+    this.water.set(`${e.userId}|${e.id}`, { ...e });
+  }
+  async listWater(userId: string, from: string, to: string) {
+    return [...this.water.values()].filter((e) => e.userId === userId && e.date >= from && e.date <= to).sort((a, b) => a.at.localeCompare(b.at));
+  }
+  async deleteWater(userId: string, id: string) {
+    return this.water.delete(`${userId}|${id}`);
   }
 
   async upsertWeight(w: WeightEntry) {

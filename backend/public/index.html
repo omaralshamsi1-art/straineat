@@ -607,6 +607,21 @@ html[dir="rtl"] .mon2b .t i { transform: scaleX(-1); display: inline-block; }
 .mon2b .v { font-size: 16px; font-weight: 800; }
 .mon2b small { font-size: 12px; color: var(--muted); }
 .dayhead { display: flex; align-items: center; justify-content: space-between; margin: 16px 2px 2px; }
+.fdays { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.fdays button { min-height: 38px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card-2); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
+.fdays button[aria-pressed="true"] { background: var(--brand-2); border-color: var(--brand-2); color: #111; font-weight: 700; }
+.water { margin: 0 0 12px; padding: 14px 16px; }
+.water .wtop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; cursor: pointer; }
+.water .wtop .t { font-size: 13px; font-weight: 800; }
+html[dir="ltr"] .water .wtop .t { text-transform: uppercase; letter-spacing: .1em; font-size: 12px; }
+.water .wv { font-size: 16px; font-weight: 800; }
+.water .wbar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; margin: 10px 0 6px; position: relative; }
+.water .wbar i { position: absolute; inset-block: 0; inset-inline-start: 0; background: #4aa8ff; border-radius: 99px; transition: width .4s; }
+.water .wbar b { position: absolute; inset-block: -2px; width: 2px; background: var(--ink); opacity: .45; }
+.water .wsub { font-size: 12px; color: var(--muted); min-height: 16px; }
+.water .wbtns { display: flex; gap: 8px; margin-top: 10px; }
+.water .wbtns button { flex: 1; min-height: 40px; border-radius: 999px; border: 1px solid var(--line); background: var(--card-2); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+.water .wbtns button.undo { flex: 0 0 auto; padding: 0 14px; color: var(--muted); }
 /* stop iOS rubber-band: it drags the fixed nav and button with the page */
 html, body { overscroll-behavior-y: none; }
 .dayhead h2 { margin: 0; font-size: 19px; font-weight: 800; }
@@ -770,6 +785,13 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     <div class="mon2b">
       <button class="card" data-det="eaten"><span class="t">التغذية <i>›</i></span><span class="v" id="monNutV">—</span><small id="monNutS"></small></button>
       <button class="card" id="monBody"><span class="t">الجسم <i>›</i></span><span class="v" id="monBodyV">—</span><small id="monBodyS"></small></button>
+    </div>
+
+    <div class="card water hidden" id="waterCard">
+      <div class="wtop" id="wOpen"><span class="t">💧 الماء</span><span class="wv num" id="wVal" dir="ltr">—</span></div>
+      <div class="wbar"><i id="wFill" style="width:0"></i><b id="wPace" class="hidden"></b></div>
+      <div class="wsub" id="wSub"></div>
+      <div class="wbtns"><button data-wadd="250">+250 مل</button><button data-wadd="500">+500 مل</button><button id="wCustom">كمية…</button><button class="undo hidden" id="wUndo" aria-label="تراجع">↶</button></div>
     </div>
 
     <div class="dayhead"><h2>يومي</h2><div style="display:flex;gap:8px;align-items:center"><button class="chip src ideas" id="dayIdeas"><svg width="15" height="15"><use href="#i-bulb"/></svg>اقتراح وجبة</button><button class="plus" id="dayPlus" aria-label="سجّل وجبة">+</button></div></div>
@@ -975,9 +997,13 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
 
     <div class="card">
       <h3>وضع رمضان والصيام</h3>
-      <p class="small muted" style="margin-top:-4px">يتفعّل تلقائياً في رمضان (حسب تقويم أم القرى). يمكنك تفعيله يدوياً لأيام الصيام الأخرى.</p>
-      <label for="rmMode">الحالة</label>
-      <select id="rmMode"><option value="auto">تلقائي في رمضان</option><option value="on">مفعّل الآن</option><option value="off">متوقف</option></select>
+      <p class="small muted" style="margin-top:-4px">يتفعّل تلقائياً في رمضان (حسب تقويم أم القرى)، وفي أيام الصيام اللي تختارها.</p>
+      <label for="rmMode">رمضان</label>
+      <select id="rmMode"><option value="auto">تلقائي في رمضان</option><option value="on">صائم كل يوم (مفعّل دائماً)</option><option value="off">متوقف</option></select>
+      <label>صيام تطوع في غير رمضان</label>
+      <div class="fdays" id="rmDays"></div>
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="rmWhite"> الأيام البيض (13 و14 و15 من كل شهر هجري)</label>
+      <p class="small muted" style="margin:4px 0 0">في هالأيام يتحول اليوم تلقائياً لوضع الصيام: تقسيم السحور والإفطار، وما نذكّرك بالأكل والماء وأنت صائم. لا يُطبّق في أيام العيد والتشريق.</p>
       <div class="grid2">
         <div><label for="rmSuhoor">وقت السحور (الإمساك)</label><input id="rmSuhoor" type="time"></div>
         <div><label for="rmIftar">وقت الإفطار</label><input id="rmIftar" type="time"></div>
@@ -1016,6 +1042,8 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       <p class="small muted" style="margin-top:-4px">نذكّرك في أوقات وجباتك المعتادة إذا لم تسجّل، وبقياس الوزن صباحاً. على الآيفون: أضف التطبيق للشاشة الرئيسية أولاً.</p>
       <label class="check"><input type="checkbox" id="rmMeals" checked> تذكير الوجبات</label>
       <label class="check"><input type="checkbox" id="rmWeight" checked> تذكير الوزن الصباحي</label>
+      <label class="check"><input type="checkbox" id="rmWater" checked> تذكير شرب الماء (إذا تأخرت عن هدفك)</label>
+      <label class="check"><input type="checkbox" id="hotEnv"> أشتغل أو أتمرن في الحر أغلب الأيام (+750 مل لهدف الماء)</label>
       <button class="btn ghost" id="pushBtn">تفعيل التنبيهات على هذا الجهاز</button>
       <button class="btn ghost hidden" id="pushTest">إرسال تنبيه تجريبي</button>
     </div>
@@ -1800,6 +1828,76 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     $('detBody').innerHTML = ''; $('detBody').appendChild($('sugWrap'));
     if (!$('sugBody').children.length) loadSuggestions(false);
   }
+  // ---------------- water ----------------
+  let waterDay = null;
+  const ltr = (ml) => (ml >= 1000 ? `${fmt1(ml / 1000)} ${T('لتر')}` : `${fmt(ml)} ${T('مل')}`);
+  async function loadWater() {
+    try { paintWater(await api(`water?date=${isoDay(day)}`)); } catch { $('waterCard').classList.add('hidden'); }
+  }
+  function paintWater(w) {
+    waterDay = w;
+    $('waterCard').classList.remove('hidden');
+    const tgt = w.targetMl;
+    $('wVal').textContent = tgt ? `${fmt1(w.intakeMl / 1000)} / ${fmt1(tgt / 1000)} ${T('لتر')}` : ltr(w.intakeMl);
+    $('wFill').style.width = `${tgt ? Math.min(100, (w.intakeMl / tgt) * 100) : 0}%`;
+    const isTodayV = isoDay(day) === isoDay(new Date());
+    const showPace = tgt && isTodayV && w.expectedByNowMl > 0 && w.expectedByNowMl < tgt;
+    $('wPace').classList.toggle('hidden', !showPace);
+    if (showPace) $('wPace').style.insetInlineStart = `${(w.expectedByNowMl / tgt) * 100}%`;
+    const warn = (w.notes || []).find((n) => n.level === 'warn');
+    let sub;
+    if (warn) sub = `<span style="color:var(--bad)">${esc(tx(warn, 'text'))}</span>`;
+    else if (!tgt) sub = T('نتابع فقط — كمية السوائل يحددها طبيبك.');
+    else if (w.intakeMl >= tgt) sub = `<span style="color:var(--good)">${T('✓ وصلت هدف الماء اليوم')}</span>`;
+    else if (isTodayV && w.expectedByNowMl - w.intakeMl >= 500) sub = L`متأخر ${fmt(Math.round((w.expectedByNowMl - w.intakeMl) / 50) * 50)} مل عن هالوقت`;
+    else sub = L`باقي ${ltr(w.remainingMl)}${w.workoutMl ? L` · +${fmt(w.workoutMl)} للتمرين` : ''}`;
+    $('wSub').innerHTML = sub;
+    $('wUndo').classList.toggle('hidden', !(w.entries || []).length || !isTodayV);
+  }
+  async function addWater(ml) {
+    try {
+      const at = isoDay(day) === isoDay(new Date()) ? new Date().toISOString() : `${isoDay(day)}T12:00:00`;
+      paintWater(await api('water', { method: 'POST', json: { ml, date: isoDay(day), at } }));
+      toast(L`+${fmt(ml)} مل 💧`);
+    } catch (e) { toast(e.message); }
+  }
+  $('waterCard').querySelectorAll('[data-wadd]').forEach((b) => (b.onclick = () => addWater(Number(b.dataset.wadd))));
+  $('wCustom').onclick = () => {
+    const v = prompt(T('كم مل شربت؟'), ls.get('ns_wlast') || '330');
+    const ml = Math.round(Number(v));
+    if (!v) return;
+    if (!(ml >= 10 && ml <= 3000)) return toast(T('اكتب رقماً بين 10 و 3000 مل'));
+    ls.set('ns_wlast', String(ml)); addWater(ml);
+  };
+  $('wUndo').onclick = async () => {
+    const e = waterDay && waterDay.entries[waterDay.entries.length - 1]; if (!e) return;
+    try { paintWater(await api(`water/${encodeURIComponent(e.id)}`, { method: 'DELETE' })); toast(L`حذفنا ${fmt(e.ml)} مل`); } catch (err) { toast(err.message); }
+  };
+  $('wOpen').onclick = () => openWater();
+  async function openWater() {
+    const w = waterDay; if (!w) return;
+    $('det').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+    $('detBack').textContent = '‹'; $('detTitle').textContent = T('الماء');
+    const parts = [
+      tileHtml(T('الهدف'), w.targetMl ? fmt1(w.targetMl / 1000) : '—', ' ' + T('لتر'), w.targetMl ? L`أساسي ${fmt1(w.baseMl / 1000)}` : T('يحدده طبيبك'), 'lo'),
+      tileHtml(T('شربت'), fmt1(w.intakeMl / 1000), ' ' + T('لتر'), w.remainingMl ? L`باقي ${ltr(w.remainingMl)}` : '', w.targetMl && w.intakeMl >= w.targetMl ? 'ok' : 'lo'),
+      tileHtml(T('ماء مسجّل'), fmt(w.manualMl), ' ' + T('مل'), '', ''),
+      tileHtml(T('مشروبات من وجباتك'), fmt(w.drinksMl), ' ' + T('مل'), (w.drinks || []).map((d) => (LANG === 'ar' ? d.name_ar || d.name : d.name)).slice(0, 2).join(' · '), ''),
+    ];
+    if (w.healthMl) parts.push(tileHtml(T('من Apple Health'), fmt(w.healthMl), ' ' + T('مل'), '', ''));
+    const notes = renderNotices(w.notes);
+    const list = (w.entries || []).slice().reverse().map((e) => `<div class="row" style="padding:8px 0;border-top:1px solid var(--line)"><span class="num">${new Date(e.at).toLocaleTimeString(LOC, { hour: '2-digit', minute: '2-digit' })}</span><b class="num">${fmt(e.ml)} ${T('مل')}</b><button class="lnk" data-wdel="${esc(e.id)}" style="color:var(--bad)">${T('حذف')}</button></div>`).join('');
+    $('detBody').innerHTML = `<div class="dchart"><div class="t">${T('الماء آخر 7 أيام')}</div><div class="big num">${fmt1(w.intakeMl / 1000)}<small style="font-size:15px"> / ${w.targetMl ? fmt1(w.targetMl / 1000) : '—'} ${T('لتر')}</small></div><div id="detChart"><div class="loading"><div class="spinner"></div></div></div></div>
+      <div class="tiles">${parts.join('')}</div>${notes}
+      <p class="small muted">${T('الهدف من المشروبات: 2.2 لتر للنساء و3.0 للرجال (المرجع الأمريكي NASEM — حوالي 80% من ماء الجسم يجي من المشروبات)، ويزيد مع التمرين والحر. القهوة والشاي والعصير المسجّلة كوجبات تنحسب.')}</p>
+      ${list ? `<div class="card" style="margin-top:10px"><h3>${T('سجل اليوم')}</h3>${list}</div>` : ''}`;
+    $('detBody').querySelectorAll('[data-wdel]').forEach((b) => (b.onclick = async () => { try { paintWater(await api(`water/${encodeURIComponent(b.dataset.wdel)}`, { method: 'DELETE' })); openWater(); } catch (e) { toast(e.message); } }));
+    try {
+      const h = await api('water/history?days=7');
+      $('detChart').innerHTML = barsSvg(h.days.map((d) => ({ ...d, intakeL: d.intakeMl / 1000, targetL: d.targetMl ? d.targetMl / 1000 : null })), 'intakeL', 'targetL', '#4aa8ff');
+    } catch { $('detChart').innerHTML = ''; }
+  }
+
   function renderMonitors() {
     const b = lastBal; if (!b || !lastSt) return;
     $('monNutV').textContent = lastSt.cls === 'good' ? T('✓ ضمن الهدف') : lastSt.cls === 'bad' ? T('تجاوزت الهدف') : T('في الطريق');
@@ -1857,6 +1955,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       const sched = await schedP; schedCache = sched;
       lastSt = st; renderStack(); renderMonitors();
       renderTimeline(b, sched);
+      loadWater();
     } catch (e) { $('mealList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
 
@@ -1888,18 +1987,31 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     const m = r.minutesToIftar;
     $('ramState').textContent = r.fasting ? L`صائم — باقي على الإفطار ${Math.floor(m / 60) ? L`${Math.floor(m / 60)} ساعة و` : ''}${m % 60} دقيقة` : T('وقت الإفطار والسحور — هدفك موزّع كالتالي:');
     $('ramSplit').innerHTML = r.split ? L`<div><b class="num">${fmt(r.split.suhoor)}</b><span>السحور</span></div><div><b class="num">${fmt(r.split.iftar)}</b><span>الإفطار</span></div><div><b class="num">${fmt(r.split.evening)}</b><span>بينهما</span></div>` : '';
-    $('ramChoice').classList.toggle('hidden', !r.needsChoice);
+    $('ramChoice').classList.toggle('hidden', !r.needsChoice || ls.get('ns_ram_keep') === '1');
+    const head = $('ramCard').querySelector('.row b');
+    head.textContent = r.kind === 'ramadan' ? T('🌙 وضع رمضان') : r.kind === 'white' ? T('🌙 صيام الأيام البيض') : T('🌙 يوم صيام');
   }
   async function setRamadan(enabled, extra = {}) {
     const prof = await api('profile');
     await api('profile', { method: 'PUT', json: { ramadan: { ...(prof.ramadan || {}), enabled, ...extra } } });
   }
-  $('ramKeep').onclick = async () => { try { await setRamadan(true); toast(T('تم ✓')); loadToday(); } catch (e) { toast(e.message); } };
+  // keeping the automatic Ramadan mode stays "auto" (null) so it ends with Ramadan; just stop asking on this device
+  $('ramKeep').onclick = () => { ls.set('ns_ram_keep', '1'); $('ramChoice').classList.add('hidden'); toast(T('تم ✓')); };
+  let fastDays = [];
+  const WD = () => [T('الأحد'), T('الاثنين'), T('الثلاثاء'), T('الأربعاء'), T('الخميس'), T('الجمعة'), T('السبت')];
+  function paintFastDays() {
+    $('rmDays').innerHTML = [1, 4, 0, 2, 3, 5, 6].map((d) => `<button type="button" data-fd="${d}" aria-pressed="${fastDays.includes(d)}">${WD()[d]}</button>`).join('');
+    $('rmDays').querySelectorAll('[data-fd]').forEach((b) => (b.onclick = () => {
+      const d = Number(b.dataset.fd);
+      fastDays = fastDays.includes(d) ? fastDays.filter((x) => x !== d) : [...fastDays, d].sort();
+      b.setAttribute('aria-pressed', String(fastDays.includes(d)));
+    }));
+  }
   $('ramOff').onclick = async () => { try { await setRamadan(false); toast(T('أوقفنا وضع رمضان')); loadToday(); } catch (e) { toast(e.message); } };
   $('rmSave').onclick = async () => {
     const mode = $('rmMode').value;
     try {
-      await setRamadan(mode === 'auto' ? null : mode === 'on', { suhoorTime: $('rmSuhoor').value || '04:45', iftarTime: $('rmIftar').value || '18:00' });
+      await setRamadan(mode === 'auto' ? null : mode === 'on', { suhoorTime: $('rmSuhoor').value || '04:45', iftarTime: $('rmIftar').value || '18:00', fastDays, whiteDays: $('rmWhite').checked });
       toast(T('تم الحفظ ✓'));
     } catch (e) { toast(e.message); }
   };
@@ -2112,6 +2224,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       const rm = prof.ramadan || { enabled: null, suhoorTime: '04:45', iftarTime: '18:00' };
       $('rmMode').value = rm.enabled === null ? 'auto' : rm.enabled ? 'on' : 'off';
       $('rmSuhoor').value = rm.suhoorTime; $('rmIftar').value = rm.iftarTime;
+      fastDays = rm.fastDays || []; paintFastDays(); $('rmWhite').checked = !!rm.whiteDays;
       planGoal = p.effectiveGoal;
     } catch (e) { toast(e.message); }
     loadAccount(); loadPushState();
@@ -2215,7 +2328,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     try {
       const prof = await api('profile');
       const rm = prof.reminders || { meals: true, weight: true };
-      $('rmMeals').checked = rm.meals; $('rmWeight').checked = rm.weight;
+      $('rmMeals').checked = rm.meals; $('rmWeight').checked = rm.weight; $('rmWater').checked = rm.water !== false; $('hotEnv').checked = !!prof.hotEnvironment;
       meds = prof.medReminders || []; renderMeds();
       const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
       if (!supported) { $('pushState').textContent = T('غير مدعوم هنا'); $('pushBtn').disabled = true; $('medPush').textContent = T('هذا المتصفح لا يدعم التنبيهات. على الآيفون: أضف التطبيق للشاشة الرئيسية وافتحه منها.'); return; }
@@ -2247,8 +2360,11 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     } catch (e) { toast(e.message || T('تعذّر تفعيل التنبيهات'), 3500); }
   };
   $('pushTest').onclick = async () => { try { const r = await api('push/test', { method: 'POST' }); toast(r.sent ? T('أرسلنا تنبيهاً تجريبياً') : T('لم يُرسل — أعد التفعيل')); } catch (e) { toast(e.message); } };
-  for (const id of ['rmMeals', 'rmWeight']) $(id).onchange = async () => {
-    try { await api('profile', { method: 'PUT', json: { reminders: { meals: $('rmMeals').checked, weight: $('rmWeight').checked } } }); toast(T('تم الحفظ ✓')); } catch (e) { toast(e.message); }
+  for (const id of ['rmMeals', 'rmWeight', 'rmWater']) $(id).onchange = async () => {
+    try { await api('profile', { method: 'PUT', json: { reminders: { meals: $('rmMeals').checked, weight: $('rmWeight').checked, water: $('rmWater').checked } } }); toast(T('تم الحفظ ✓')); } catch (e) { toast(e.message); }
+  };
+  $('hotEnv').onchange = async () => {
+    try { await api('profile', { method: 'PUT', json: { hotEnvironment: $('hotEnv').checked } }); toast(T('تم الحفظ ✓')); } catch (e) { toast(e.message); }
   };
 
   /** Show only the controls for the chosen burn source (automatic shows WHOOP and Apple Health). */
@@ -2714,7 +2830,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     } else if (kind === 'left') {
       const t = b.macroTargets || {}, i = b.intake;
       const lft = (want, have) => Math.max(0, Math.round((want || 0) - (have || 0)));
-      const bonusNote = b.burnBonusKcal > 0 ? `<p class="small muted" style="margin:6px 0 0">${L`ميزانيتك ${fmt(b.baseTargetKcal)} + ${fmt(b.burnBonusKcal)} لأن حرقك اليوم أكثر من المتوقع (نضيف نصف الزيادة فقط لأن تقدير الساعة تقريبي).`}</p>` : '';
+      const bonusNote = b.burnBonusKcal > 0 ? `<p class="small muted" style="margin:6px 0 0">${(b.burnBonusInfo && b.burnBonusInfo.share > 0.5 ? L`ميزانيتك ${fmt(b.baseTargetKcal)} + ${fmt(b.burnBonusKcal)} لأن حرقك اليوم أكثر من المتوقع (صحّحنا قراءة ساعتك حسب دقتها عندك ${b.burnBonusInfo.deviceAccuracyPct}% وأضفنا 75% من الزيادة).` : L`ميزانيتك ${fmt(b.baseTargetKcal)} + ${fmt(b.burnBonusKcal)} لأن حرقك اليوم أكثر من المتوقع (نضيف نصف الزيادة فقط لأن تقدير الساعة تقريبي).`)}</p>` : '';
       chart = `<div class="dchart"><div class="t">${T('متبقي لك اليوم')}</div><div class="big num">${b.remainingKcal < 0 ? '−' : ''}${fmt(Math.abs(b.remainingKcal))}<small style="font-size:15px"> ${T('سعرة')}</small></div>${bonusNote}<div id="detChart"></div></div>`;
       tiles = [
         tileHtml(T('البروتين'), fmt(lft(t.protein_g, i.protein_g)), ' ' + T('غ'), L`من ${fmt(t.protein_g)}`, 'lo'),

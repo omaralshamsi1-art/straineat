@@ -13,6 +13,8 @@ import { dueMedReminders } from '../meds/meds';
 import { EnergyService } from '../energy/energy.service';
 import { WhoopService } from '../integrations/whoop/whoop.service';
 import { isNotableWorkout } from '../insights/insights';
+import { WaterService } from '../water/water.service';
+import { dueWaterReminder } from '../water/water';
 
 export const PUSH_SENDER = Symbol('PUSH_SENDER');
 export type PushSender = (sub: PushSub, payload: string) => Promise<void>;
@@ -87,6 +89,7 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly schedule?: ScheduleService,
     @Optional() private readonly energy?: EnergyService,
     @Optional() private readonly whoop?: WhoopService,
+    @Optional() private readonly water?: WaterService,
   ) {
     this.pollMs = Math.max(5, Number(config.get('WHOOP_POLL_MINUTES') ?? 20) || 20) * 60_000;
     const pub = config.get<string>('VAPID_PUBLIC_KEY');
@@ -242,6 +245,12 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
         due.push(...dueSlotReminders(day.slots, toMin(`${Math.floor(nowMin / 60)}:${nowMin % 60}`), lang, { fasting }));
       }
       due.push(...(await this.insightPushes(userId, today, nowMin, now, lang)));
+      if (prefs.water !== false && this.water && nowMin >= 7 * 60 && nowMin < 23 * 60) {
+        const rv = ramadanView(p.ramadan, now, tz, 2000);
+        const wd = await this.water.day(userId, today, now);
+        const r = dueWaterReminder({ nowMin, intakeMl: wd.intakeMl, expectedMl: wd.expectedByNowMl, targetMl: wd.targetMl, fasting, fastDay: rv.active, iftarMin: rv.active ? toMin(rv.iftarTime) : null, lang });
+        if (r) due.push(r);
+      }
       for (const r of due) {
         const key = `reminder:${today}:${r.key}`;
         if (await this.repo.getCache(userId, key)) continue;

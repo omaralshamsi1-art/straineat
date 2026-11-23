@@ -37,7 +37,7 @@ describe('i18n', () => {
     const tips = dailyTips({ intake: { calories: 0, protein_g: 0, fiber_g: 0 }, target: 1800, macroTargets: { protein_g: 120, fiber_g: 25 }, goal: 'lose', isToday: true, hour: 15, mealsCount: 0 });
     expect(tips.length).toBeGreaterThan(0);
     expect(tips.every((t) => t.text_en && !/[؀-ۿ]/.test(t.text_en))).toBe(true);
-    const r = ramadanTips({ active: true, detected: true, needsChoice: false, fasting: true, suhoorTime: '04:45', iftarTime: '18:00', split: { suhoor: 500, iftar: 800, evening: 400 }, minutesToIftar: 75 }, 0);
+    const r = ramadanTips({ active: true, kind: 'ramadan', detected: true, needsChoice: false, fasting: true, suhoorTime: '04:45', iftarTime: '18:00', split: { suhoor: 500, iftar: 800, evening: 400 }, minutesToIftar: 75 }, 0);
     expect(r[0].text_en).toContain('1 h 15 min');
     const p = computePlan({ goal: 'lose', pace: 'fast', sex: 'female', age: 36, heightCm: 165, weightKg: 70, targetWeightKg: 40, maintenanceKcal: 2000, maintenanceSource: 'formula', bmr: 1400, screening: { medicalSupervision: true } });
     expect(p.notices.length).toBeGreaterThan(0);

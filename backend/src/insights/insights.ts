@@ -172,7 +172,10 @@ export function workoutCard(i: { workout: WorkoutLike; weightKg: number | null; 
     ]);
   }
   if (i.bonusKcal > 0) lines.push([`ميزانيتك اليوم زادت +${i.bonusKcal} سعرة بسبب حرقك الإضافي.`, `Today's budget went up +${i.bonusKcal} kcal for the extra burn.`]);
-  lines.push(['واشرب ماي يعوّض العرق.', 'Drink water to replace the sweat.']);
+  const ml = Math.min(1500, Math.max(250, Math.round((min / 60) * 500 / 50) * 50));
+  lines.push(i.fasting
+    ? [`بعد الإفطار اشرب ~${ml} مل زيادة على دفعات لتعويض العرق (أُضيفت لهدف الماء).`, `After iftar drink ~${ml} ml extra in rounds to replace sweat (added to your water goal).`]
+    : [`اشرب ~${ml} مل زيادة على دفعات لتعويض العرق (أُضيفت لهدف الماء).`, `Drink ~${ml} ml extra in rounds to replace sweat (added to your water goal).`]);
 
   return {
     id: `wo:${w.id}`,

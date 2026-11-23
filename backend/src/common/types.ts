@@ -128,8 +128,15 @@ export interface Profile {
   screening: { pregnant?: boolean; breastfeeding?: boolean; medicalSupervision?: boolean; edHistory?: boolean };
   onboarded: boolean;
   /** Set by the system when measured burn shows the declared activity level was off. */
-  ramadan: { enabled: boolean | null; suhoorTime: string; iftarTime: string };
-  reminders: { meals: boolean; weight: boolean };
+  /**
+   * Fasting settings. enabled: Ramadan auto (null) / always on (true) / off (false).
+   * fastDays: voluntary weekly fasting days outside Ramadan (0 = Sunday … 6 = Saturday, e.g. [1, 4] Mon/Thu).
+   * whiteDays: also fast 13–15 of each Hijri month.
+   */
+  ramadan: { enabled: boolean | null; suhoorTime: string; iftarTime: string; fastDays?: number[]; whiteDays?: boolean };
+  reminders: { meals: boolean; weight: boolean; water?: boolean };
+  /** works or trains outdoors / in the heat most days — raises the water target */
+  hotEnvironment?: boolean;
   /** personal medicine / vitamin reminders (push at the set local times) */
   medReminders?: { id: string; name: string; dose: string; kind: 'medicine' | 'vitamin' | 'supplement' | 'other'; times: string[]; enabled: boolean }[];
   /** UI + AI output language */
@@ -195,6 +202,15 @@ export interface Workout {
   distanceM: number | null;
   zonesMin: number[] | null; // minutes in HR zones 0..5 (WHOOP)
   updatedAt: string;
+}
+
+export interface WaterEntry {
+  userId: string;
+  id: string;
+  date: string; // local YYYY-MM-DD
+  ml: number;
+  source: 'manual' | 'apple_health';
+  at: string; // ISO
 }
 
 export interface CacheEntry {

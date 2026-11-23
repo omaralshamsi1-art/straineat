@@ -25,7 +25,15 @@ The app is in English by default; Settings → Language switches to Arabic (the 
   Not logged). Drinks (coffee, tea, juice…) are listed apart: they count in calories but never as a meal. "Edit times"
   opens Settings → Meal schedule (Automatic from meals per day and usual times, or My times). In Ramadan it becomes
   iftar / evening / suhoor.
-- Ramadan card (appears during Ramadan or when fasting mode is on): suhoor/iftar times and how the day's target is split.
+- Ramadan / fasting card (appears during Ramadan, when fasting mode is on, or on the user's chosen fasting days): suhoor/iftar
+  times and how the day's target is split.
+- Water (💧 monitor on Today): daily drinking target in ml = 2.2 L women / 3.0 L men from drinks (NASEM adequate intake;
+  ~80% of total water comes from drinks), 2.3 L pregnant, 3.1 L breastfeeding, +500 ml per hour of training (max +1.5 L),
+  +750 ml if "I work or train in the heat" is on (Settings → Reminders/Water). Kidney or heart conditions: no target, tracking
+  only, follow the doctor's fluid advice. Intake = quick taps (+250 / +500 / custom, undo) + drinks logged as meals (coffee,
+  tea, juice, laban count) + water from Apple Health (iPhone app). Push nudges at 11:00/14:00/17:00/20:00 only when ≥500 ml
+  behind the expected pace (none while fasting; on fasting days one nudge 2 h after iftar). Warnings when >1.5 L logged
+  within an hour or >6 L a day (low blood sodium risk). Use get_water.
 - Tips and the weekly challenge.
 - "What should I eat now?": 6 AI ideas that fit the calories and protein left — 2 home recipes (tap for ingredients
   and method), 2 from healthy restaurants and 2 smart picks from fast-food chains near the user (based on the emirate and
@@ -86,7 +94,9 @@ After analysis the Review screen opens.
 ## Settings
 - Account (name, email, role), invite users (owner), meal schedule + reminders (10 min before each meal/snack and
   again if a meal isn't logged an hour later; on iPhone turn on "Meal reminders" and allow notifications; on the web
-  add the app to the Home Screen and enable reminders), Ramadan & fasting mode (on/off/auto, suhoor and iftar times), WHOOP connect/disconnect,
+  add the app to the Home Screen and enable reminders), Ramadan & fasting mode (on/off/auto, suhoor and iftar times, plus voluntary fasting days outside Ramadan: pick weekdays such as
+  Monday and Thursday and/or the White Days 13–15 of each Hijri month; never applied on Eid al-Fitr, Eid al-Adha or the Tashreeq days;
+  on those days the app switches to the fasting split, tips and reminders automatically), WHOOP connect/disconnect,
   Apple Health (iPhone app only: syncs burned energy, workouts and weight), Appearance (Auto / Light / Dark — Auto
   follows the phone), Language (English / العربية), sign out.
 

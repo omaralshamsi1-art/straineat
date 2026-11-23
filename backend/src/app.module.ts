@@ -1,3 +1,4 @@
+import { WaterService } from './water/water.service';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
@@ -19,7 +20,7 @@ import {
   ProfileController,
   WhoopController,
   AssistantController,
-  ScheduleController,
+  ScheduleController, WaterController,
 } from './controllers';
 import { ScheduleService } from './schedule/schedule.service';
 import { ShortcutService } from './energy/shortcut.service';
@@ -40,7 +41,7 @@ import { REPOSITORY } from './storage/repository';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true })],
-  controllers: [HealthController, AuthController, FoodsController, MotivationController, PushController, MealsController, PlanController, WorkoutsController, CoachController, EnergyController, ProfileController, WhoopController, AssistantController, ScheduleController],
+  controllers: [HealthController, AuthController, FoodsController, MotivationController, PushController, MealsController, PlanController, WorkoutsController, CoachController, EnergyController, ProfileController, WhoopController, AssistantController, ScheduleController, WaterController],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_FILTER, useClass: LocalizedErrorFilter },
@@ -69,6 +70,7 @@ import { REPOSITORY } from './storage/repository';
     AssistantService,
     ScheduleService,
     ShortcutService,
+    WaterService,
   ],
 })
 export class AppModule {}

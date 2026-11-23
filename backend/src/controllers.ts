@@ -36,6 +36,7 @@ import { Workout } from './common/types';
 import { AssistantService } from './assistant/assistant.service';
 import { ShortcutService } from './energy/shortcut.service';
 import { ScheduleService } from './schedule/schedule.service';
+import { WaterService } from './water/water.service';
 import { validateProfilePatch } from './profile/profile.service';
 
 @Controller('health')
@@ -408,6 +409,39 @@ export class AssistantController {
   @Delete('history')
   clear(@UserId() userId: string) {
     return this.assistant.clear(userId);
+  }
+}
+
+@Controller('water')
+export class WaterController {
+  constructor(private readonly water: WaterService) {}
+
+  /** Today's water: target (sex + training + heat), intake (taps + drinks logged as meals + Apple Health), notes. */
+  @Get()
+  day(@UserId() userId: string, @Query('date') date?: string) {
+    return this.water.day(userId, date);
+  }
+
+  @Get('history')
+  history(@UserId() userId: string, @Query('days') days?: string) {
+    return this.water.history(userId, Number(days) || 7);
+  }
+
+  /** { ml, at?, date? } — one tap */
+  @Post()
+  add(@UserId() userId: string, @Body() body: { ml?: number; at?: string; date?: string }) {
+    return this.water.add(userId, body ?? {});
+  }
+
+  @Delete(':id')
+  remove(@UserId() userId: string, @Param('id') id: string) {
+    return this.water.remove(userId, id);
+  }
+
+  /** Apple Health daily totals from the iOS app: { samples: [{ date, ml }] } */
+  @Post('samples')
+  ingest(@UserId() userId: string, @Body() body: { samples?: { date: string; ml: number }[] }) {
+    return this.water.ingest(userId, body?.samples ?? []);
   }
 }
 

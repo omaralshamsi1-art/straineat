@@ -182,6 +182,8 @@ struct InsightCard: Codable, Hashable, Identifiable {
 struct RamadanView: Codable {
     struct Split: Codable { let suhoor: Double; let iftar: Double; let evening: Double }
     let active: Bool
+    /// ramadan | manual | weekday | white
+    var kind: String?
     let detected: Bool
     let needsChoice: Bool
     let fasting: Bool
@@ -384,8 +386,9 @@ struct Invite: Codable, Identifiable { let code: String; let usedBy: String?; le
 
 /// Only the fields the app reads; writes go through `APIClient.updateProfile(_:)` as partial patches.
 struct Profile: Codable {
-    struct Ramadan: Codable { var enabled: Bool?; var suhoorTime: String; var iftarTime: String }
-    struct Reminders: Codable { var meals: Bool; var weight: Bool }
+    struct Ramadan: Codable { var enabled: Bool?; var suhoorTime: String; var iftarTime: String; var fastDays: [Int]?; var whiteDays: Bool? }
+    struct Reminders: Codable { var meals: Bool; var weight: Bool; var water: Bool? }
+    var hotEnvironment: Bool?
     struct Screening: Codable { var pregnant: Bool?; var breastfeeding: Bool?; var medicalSupervision: Bool?; var edHistory: Bool? }
     var sex: String?
     var birthYear: Int?
@@ -457,3 +460,25 @@ struct MealScheduleSetting: Codable, Hashable {
     var custom: Bool?
     var slots: [Slot]
 }
+
+struct WaterDay: Codable {
+    struct Entry: Codable, Identifiable, Hashable { let id: String; let date: String; let ml: Double; let source: String; let at: Date }
+    struct Drink: Codable, Hashable { let id: String; let name: String; let nameAr: String?; let ml: Double
+        enum CodingKeys: String, CodingKey { case id, name, ml; case nameAr = "name_ar" } }
+    let date: String
+    let targetMl: Double?
+    let baseMl: Double
+    let workoutMl: Double
+    let heatMl: Double
+    let supervised: Bool
+    let intakeMl: Double
+    let manualMl: Double
+    let healthMl: Double
+    let drinksMl: Double
+    let expectedByNowMl: Double?
+    let remainingMl: Double?
+    let entries: [Entry]
+    let drinks: [Drink]
+    let notes: [PlanNotice]
+}
+struct WaterHistory: Codable { struct Day: Codable, Identifiable { let date: String; let intakeMl: Double; let targetMl: Double?; var id: String { date } }; let days: [Day] }

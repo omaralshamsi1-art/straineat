@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 struct PlanTab: View {
     @Environment(AppStore.self) private var store
@@ -16,6 +17,7 @@ struct PlanTab: View {
                     DevicesCard(profile: profile, onChange: { Task { await load() } })
                     if let profile { RamadanSettingsCard(profile: profile, onSaved: { Task { await load() } }) }
                     MealRemindersCard()
+                    if let profile { WaterSettingsCard(profile: profile) }
                     if let profile { MedRemindersCard(profile: profile) }
                     if let profile { ScheduleSettingsCard(profile: profile) }
                     if let profile { LocationCard(profile: profile) }
@@ -350,27 +352,40 @@ struct DevicesCard: View {
 struct RamadanSettingsCard: View {
     let profile: Profile
     var onSaved: () -> Void
-    @State private var enabled = false
+    @State private var mode = "auto" // auto | on | off
+    @State private var days: Set<Int> = []
+    @State private var white = false
     @State private var suhoor = Date()
     @State private var iftar = Date()
     @State private var loaded = false
+    @State private var saved = false
 
     var body: some View {
         Card(title: t("Ramadan & fasting", "رمضان والصيام"), icon: "moon.stars") {
-            Toggle(t("Fasting mode", "وضع الصيام"), isOn: $enabled)
-            if enabled {
-                DatePicker(t("Suhoor", "السحور"), selection: $suhoor, displayedComponents: .hourAndMinute)
-                DatePicker(t("Iftar", "الإفطار"), selection: $iftar, displayedComponents: .hourAndMinute)
+            Picker(t("Ramadan", "رمضان"), selection: $mode) {
+                Text(t("Automatic in Ramadan", "تلقائي في رمضان")).tag("auto")
+                Text(t("Fasting every day (always on)", "صائم كل يوم (مفعّل دائماً)")).tag("on")
+                Text(t("Off", "متوقف")).tag("off")
             }
-            Text(t("Turns on automatically in Ramadan. You can turn it on for voluntary fasting days.", "يتفعّل تلقائياً في رمضان. يمكنك تفعيله لأيام الصيام التطوعي.")).font(.caption).foregroundStyle(Theme.muted)
-            Button(t("Save", "حفظ")) { Task { await save() } }.buttonStyle(SoftButtonStyle())
+            Text(t("Voluntary fasting outside Ramadan", "صيام تطوع في غير رمضان")).font(.subheadline.weight(.semibold)).padding(.top, 4)
+            FlowDays(selected: $days)
+            Toggle(t("The White Days (13th, 14th and 15th of each Hijri month)", "الأيام البيض (13 و14 و15 من كل شهر هجري)"), isOn: $white).tint(Theme.brand2)
+            DatePicker(t("Suhoor", "السحور"), selection: $suhoor, displayedComponents: .hourAndMinute)
+            DatePicker(t("Iftar", "الإفطار"), selection: $iftar, displayedComponents: .hourAndMinute)
+            Text(t("On these days the app switches to fasting mode: suhoor/iftar split, and no food or water reminders while you fast. Never applied on Eid or the Tashreeq days.",
+                   "في هالأيام يتحول اليوم تلقائياً لوضع الصيام: تقسيم السحور والإفطار، وما نذكّرك بالأكل والماء وأنت صائم. لا يُطبّق في أيام العيد والتشريق."))
+                .font(.caption).foregroundStyle(Theme.muted)
+            Button(saved ? t("Saved ✓", "تم الحفظ ✓") : t("Save", "حفظ")) { Task { await save() } }.buttonStyle(SoftButtonStyle())
         }
         .onAppear {
             guard !loaded else { return }
             loaded = true
-            enabled = profile.ramadan?.enabled ?? false
-            suhoor = time(profile.ramadan?.suhoorTime ?? "04:45")
-            iftar = time(profile.ramadan?.iftarTime ?? "18:00")
+            let r = profile.ramadan
+            mode = r?.enabled == nil ? "auto" : (r?.enabled == true ? "on" : "off")
+            days = Set(r?.fastDays ?? [])
+            white = r?.whiteDays ?? false
+            suhoor = time(r?.suhoorTime ?? "04:45")
+            iftar = time(r?.iftarTime ?? "18:00")
         }
     }
 
@@ -383,11 +398,61 @@ struct RamadanSettingsCard: View {
         return String(format: "%02d:%02d", c.hour ?? 0, c.minute ?? 0)
     }
     private func save() async {
-        // Off + never chosen = keep automatic detection during Ramadan.
-        let flag: Any = enabled ? true as Any : (profile.ramadan?.enabled == nil ? NSNull() as Any : false as Any)
-        let r: [String: Any] = ["enabled": flag, "suhoorTime": hhmm(suhoor), "iftarTime": hhmm(iftar)]
-        _ = try? await APIClient.shared.updateProfile(["ramadan": r])
+        let flag: Any = mode == "auto" ? NSNull() as Any : (mode == "on") as Any
+        let r: [String: Any] = ["enabled": flag, "suhoorTime": hhmm(suhoor), "iftarTime": hhmm(iftar), "fastDays": days.sorted(), "whiteDays": white]
+        if (try? await APIClient.shared.updateProfile(["ramadan": r])) != nil { saved = true }
         onSaved()
+    }
+}
+
+/// Weekday chips (0 = Sunday … 6 = Saturday), Monday and Thursday first.
+private struct FlowDays: View {
+    @Binding var selected: Set<Int>
+    private let order = [1, 4, 0, 2, 3, 5, 6]
+    private func name(_ d: Int) -> String {
+        [t("Sun", "الأحد"), t("Mon", "الاثنين"), t("Tue", "الثلاثاء"), t("Wed", "الأربعاء"), t("Thu", "الخميس"), t("Fri", "الجمعة"), t("Sat", "السبت")][d]
+    }
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 78), spacing: 6)], spacing: 6) {
+            ForEach(order, id: \.self) { d in
+                let on = selected.contains(d)
+                Button { if on { selected.remove(d) } else { selected.insert(d) } } label: {
+                    Text(name(d)).font(.subheadline.weight(on ? .bold : .regular)).frame(maxWidth: .infinity, minHeight: 36)
+                        .foregroundStyle(on ? Color.black : Theme.ink)
+                        .background(on ? Theme.brand2 : Theme.card2, in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+}
+
+// MARK: Water settings
+
+struct WaterSettingsCard: View {
+    let profile: Profile
+    @AppStorage(WaterNotifications.enabledKey) private var remind = true
+    @State private var hot = false
+    @State private var loaded = false
+    var body: some View {
+        Card(title: t("Water", "الماء"), icon: "drop.fill") {
+            Toggle(t("Water reminders (when you fall behind)", "تذكير شرب الماء (إذا تأخرت عن هدفك)"), isOn: Binding(get: { remind }, set: { v in
+                remind = v
+                Task {
+                    if v { _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) }
+                    else { UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["water-11", "water-14", "water-17", "water-20"]) }
+                    _ = try? await APIClient.shared.updateProfile(["reminders": ["meals": profile.reminders?.meals ?? true, "weight": profile.reminders?.weight ?? true, "water": v]])
+                }
+            })).tint(Theme.brand2)
+            Toggle(t("I work or train in the heat most days (+750 ml water goal)", "أشتغل أو أتمرن في الحر أغلب الأيام (+750 مل لهدف الماء)"), isOn: Binding(get: { hot }, set: { v in
+                hot = v
+                Task { _ = try? await APIClient.shared.updateProfile(["hotEnvironment": v]) }
+            })).tint(Theme.brand2)
+            Text(t("Goal from drinks: 2.2 L women / 3.0 L men, more with training and heat. Kidney or heart conditions: tracking only.",
+                   "الهدف من المشروبات: 2.2 لتر للنساء و3.0 للرجال، ويزيد مع التمرين والحر. مع أمراض الكلى أو القلب: متابعة فقط."))
+                .font(.caption).foregroundStyle(Theme.muted)
+        }
+        .onAppear { guard !loaded else { return }; loaded = true; hot = profile.hotEnvironment ?? false }
     }
 }
 

@@ -1,4 +1,4 @@
-import { CacheEntry, EnergyDay, Invite, KnownMeal, Meal, OAuthTokens, Profile, PushSub, User, WeightEntry, Workout } from '../common/types';
+import { CacheEntry, WaterEntry, EnergyDay, Invite, KnownMeal, Meal, OAuthTokens, Profile, PushSub, User, WeightEntry, Workout } from '../common/types';
 import { normalizeKey } from '../common/nutrition-math';
 
 export const REPOSITORY = Symbol('REPOSITORY');
@@ -28,6 +28,10 @@ export interface Repository {
   upsertWorkout(w: Workout): Promise<void>;
   listWorkouts(userId: string, from: string, to: string): Promise<Workout[]>;
   deleteWorkout(userId: string, id: string): Promise<void>;
+
+  upsertWater(e: WaterEntry): Promise<void>;
+  listWater(userId: string, from: string, to: string): Promise<WaterEntry[]>;
+  deleteWater(userId: string, id: string): Promise<boolean>;
 
   getCache(userId: string, key: string): Promise<CacheEntry | null>;
   setCache(e: CacheEntry): Promise<void>;

@@ -146,7 +146,7 @@ Every option needs realistic kcal, protein, carbs and fat for what is described.
       const user = [
         `Meal slot: ${slot}. Local time hour: ${hour}. Location: ${place}.`,
         `Goal: ${b.goal}. Calories left today: ${remaining}. Protein left today: ${proteinLeft} g. Fibre so far: ${Math.round(b.intake.fiber_g)} of ${b.macroTargets.fiber_g} g.`,
-        ram.active && ram.split ? `Ramadan mode: suhoor ≈${ram.split.suhoor}, iftar ≈${ram.split.iftar}, evening ≈${ram.split.evening} kcal.` : '',
+        ram.active && ram.split ? `${ram.kind === 'ramadan' ? 'Ramadan' : 'Fasting day'} mode: suhoor ≈${ram.split.suhoor}, iftar ≈${ram.split.iftar}, evening ≈${ram.split.evening} kcal.` : '',
         `avoidRestriction: ${!!profile.screening?.edHistory}. medicalSupervision: ${!!profile.screening?.medicalSupervision}.`,
         dietLine(profile.dietStyle, profile.conditions),
         whoopLine,

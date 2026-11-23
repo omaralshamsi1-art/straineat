@@ -24,7 +24,7 @@ export const DEFAULT_PROFILE = (userId: string): Profile => ({
   screening: {},
   onboarded: false,
   ramadan: { enabled: null, suhoorTime: '04:45', iftarTime: '18:00' },
-  reminders: { meals: true, weight: true },
+  reminders: { meals: true, weight: true, water: true },
   language: 'en',
   activityCalibration: null,
 });
@@ -56,6 +56,7 @@ export class ProfileService {
       next.goalDeltaKcal = patch.goal === 'lose' ? -500 : patch.goal === 'gain' ? 300 : 0;
     }
     if (patch.screening) next.screening = { ...current.screening, ...patch.screening };
+    if (patch.ramadan) next.ramadan = { ...current.ramadan, ...stripUndefined(patch.ramadan) } as Profile['ramadan'];
     await this.repo.saveProfile(next);
     return next;
   }
@@ -130,18 +131,21 @@ export function validateProfilePatch(patch: Partial<Profile>): Partial<Profile> 
     } else if (k === 'ramadan') {
       const r = (v ?? {}) as Record<string, unknown>;
       const time = (t: unknown, d: string) => {
-        if (t === undefined) return d;
+        if (t === undefined) return undefined; // keep the saved value
         if (typeof t !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(t)) throw new BadRequestException('ramadan times must be HH:MM');
         return t;
       };
       out.ramadan = {
-        enabled: r.enabled === null || r.enabled === undefined ? null : !!r.enabled,
+        enabled: r.enabled === undefined ? undefined : r.enabled === null ? null : !!r.enabled,
         suhoorTime: time(r.suhoorTime, '04:45'),
         iftarTime: time(r.iftarTime, '18:00'),
+        // omitted → kept as they are (merged in update)
+        fastDays: Array.isArray(r.fastDays) ? [...new Set(r.fastDays.map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort() : undefined,
+        whiteDays: r.whiteDays === undefined ? undefined : !!r.whiteDays,
       };
     } else if (k === 'reminders') {
       const r = (v ?? {}) as Record<string, unknown>;
-      out.reminders = { meals: r.meals !== false, weight: r.weight !== false };
+      out.reminders = { meals: r.meals !== false, weight: r.weight !== false, water: r.water !== false };
     } else if (k === 'birthDate') {
       if (v === null || v === '') { out.birthDate = null; continue; }
       const s = String(v);
@@ -172,6 +176,8 @@ export function validateProfilePatch(patch: Partial<Profile>): Partial<Profile> 
       } catch (e: any) {
         throw new BadRequestException(e.message);
       }
+    } else if (k === 'hotEnvironment') {
+      out.hotEnvironment = !!v;
     } else if (k === 'onboarded') {
       out.onboarded = !!v;
     } else if (['timezone', 'city', 'area', 'country', 'startDate'].includes(k)) {

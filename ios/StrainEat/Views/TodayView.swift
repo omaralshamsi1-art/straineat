@@ -16,6 +16,7 @@ struct TodayView: View {
                                      onLog: onLog, onSuggest: { showIdeas = true }, onSchedule: { schedule = $0 })
                         if let r = b.ramadan, r.active || r.needsChoice { RamadanCard(view: r) }
                         TodayMonitors(balance: b, isToday: store.isToday)
+                        WaterCard(isToday: store.isToday, fastingDay: b.ramadan?.active == true)
                         HStack {
                             Text(t("My day", "يومي")).font(.title3.weight(.heavy))
                             Spacer()
@@ -184,7 +185,7 @@ struct RamadanCard: View {
     @Environment(AppStore.self) private var store
     let view: RamadanView
     var body: some View {
-        Card(title: t("Ramadan mode", "وضع رمضان"), icon: "moon.stars.fill") {
+        Card(title: view.kind == nil || view.kind == "ramadan" ? t("Ramadan mode", "وضع رمضان") : view.kind == "white" ? t("White Days fast", "صيام الأيام البيض") : t("Fasting day", "يوم صيام"), icon: "moon.stars.fill") {
             if view.needsChoice && !view.active {
                 Text(t("Ramadan Mubarak! Turn on Ramadan mode? We'll split your calories between suhoor and iftar.", "رمضان مبارك! هل تريد تفعيل وضع رمضان؟ نقسّم سعراتك بين السحور والإفطار.")).font(.subheadline)
                 HStack {

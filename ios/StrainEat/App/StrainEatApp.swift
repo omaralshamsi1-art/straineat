@@ -93,6 +93,7 @@ final class AppStore {
 
     var isOwner: Bool { me?.role == "owner" }
     var isToday: Bool { Calendar.current.isDateInToday(day) }
+    var selectedDateKey: String { DateFormatter.isoDay.string(from: day) }
 
     static func hasCredentials() -> Bool {
         let d = UserDefaults.standard
@@ -108,6 +109,7 @@ final class AppStore {
         defer { isLoading = false; refreshTick += 1 }
         await HealthKitManager.shared.syncBurnToServer()
         await HealthKitManager.shared.syncWorkoutsToServer()
+        await HealthKitManager.shared.syncWaterToServer()
         if whoopConnected {
             let lastSync = UserDefaults.standard.double(forKey: "whoopLastSync")
             if force || Date().timeIntervalSince1970 - lastSync > 15 * 60 { // at most every 15 min unless pulled

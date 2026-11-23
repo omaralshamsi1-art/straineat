@@ -70,13 +70,43 @@ export function isRamadan(at: Date, timeZone: string): boolean {
   return hijriMonth(at, timeZone) === 9;
 }
 
+/** Hijri month + day (Umm al-Qura) in a timezone. */
+export function hijriDate(at: Date, timeZone: string): { month: number; day: number } {
+  const parts = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { timeZone, month: 'numeric', day: 'numeric' }).formatToParts(at);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  return { month: get('month'), day: get('day') };
+}
+
+/** Days voluntary fasting is not done: Eid al-Fitr (1 Shawwal), Eid al-Adha and Tashreeq (10–13 Dhu al-Hijjah). */
+export function isNoFastDay(h: { month: number; day: number }): boolean {
+  return (h.month === 10 && h.day === 1) || (h.month === 12 && h.day >= 10 && h.day <= 13);
+}
+
+/** Local weekday 0 = Sunday … 6 = Saturday. */
+export function localWeekday(at: Date, timeZone: string): number {
+  const w = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short' }).format(at);
+  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(w);
+}
+
+/** Is today a chosen voluntary fasting day (outside Ramadan)? */
+export function voluntaryFastToday(st: { fastDays?: number[]; whiteDays?: boolean } | undefined, at: Date, timeZone: string): 'weekday' | 'white' | null {
+  if (!st) return null;
+  const h = hijriDate(at, timeZone);
+  if (h.month === 9 || isNoFastDay(h)) return null;
+  if ((st.fastDays ?? []).includes(localWeekday(at, timeZone))) return 'weekday';
+  if (st.whiteDays && h.day >= 13 && h.day <= 15) return 'white';
+  return null;
+}
+
 const toMin = (hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number);
   return h * 60 + m;
 };
 
 export interface RamadanView {
-  active: boolean; // Ramadan (unless turned off) or turned on manually for voluntary fasting
+  active: boolean; // Ramadan (unless turned off), always-on, or a chosen voluntary fasting day
+  /** why today is a fasting day */
+  kind: 'ramadan' | 'manual' | 'weekday' | 'white' | null;
   detected: boolean; // calendar says Ramadan
   needsChoice: boolean; // Ramadan detected and the user has not decided yet
   fasting: boolean; // between suhoor and iftar right now
@@ -88,7 +118,7 @@ export interface RamadanView {
 
 /** Suhoor ≈30%, iftar ≈45%, evening snack/second meal ≈25% of the daily target. */
 export function ramadanView(
-  setting: { enabled: boolean | null; suhoorTime: string; iftarTime: string } | undefined,
+  setting: { enabled: boolean | null; suhoorTime: string; iftarTime: string; fastDays?: number[]; whiteDays?: boolean } | undefined,
   now: Date,
   timeZone: string,
   targetKcal: number,
@@ -96,7 +126,10 @@ export function ramadanView(
   const st = setting ?? { enabled: null, suhoorTime: '04:45', iftarTime: '18:00' };
   const detected = isRamadan(now, timeZone);
   // On automatically during Ramadan unless the user turned it off; the user may also turn it on for voluntary fasting days.
-  const active = st.enabled === true || (detected && st.enabled !== false);
+  const ramadanOn = detected && st.enabled !== false;
+  const voluntary = detected ? null : voluntaryFastToday(st, now, timeZone);
+  const active = st.enabled === true || ramadanOn || !!voluntary;
+  const kind: RamadanView['kind'] = ramadanOn ? 'ramadan' : st.enabled === true ? 'manual' : voluntary;
   const hm = new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now);
   const nowMin = toMin(hm);
   const s = toMin(st.suhoorTime), i = toMin(st.iftarTime);
@@ -104,6 +137,7 @@ export function ramadanView(
   const r = (x: number) => Math.round(x / 10) * 10;
   return {
     active,
+    kind: active ? kind : null,
     detected,
     needsChoice: detected && st.enabled === null,
     fasting,
@@ -121,11 +155,11 @@ export function ramadanTips(v: RamadanView, intakeKcal: number): { kind: string;
     const h = Math.floor((v.minutesToIftar ?? 0) / 60), m = (v.minutesToIftar ?? 0) % 60;
     return [{
       kind: 'ramadan',
-      text_ar: `صياماً مقبولاً 🌙 — باقي على الإفطار ${h ? `${h} ساعة ` : ''}${m} دقيقة. ابدأ الإفطار بالتمر والماء، ثم شوربة أو سلطة قبل الطبق الرئيسي.`,
-      text_en: `Ramadan Kareem 🌙 — ${h ? `${h} h ` : ''}${m} min to iftar. Break your fast with dates and water, then soup or salad before the main dish.`,
+      text_ar: `${v.kind === 'ramadan' ? 'صياماً مقبولاً 🌙' : 'صيام مقبول اليوم 🌙'} — باقي على الإفطار ${h ? `${h} ساعة ` : ''}${m} دقيقة. ابدأ الإفطار بالتمر والماء، ثم شوربة أو سلطة قبل الطبق الرئيسي.`,
+      text_en: `${v.kind === 'ramadan' ? 'Ramadan Kareem 🌙' : 'Fasting today 🌙'} — ${h ? `${h} h ` : ''}${m} min to iftar. Break your fast with dates and water, then soup or salad before the main dish.`,
     }];
   }
-  const tips = [{ kind: 'ramadan', text_ar: 'وزّع 8 أكواب ماء تقريباً بين الإفطار والسحور، وقلّل المقليات والحلويات الثقيلة.', text_en: 'Spread about 8 glasses of water between iftar and suhoor, and go easy on fried food and heavy sweets.' }];
+  const tips = [{ kind: 'ramadan', text_ar: 'وزّع هدف الماء بين الإفطار والسحور على دفعات، وقلّل المقليات والحلويات الثقيلة.', text_en: 'Spread your water goal between iftar and suhoor in rounds, and go easy on fried food and heavy sweets.' }];
   if (intakeKcal > 0 && v.split && intakeKcal < v.split.iftar + v.split.evening) {
     tips.push({
       kind: 'suhoor',

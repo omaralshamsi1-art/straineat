@@ -77,6 +77,17 @@ final class APIClient {
         try await send(request("balance?date=\(DateFormatter.isoDay.string(from: date))"))
     }
 
+    // MARK: Water
+    func water(date: String? = nil) async throws -> WaterDay { try await send(request("water" + (date.map { "?date=\($0)" } ?? ""))) }
+    func waterHistory(days: Int = 7) async throws -> WaterHistory { try await send(request("water/history?days=\(days)")) }
+    func addWater(ml: Int) async throws -> WaterDay { try await send(jsonRequest("water", method: "POST", ["ml": ml, "at": ISO8601DateFormatter().string(from: Date())])) }
+    func deleteWater(id: String) async throws -> WaterDay {
+        try await send(request("water/\(id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id)", method: "DELETE"))
+    }
+    func pushWater(_ samples: [[String: Any]]) async throws {
+        let _: [String: Int] = try await send(jsonRequest("water/samples", method: "POST", ["samples": samples]))
+    }
+
     func pushEnergy(_ samples: [EnergySample]) async throws {
         struct Body: Encodable { let samples: [EnergySample] }
         var req = request("energy/samples", method: "POST")

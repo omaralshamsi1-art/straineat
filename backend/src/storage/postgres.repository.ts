@@ -4,7 +4,7 @@ import { Pool, types } from 'pg';
 
 // Return DATE columns as 'YYYY-MM-DD' strings (no timezone shifting).
 types.setTypeParser(1082, (v) => v);
-import { CacheEntry, EnergyDay, Invite, KnownMeal, Meal, OAuthTokens, Profile, PushSub, User, WeightEntry, Workout } from '../common/types';
+import { CacheEntry, EnergyDay, Invite, KnownMeal, Meal, OAuthTokens, Profile, PushSub, User, WeightEntry, Workout , WaterEntry } from '../common/types';
 import { normalizeKey } from '../common/nutrition-math';
 import { rankKnown, Repository } from './repository';
 
@@ -107,6 +107,22 @@ export class PostgresRepository implements Repository {
       totalKcal: Number(x.total_kcal),
       updatedAt: new Date(x.updated_at).toISOString(),
     }));
+  }
+
+  async upsertWater(e: WaterEntry) {
+    await this.pool.query(
+      `insert into water_logs (user_id, id, date, ml, source, at) values ($1,$2,$3,$4,$5,$6)
+       on conflict (user_id, id) do update set date=$3, ml=$4, source=$5, at=$6`,
+      [e.userId, e.id, e.date, e.ml, e.source, e.at],
+    );
+  }
+  async listWater(userId: string, from: string, to: string) {
+    const r = await this.pool.query(`select * from water_logs where user_id=$1 and date between $2 and $3 order by at`, [userId, from, to]);
+    return r.rows.map((x) => ({ userId: x.user_id, id: x.id, date: fmtDate(x.date), ml: Number(x.ml), source: x.source, at: new Date(x.at).toISOString() }));
+  }
+  async deleteWater(userId: string, id: string) {
+    const r = await this.pool.query(`delete from water_logs where user_id=$1 and id=$2`, [userId, id]);
+    return (r.rowCount ?? 0) > 0;
   }
 
   async upsertWeight(w: WeightEntry) {

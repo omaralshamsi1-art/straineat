@@ -16,6 +16,7 @@ final class HealthKitManager {
         HKQuantityType(.height),
         HKQuantityType(.heartRate),
         HKObjectType.workoutType(),
+        HKQuantityType(.dietaryWater),
     ]
 
     private let dietary: [(KeyPath<Nutrients, Double>, HKQuantityTypeIdentifier, HKUnit)] = [
@@ -32,7 +33,7 @@ final class HealthKitManager {
 
     func requestAuthorization() async throws {
         guard isAvailable else { return }
-        let share = Set(dietary.map { HKQuantityType($0.1) as HKSampleType })
+        let share = Set(dietary.map { HKQuantityType($0.1) as HKSampleType }).union([HKQuantityType(.dietaryWater)])
         try await store.requestAuthorization(toShare: share, read: readTypes.union(share.map { $0 as HKObjectType }))
     }
 
@@ -69,6 +70,39 @@ final class HealthKitManager {
         do { try await APIClient.shared.pushEnergy(samples) } catch { return nil }
         let today = DateFormatter.isoDay.string(from: Date())
         return samples.first { $0.date == today }.map { ($0.activeKcal ?? 0) + ($0.basalKcal ?? 0) }
+    }
+
+    // MARK: Water
+
+    /// Water other apps wrote to Health (Google Health / Fitbit, water apps) — StrainEat's own samples are left out
+    /// because the server already has them. Sends daily totals for the last `days` days.
+    func syncWaterToServer(days: Int = 3) async {
+        guard isAvailable else { return }
+        let notMine = NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(from: HKSource.default()))
+        var samples: [[String: Any]] = []
+        for offset in 0..<days {
+            let day = Calendar.current.date(byAdding: .day, value: -offset, to: Date())!
+            let start = Calendar.current.startOfDay(for: day)
+            let end = min(Calendar.current.date(byAdding: .day, value: 1, to: start)!, Date())
+            let pred = NSCompoundPredicate(andPredicateWithSubpredicates: [HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate), notMine])
+            let q = HKStatisticsQueryDescriptor(predicate: HKSamplePredicate.quantitySample(type: HKQuantityType(.dietaryWater), predicate: pred), options: .cumulativeSum)
+            guard let ml = try? await q.result(for: store)?.sumQuantity()?.doubleValue(for: .literUnit(with: .milli)) else { continue }
+            samples.append(["date": DateFormatter.isoDay.string(from: day), "ml": Int(ml.rounded())])
+        }
+        if !samples.isEmpty { try? await APIClient.shared.pushWater(samples) }
+    }
+
+    /// Writes a water tap to Health (tagged with the entry id so undo can remove it).
+    func saveWater(ml: Double, id: String, at: Date) async {
+        guard isAvailable else { return }
+        let s = HKQuantitySample(type: HKQuantityType(.dietaryWater), quantity: HKQuantity(unit: .literUnit(with: .milli), doubleValue: ml),
+                                 start: at, end: at, metadata: [HKMetadataKeyExternalUUID: id])
+        try? await store.save(s)
+    }
+    func deleteWater(id: String) async {
+        guard isAvailable else { return }
+        let pred = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeyExternalUUID, allowedValues: [id])
+        try? await store.deleteObjects(of: HKQuantityType(.dietaryWater), predicate: pred)
     }
 
     // MARK: Workouts → server (activity type, duration, kcal, heart rate, distance)
