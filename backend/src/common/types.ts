@@ -120,7 +120,9 @@ export interface Profile {
   country: string | null;
   // ---- goal engine (phase 2a) ----
   targetWeightKg: number | null;
-  pace: 'relaxed' | 'moderate' | 'fast';
+  pace: 'relaxed' | 'moderate' | 'fast' | 'intense';
+  /** optional deadline for targetWeightKg (YYYY-MM-DD); the plan works out the weekly pace from it */
+  targetDate?: string | null;
   startWeightKg: number | null;
   startDate: string | null;
   screening: { pregnant?: boolean; breastfeeding?: boolean; medicalSupervision?: boolean; edHistory?: boolean };

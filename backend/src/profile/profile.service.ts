@@ -93,7 +93,7 @@ const ENUMS: Partial<Record<keyof Profile, readonly string[]>> = {
   sex: ['male', 'female'],
   activityLevel: ['sedentary', 'light', 'moderate', 'active', 'very_active'],
   goal: ['lose', 'maintain', 'gain'],
-  pace: ['relaxed', 'moderate', 'fast'],
+  pace: ['relaxed', 'moderate', 'fast', 'intense'],
   dietStyle: DIET_STYLES,
   preferredEnergySource: ['whoop', 'apple_health', 'health_connect', 'garmin', 'fitbit', 'manual'],
 };
@@ -150,6 +150,13 @@ export function validateProfilePatch(patch: Partial<Profile>): Partial<Profile> 
         throw new BadRequestException('birthDate must be YYYY-MM-DD in the past');
       out.birthDate = s;
       out.birthYear = y;
+    } else if (k === 'targetDate') {
+      if (v === null || v === '') { out.targetDate = null; continue; }
+      const s = String(v);
+      const t = Date.parse(`${s}T00:00:00Z`);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(t) || t < Date.now() - 86400000 || t > Date.now() + 3 * 365 * 86400000)
+        throw new BadRequestException('targetDate must be YYYY-MM-DD within the next 3 years');
+      out.targetDate = s;
     } else if (k === 'conditions') {
       const list = Array.isArray(v) ? v.map(String) : [];
       if (list.some((c) => !(CONDITIONS as readonly string[]).includes(c))) throw new BadRequestException('invalid conditions');

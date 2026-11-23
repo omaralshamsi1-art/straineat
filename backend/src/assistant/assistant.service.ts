@@ -35,7 +35,7 @@ const KEEP = 40; // messages stored
 const CONTEXT = 14; // messages sent to the model
 const SCREENS = ['today', 'progress', 'snap', 'review', 'plan', 'plan-settings', 'settings', 'onboarding'];
 
-const PLAN_FIELDS = ['goal', 'targetWeightKg', 'pace', 'activityLevel', 'mealsPerDay', 'dietStyle'] as const;
+const PLAN_FIELDS = ['goal', 'targetWeightKg', 'targetDate', 'pace', 'activityLevel', 'mealsPerDay', 'dietStyle'] as const;
 
 const TOOLS: ChatTool[] = [
   {
@@ -105,7 +105,8 @@ const TOOLS: ChatTool[] = [
       properties: {
         goal: { type: 'string', enum: ['lose', 'maintain', 'gain'] },
         targetWeightKg: { type: 'number' },
-        pace: { type: 'string', enum: ['relaxed', 'moderate', 'fast'] },
+        pace: { type: 'string', enum: ['relaxed', 'moderate', 'fast', 'intense'] },
+        targetDate: { type: ['string', 'null'], description: 'deadline for the target weight, YYYY-MM-DD; null clears it' },
         activityLevel: { type: 'string', enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'] },
         mealsPerDay: { type: 'integer' },
         dietStyle: { type: 'string', enum: ['normal', 'vegetarian', 'vegan', 'keto', 'low_carb', 'mediterranean', 'paleo', 'light'] },

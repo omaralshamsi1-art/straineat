@@ -24,6 +24,13 @@ export function pickEnergy(days: EnergyDay[], preferred: EnergySource | null): E
   return order.map((s) => days.find((x) => x.source === s)).find(Boolean) ?? null;
 }
 
+/** Device bias from measured vs observed burn; clamped so one odd month can't swing targets. */
+export function deviceCalibration(observed: number | null, avgDevice: number | null, days: number) {
+  if (observed == null || !avgDevice || days < CALIBRATION_MIN_DAYS) return null;
+  const factor = Math.round(Math.min(1.2, Math.max(0.7, observed / avgDevice)) * 100) / 100;
+  return { factor, accuracyPct: Math.round(100 * (1 - Math.abs(1 - factor))), days };
+}
+
 const WEIGHT_SOURCE_ORDER: WeightEntry['source'][] = ['manual', 'apple_health', 'whoop'];
 
 export function addDays(date: string, n: number): string {
@@ -55,6 +62,12 @@ export interface PlanView extends Plan {
   progressPct: number | null;
   changeSinceStartKg: number | null;
   adaptiveObservedKcal: number | null;
+  /**
+   * How the watch's burn compares with what the body really burned (intake − weight change).
+   * factor 0.9 = the device reads ~11% high for this person. Null until both are known.
+   */
+  deviceCalibration: { factor: number; accuracyPct: number; days: number } | null;
+  targetDate: string | null;
   /** measured-burn calibration status */
   burnData: { days: number; needed: number; window: number; avgKcal: number | null };
   activityLevel: string;
@@ -184,6 +197,7 @@ export class PlanService {
       heightCm: profile.heightCm,
       weightKg: currentWeight,
       targetWeightKg: profile.targetWeightKg,
+      targetDate: profile.targetDate ?? null,
       maintenanceKcal: adaptive.kcal,
       maintenanceSource: source,
       bmr,
@@ -227,6 +241,8 @@ export class PlanService {
       progressPct,
       changeSinceStartKg: start && currentWeight ? Math.round((currentWeight - start) * 10) / 10 : null,
       adaptiveObservedKcal: adaptive.observed,
+      deviceCalibration: deviceCalibration(adaptive.observed, avgDevice, deviceDays.length),
+      targetDate: profile.targetDate ?? null,
       burnData: { days: deviceDays.length, needed: CALIBRATION_MIN_DAYS, window: CALIBRATION_WINDOW_DAYS, avgKcal: avgDevice ? Math.round(avgDevice) : null },
       activityLevel: profile.activityLevel,
       activityCalibration: profile.activityCalibration ?? null,
@@ -258,7 +274,7 @@ export class PlanService {
         proteinG: Math.round(dayMeals.reduce((a, m) => a + m.final.totals.protein_g, 0)),
         meals: dayMeals.length,
         burnKcal: burn?.totalKcal ?? null,
-        targetKcal: plan.targetKcal + burnBonus({ burnKcal: burn?.totalKcal, expectedKcal: plan.maintenanceKcal || estimatedTdee(profile), partialDay: date === today, minuteOfDay: localMinuteOfDay(new Date(), profile.timezone) }).bonusKcal,
+        targetKcal: plan.targetKcal + burnBonus({ burnKcal: burn?.totalKcal, expectedKcal: plan.maintenanceKcal || estimatedTdee(profile), partialDay: date === today, minuteOfDay: localMinuteOfDay(new Date(), profile.timezone), deviceFactor: plan.deviceCalibration?.factor }).bonusKcal,
       });
     }
     const logged = out.filter((d) => d.meals > 0);

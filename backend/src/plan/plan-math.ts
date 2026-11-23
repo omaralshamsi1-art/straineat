@@ -13,17 +13,25 @@
  */
 
 export type Goal = 'lose' | 'maintain' | 'gain';
-export type Pace = 'relaxed' | 'moderate' | 'fast';
+export type Pace = 'relaxed' | 'moderate' | 'fast' | 'intense';
 export type Sex = 'male' | 'female' | null;
 
 export const KCAL_PER_KG = 7700;
 
 /** Weekly change as a fraction of body weight. */
 export const PACE_RATE: Record<'lose' | 'gain', Record<Pace, number>> = {
-  lose: { relaxed: 0.0025, moderate: 0.005, fast: 0.0075 },
-  gain: { relaxed: 0.00125, moderate: 0.0025, fast: 0.004 },
+  lose: { relaxed: 0.0025, moderate: 0.005, fast: 0.0075, intense: 0.01 },
+  gain: { relaxed: 0.00125, moderate: 0.0025, fast: 0.004, intense: 0.005 },
 };
 const MAX_LOSS_KG_WEEK = 1.0;
+/**
+ * Intense loss (above 0.75% of body weight a week) is offered only with BMI ≥ 25, age 18–64 and no
+ * condition that needs a clinician. It stays under ~1.36 kg (3 lb) a week — the rate above which
+ * NIDDK reports a higher gallstone risk — and never goes under the calorie floor, so it is never a
+ * very-low-calorie diet (≤800 kcal, medical supervision only — NHS).
+ */
+const INTENSE_MAX_KG_WEEK = 1.25;
+const INTENSE_MAX_DEFICIT = 1300;
 const MAX_GAIN_KG_WEEK = 0.5;
 const MAX_DEFICIT = 1000;
 const MAX_SURPLUS = 500;
@@ -49,8 +57,12 @@ export interface PlanInput {
   maintenanceSource: 'adaptive' | 'device' | 'formula';
   bmr: number | null;
   screening: Screening;
+  /** optional deadline (YYYY-MM-DD) for targetWeightKg */
+  targetDate?: string | null;
   today?: Date;
 }
+
+export type Advice = { text_ar: string; text_en: string };
 
 export interface Plan {
   goal: Goal;
@@ -71,6 +83,13 @@ export interface Plan {
   targetBmi: number | null;
   etaDate: string | null;
   weeksToGoal: number | null;
+  /** loss above 0.75% of body weight a week */
+  intense: boolean;
+  /** fastest weekly change the plan allows for this person (kg, positive) */
+  maxSafeKgWeek: number | null;
+  deadline: { date: string; requiredKgWeek: number; feasible: boolean } | null;
+  /** what to know and do on an intense plan */
+  advice: Advice[];
   notices: { level: 'info' | 'warn' | 'stop'; code: string; text_ar: string; text_en: string }[];
 }
 
@@ -128,13 +147,46 @@ export function computePlan(i: PlanInput): Plan {
 
   // ---- energy target ----
   const floor = calorieFloor(i.sex, i.bmr);
+  const age = i.age;
+  const intenseBlock = goal !== 'lose' ? null
+    : bmi == null ? 'no_bmi'
+    : bmi < 25 ? 'bmi'
+    : age != null && age >= 65 ? 'age'
+    : s.medicalSupervision ? 'medical'
+    : null;
   let delta = 0;
   let weekly = 0;
+  let maxSafe: number | null = null;
+  let deadline: Plan['deadline'] = null;
   if (goal !== 'maintain' && i.weightKg) {
-    const rate = PACE_RATE[goal][i.pace] * i.weightKg; // kg/week
-    const capped = goal === 'lose' ? Math.min(rate, MAX_LOSS_KG_WEEK) : Math.min(rate, MAX_GAIN_KG_WEEK);
+    maxSafe = goal === 'lose'
+      ? (intenseBlock ? Math.min(PACE_RATE.lose.fast * i.weightKg, MAX_LOSS_KG_WEEK) : Math.min(PACE_RATE.lose.intense * i.weightKg, INTENSE_MAX_KG_WEEK))
+      : Math.min(PACE_RATE.gain.intense * i.weightKg, MAX_GAIN_KG_WEEK);
+    let rate = PACE_RATE[goal][i.pace] * i.weightKg; // kg/week
+    const days = i.targetDate ? Math.round((Date.parse(`${i.targetDate}T12:00:00Z`) - Date.parse(`${(i.today ?? new Date()).toISOString().slice(0, 10)}T12:00:00Z`)) / 86400000) : null;
+    if (i.targetDate && i.targetWeightKg && days != null) {
+      const required = Math.abs(i.targetWeightKg - i.weightKg) / Math.max(days / 7, 1 / 7);
+      if (days < 7) {
+        notices.push({ level: 'warn', code: 'deadline_close', text_ar: 'تاريخ هدفك قريب جداً (أقل من أسبوع) — حدّث التاريخ لنحسب خطة واقعية. نستخدم الآن السرعة المختارة.', text_en: 'Your target date is less than a week away — update it so we can plan realistically. Using your chosen pace for now.' });
+      } else {
+        rate = Math.min(required, maxSafe);
+        deadline = { date: i.targetDate, requiredKgWeek: Math.round(required * 100) / 100, feasible: required <= maxSafe + 1e-9 };
+      }
+    } else if (i.pace === 'intense' && goal === 'lose' && intenseBlock) {
+      const why: Record<string, [string, string]> = {
+        no_bmi: ['نحتاج طولك ووزنك أولاً', 'we need your height and weight first'],
+        bmi: ['مؤشر كتلة جسمك أقل من 25، وعندها يكون جزء أكبر من النزول السريع عضلاً', 'your BMI is under 25, where more of a fast loss comes from muscle'],
+        age: ['بعد سن 65 يحتاج النزول السريع متابعة طبية', 'after 65 fast loss needs medical follow-up'],
+        medical: ['عندك حالة صحية تحتاج إشراف طبيب', 'you have a condition that needs a doctor’s supervision'],
+      };
+      notices.push({ level: 'info', code: 'intense_unavailable', text_ar: `السرعة المكثفة غير متاحة لك لأن ${why[intenseBlock][0]}، فاستخدمنا «أسرع» بدلاً منها.`, text_en: `The intense pace isn't available because ${why[intenseBlock][1]}, so we used "Faster" instead.` });
+    }
+    const capped = Math.min(rate, maxSafe);
+    const intenseRate = goal === 'lose' && capped > PACE_RATE.lose.fast * i.weightKg + 1e-6;
     delta = (capped * KCAL_PER_KG) / 7;
-    delta = goal === 'lose' ? -Math.min(delta, MAX_DEFICIT, 0.25 * i.maintenanceKcal) : Math.min(delta, MAX_SURPLUS);
+    delta = goal === 'lose'
+      ? -Math.min(delta, intenseRate ? INTENSE_MAX_DEFICIT : MAX_DEFICIT, (intenseRate ? 0.35 : 0.25) * i.maintenanceKcal)
+      : Math.min(delta, MAX_SURPLUS);
   } else if (goal !== 'maintain') {
     delta = goal === 'lose' ? -400 : 250; // no weight known yet: conservative default
   }
@@ -150,12 +202,17 @@ export function computePlan(i: PlanInput): Plan {
   target = r(target, 10);
   delta = target - i.maintenanceKcal;
   weekly = Math.round(((delta * 7) / KCAL_PER_KG) * 100) / 100;
+  const intense = goal === 'lose' && !!i.weightKg && -weekly > PACE_RATE.lose.fast * i.weightKg + 0.01;
+  if (!intense && i.pace === 'intense' && goal === 'lose' && !intenseBlock && !deadline && i.weightKg) {
+    notices.push({ level: 'info', code: 'intense_unavailable', text_ar: `أسرع نزول آمن لك ${Math.abs(weekly)} كغ أسبوعياً، لأن هدفك ما ينزل تحت ${floor} سعرة (حرقك الأساسي)، فالمكثّف ما يضيف لك شي.`, text_en: `Your fastest safe loss is ${Math.abs(weekly)} kg a week because your target never goes under ${floor} kcal (your resting burn), so intense adds nothing for you.` });
+  }
 
   // ---- macros ----
   const w = i.weightKg ?? 70;
   // For higher BMI, base protein on a reference weight (BMI 25) to avoid inflated targets.
   const refW = bmi && bmi > 30 && i.heightCm ? 25 * (i.heightCm / 100) ** 2 : w;
-  const proteinPerKg = goal === 'maintain' ? 1.4 : 1.8; // within ISSN 1.4–2.0 g/kg
+  // ISSN 1.4–2.0 g/kg; in a big deficit ~2.2–2.4 g/kg kept more lean mass in trials (Mettler 2010, Longland 2016)
+  const proteinPerKg = goal === 'maintain' ? 1.4 : intense ? 2.2 : 1.8;
   const proteinG = r(refW * proteinPerKg, 5);
   const fatG = Math.max(r((target * 0.28) / 9, 5), r(w * 0.6, 5));
   const carbsG = Math.max(0, r((target - proteinG * 4 - fatG * 9) / 4, 5));
@@ -172,6 +229,28 @@ export function computePlan(i: PlanInput): Plan {
       d.setDate(d.getDate() + Math.round(weeks * 7));
       etaDate = d.toISOString().slice(0, 10);
     }
+  }
+
+  // ---- deadline + intense advice ----
+  if (deadline) {
+    const kg = (n: number) => (Math.round(n * 100) / 100).toString();
+    if (deadline.feasible) {
+      notices.push({ level: 'info', code: 'deadline_ok', text_ar: `للوصول إلى ${i.targetWeightKg} كغ بتاريخ ${deadline.date} تحتاج ${kg(deadline.requiredKgWeek)} كغ أسبوعياً — خطتك محسوبة على هذا.`, text_en: `To reach ${i.targetWeightKg} kg by ${deadline.date} you need ${kg(deadline.requiredKgWeek)} kg a week — your plan is set for that.` });
+    } else {
+      notices.push({ level: 'warn', code: 'deadline_unrealistic', text_ar: `تاريخ ${deadline.date} يحتاج ${kg(deadline.requiredKgWeek)} كغ أسبوعياً، وهذا فوق الحد الآمن لك (${kg(maxSafe ?? 0)} كغ). خطتك على أسرع سرعة آمنة${etaDate ? `، والتاريخ المتوقع ${etaDate}` : ''}.`, text_en: `${deadline.date} needs ${kg(deadline.requiredKgWeek)} kg a week, above your safe limit (${kg(maxSafe ?? 0)} kg). Your plan uses the fastest safe pace${etaDate ? `; expected date ${etaDate}` : ''}.` });
+    }
+  }
+  const advice: Advice[] = [];
+  if (intense) {
+    notices.push({ level: 'warn', code: 'intense', text_ar: `خطة نزول مكثف (~${Math.abs(weekly)} كغ أسبوعياً). ممكنة لفترة محدودة، اقرأ النصائح تحت.`, text_en: `Intense loss plan (~${Math.abs(weekly)} kg a week). Fine for a limited time — read the advice below.` });
+    advice.push(
+      { text_ar: 'النزول أكثر من ~1.4 كغ أسبوعياً يرفع خطر حصى المرارة، لذلك نوقف السرعة تحت هذا الحد.', text_en: 'Losing more than ~1.4 kg (3 lb) a week raises the risk of gallstones, so we keep the pace below that.' },
+      { text_ar: `في العجز الكبير جزء من النزول يكون عضلاً: رفعنا بروتينك إلى ${proteinG} غ يومياً، وسوّ تمارين مقاومة 2–3 مرات أسبوعياً.`, text_en: `In a big deficit part of the loss can be muscle: we raised your protein to ${proteinG} g a day — do resistance training 2–3 times a week.` },
+      { text_ar: 'توقع جوع وتعب أكثر وتراجع في أداء التمرين والنوم. اشرب ماء كافي وخل الخضار والألياف في كل وجبة.', text_en: 'Expect more hunger and tiredness and weaker training and sleep. Drink enough water and add vegetables and fibre to every meal.' },
+      { text_ar: `هدفك لن ينزل تحت ${floor} سعرة. الحميات تحت 800 سعرة تكون فقط بإشراف طبي.`, text_en: `Your target never goes under ${floor} kcal. Diets under 800 kcal are for medical supervision only.` },
+      { text_ar: 'خلها مرحلة مؤقتة (8–12 أسبوعاً) ثم أسبوعين محافظة؛ النزول السريع بدون مرحلة تثبيت يرجع غالباً.', text_en: 'Keep it a phase (8–12 weeks), then two weeks at maintenance; fast loss without a maintenance phase often comes back.' },
+      { text_ar: 'وقف وراجع الطبيب إذا صارت دوخة مستمرة، خفقان، ألم أعلى يمين البطن، أو انقطاع الدورة.', text_en: 'Stop and see a doctor if you get lasting dizziness, palpitations, pain under the right ribs, or missed periods.' },
+    );
   }
 
   return {
@@ -193,6 +272,10 @@ export function computePlan(i: PlanInput): Plan {
     targetBmi,
     etaDate,
     weeksToGoal,
+    intense,
+    maxSafeKgWeek: maxSafe == null ? null : Math.round(maxSafe * 100) / 100,
+    deadline,
+    advice,
     notices,
   };
 }

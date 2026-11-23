@@ -13,6 +13,8 @@
  */
 
 export const BONUS_SHARE = 0.5;
+/** share once the device is calibrated against the person's own weight trend */
+export const CALIBRATED_SHARE = 0.75;
 export const BONUS_CAP = 1000;
 export const BONUS_MIN_EXTRA = 100;
 
@@ -23,6 +25,8 @@ export interface BurnBonus {
   extraKcal: number;
   /** kcal added to today's food budget (half the extra, rounded to 10, capped; never negative) */
   bonusKcal: number;
+  /** share of the extra given back: 0.5, or 0.75 once the device is calibrated */
+  share: number;
 }
 
 /**
@@ -30,13 +34,19 @@ export interface BurnBonus {
  * During the day, burn so far + the plan's expected rate for the hours left = projected day.
  * Never lowers the budget (a quiet day keeps the normal target).
  */
-export function burnBonus(i: { burnKcal: number | null | undefined; expectedKcal: number | null | undefined; partialDay: boolean; minuteOfDay: number }): BurnBonus {
-  if (i.burnKcal == null || !Number.isFinite(i.burnKcal) || !i.expectedKcal || i.expectedKcal <= 0) return { projectedKcal: null, extraKcal: 0, bonusKcal: 0 };
+/**
+ * deviceFactor (from deviceCalibration) first corrects this person's watch bias; once the device
+ * is calibrated we trust it more and give back a larger share of the extra burn.
+ */
+export function burnBonus(i: { burnKcal: number | null | undefined; expectedKcal: number | null | undefined; partialDay: boolean; minuteOfDay: number; deviceFactor?: number | null }): BurnBonus {
+  if (i.burnKcal == null || !Number.isFinite(i.burnKcal) || !i.expectedKcal || i.expectedKcal <= 0) return { projectedKcal: null, extraKcal: 0, bonusKcal: 0, share: 0 };
+  const factor = i.deviceFactor && i.deviceFactor > 0 ? i.deviceFactor : 1;
+  const share = i.deviceFactor ? CALIBRATED_SHARE : BONUS_SHARE;
   const leftFrac = i.partialDay ? Math.max(0, Math.min(1440, 1440 - i.minuteOfDay)) / 1440 : 0;
-  const projected = i.burnKcal + i.expectedKcal * leftFrac;
+  const projected = i.burnKcal * factor + i.expectedKcal * leftFrac;
   const extra = Math.max(0, projected - i.expectedKcal);
-  const bonus = extra < BONUS_MIN_EXTRA ? 0 : Math.min(BONUS_CAP, Math.round((extra * BONUS_SHARE) / 10) * 10);
-  return { projectedKcal: Math.round(projected), extraKcal: Math.round(extra), bonusKcal: bonus };
+  const bonus = extra < BONUS_MIN_EXTRA ? 0 : Math.min(BONUS_CAP, Math.round((extra * share) / 10) * 10);
+  return { projectedKcal: Math.round(projected), extraKcal: Math.round(extra), bonusKcal: bonus, share };
 }
 
 /** Local minute of the day (0–1439) in a time zone. */

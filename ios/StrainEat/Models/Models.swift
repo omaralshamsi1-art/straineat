@@ -276,6 +276,16 @@ struct Plan: Codable {
     let activityLevel: String?
     let bmr: Double?
     let ageYears: Int?
+    struct Advice: Codable, Hashable { let textAr: String; let textEn: String?
+        var text: String { pick(textEn, textAr) }
+        enum CodingKeys: String, CodingKey { case textAr = "text_ar", textEn = "text_en" } }
+    struct Deadline: Codable { let date: String; let requiredKgWeek: Double; let feasible: Bool }
+    struct DeviceCalibration: Codable { let factor: Double; let accuracyPct: Int; let days: Int }
+    let intense: Bool?
+    let maxSafeKgWeek: Double?
+    let deadline: Deadline?
+    let advice: [Advice]?
+    let deviceCalibration: DeviceCalibration?
 }
 
 struct WeightEntry: Codable, Identifiable { let date: String; let kg: Double; let trend: Double; let source: String?
@@ -388,6 +398,7 @@ struct Profile: Codable {
     var city: String?
     var area: String?
     var targetWeightKg: Double?
+    var targetDate: String?
     var pace: String?
     var screening: Screening?
     var onboarded: Bool?

@@ -24,6 +24,10 @@ struct OnboardingView: View {
     @State private var edHistory = false
     @State private var activity = "light"
     @State private var pace = "moderate"
+    @State private var byDate = false
+    @State private var targetDate = Calendar.current.date(byAdding: .month, value: 3, to: Date()) ?? Date()
+    @State private var paceCheck: Plan?
+    @State private var acked = false
     @State private var meals = 3
     @State private var lbUnits = false
     @State private var ftUnits = false
@@ -173,17 +177,44 @@ struct OnboardingView: View {
             title(t("What's your activity level?", "ما مستوى نشاطك؟"), t("If you connect your watch, we correct this automatically after 7 days of data.", "إذا ربطت ساعتك نصحّح هذا تلقائياً بعد 7 أيام من القياسات."))
             ForEach(activityOptions, id: \.0) { o in option(o.1, o.2, o.3, activity == o.0) { activity = o.0 } }
         case .pace:
-            title(t("Choose your pace", "اختر سرعة تقدمك"), t("Every option stays within safe limits.", "كل الخيارات ضمن الحدود الآمنة."))
-            ForEach([("relaxed", "🐢"), ("moderate", "🚶"), ("fast", "🚀")], id: \.0) { p in
+            title(t("Choose your pace", "اختر سرعة تقدمك"), t("Every option stays within your safe limits.", "كل الخيارات ضمن الحدود الآمنة لك."))
+            ForEach(paceList, id: \.0) { p in
                 let plan = paceOptions[p.0]
-                option(p.1, plan?.weeksToGoal.map { t("\(fmt($0)) weeks", "\(fmt($0)) أسبوعاً") } ?? paceName(p.0),
-                       plan.map { pl in
-                           let w = abs(pl.weeklyChangeKg ?? 0)
-                           return t("\(fmt1(w)) kg per week · \(fmt(pl.targetKcal)) kcal per day", "\(fmt1(w)) كغ أسبوعياً · \(fmt(pl.targetKcal)) سعرة يومياً")
-                       },
-                       pace == p.0) { pace = p.0 }
+                if p.0 == "intense" && plan?.intense != true {
+                    let why = plan?.notices.first { $0.code == "intense_unavailable" }?.text
+                    option(p.1, t("Intense", "مكثّف"), why ?? t("Not available for you", "غير متاح لك"), false) {}
+                        .disabled(true).opacity(0.55)
+                } else {
+                    option(p.1, (p.0 == "intense" ? t("Intense · ", "مكثّف · ") : "") + (plan?.weeksToGoal.map { t("\(fmt($0)) weeks", "\(fmt($0)) أسبوعاً") } ?? paceName(p.0)),
+                           plan.map(paceLine), !byDate && pace == p.0) { byDate = false; pace = p.0 }
+                }
             }
-            .task(id: "pace-\(goal)-\(weightKg)-\(targetKg)-\(activity)") { await loadPaces() }
+            option("📅", t("I want to get there by a date", "أبي أوصل بتاريخ محدد"), t("We work out the pace you need", "نحسب لك السرعة المطلوبة"), byDate) { byDate = true }
+            if byDate {
+                DatePicker(t("Date to reach your goal", "تاريخ الوصول للهدف"), selection: $targetDate,
+                           in: (Calendar.current.date(byAdding: .day, value: 14, to: Date()) ?? Date())...(Calendar.current.date(byAdding: .year, value: 3, to: Date()) ?? Date()),
+                           displayedComponents: .date)
+                    .environment(\.locale, appLocale).padding(.horizontal, 6)
+            }
+            if let c = paceCheck {
+                if byDate { Notice(text: paceLine(c), level: "info") }
+                ForEach(c.notices.filter { ["deadline_ok", "deadline_unrealistic", "deadline_close", "intense", "floor"].contains($0.code ?? "") }, id: \.self) { Notice(text: $0.text, level: $0.level) }
+                if c.intense == true, let adv = c.advice, !adv.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(t("Before you start intense loss:", "قبل ما تبدأ النزول المكثّف:")).font(.subheadline.weight(.bold))
+                        ForEach(adv, id: \.self) { a in
+                            HStack(alignment: .top, spacing: 6) { Text("•"); Text(a.text).fixedSize(horizontal: false, vertical: true) }.font(.subheadline)
+                        }
+                        Toggle(t("I've read the advice and want to continue", "قرأت النصائح وأبي أكمل"), isOn: $acked)
+                            .font(.subheadline.weight(.bold)).tint(Theme.brand).padding(.top, 4)
+                    }
+                    .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.warn.opacity(0.18), in: RoundedRectangle(cornerRadius: 18))
+                }
+            }
+            Color.clear.frame(height: 1)
+                .task(id: "pace-\(goal)-\(weightKg)-\(targetKg)-\(activity)") { await loadPaces() }
+                .task(id: "check-\(pace)-\(byDate)-\(DateFormatter.isoDay.string(from: targetDate))-\(weightKg)-\(targetKg)") { acked = false; await checkPace() }
         case .report:
             title(t("Your nutrition report", "تقرير التغذية حسب إجاباتك"), nil)
             if let p = report { reportCard(p) } else { ProgressView().padding(40) }
@@ -240,6 +271,7 @@ struct OnboardingView: View {
                     }
                     .padding(20).background(Theme.card, in: RoundedRectangle(cornerRadius: 24))
                     ForEach(p.notices, id: \.self) { Notice(text: $0.text, level: $0.level) }
+                    IntenseAdvice(plan: p)
                 }
             }
             .padding(.horizontal, 20).padding(.bottom, 110)
@@ -376,6 +408,7 @@ struct OnboardingView: View {
             }
             HStack { Circle().fill(Theme.fiber).frame(width: 12, height: 12); Text(t("Fibre", "ألياف")); Spacer(); Text("\(fmt(p.fiberG)) " + t("g", "غ")).foregroundStyle(Theme.muted) }
             ForEach(p.notices, id: \.self) { Notice(text: $0.text, level: $0.level) }
+                    IntenseAdvice(plan: p)
         }
         .padding(20).background(Theme.card, in: RoundedRectangle(cornerRadius: 24))
     }
@@ -400,7 +433,14 @@ struct OnboardingView: View {
          ("very_active", "⚡", t("Very active", "نشيط جداً"), t("Hard training or physical work", "تمارين قوية أو عمل بدني"))]
     }
     private func paceName(_ p: String) -> String {
-        ["relaxed": t("Relaxed", "مريحة"), "moderate": t("Moderate", "متوسطة"), "fast": t("Faster", "أسرع")][p] ?? p
+        ["relaxed": t("Relaxed", "مريحة"), "moderate": t("Moderate", "متوسطة"), "fast": t("Faster", "أسرع"), "intense": t("Intense", "مكثّف")][p] ?? p
+    }
+    private var paceList: [(String, String)] {
+        [("relaxed", "🐢"), ("moderate", "🚶"), ("fast", "🚀")] + (goal == "lose" ? [("intense", "🔥")] : [])
+    }
+    private func paceLine(_ pl: Plan) -> String {
+        let w = abs(pl.weeklyChangeKg ?? 0)
+        return t("\(fmt1(w)) kg per week · \(fmt(pl.targetKcal)) kcal per day", "\(fmt1(w)) كغ أسبوعياً · \(fmt(pl.targetKcal)) سعرة يومياً")
     }
 
     private var dobRange: ClosedRange<Date> {
@@ -422,18 +462,22 @@ struct OnboardingView: View {
         ]
         p["sex"] = sex ?? NSNull()
         p["targetWeightKg"] = goal == "maintain" ? NSNull() as Any : (targetKg * 10).rounded() / 10 as Any
+        p["targetDate"] = goal != "maintain" && byDate ? DateFormatter.isoDay.string(from: targetDate) as Any : NSNull() as Any
         return p
     }
     private func previewPatch(pace override: String? = nil) -> [String: Any] {
         var p = patch(); p["weightKg"] = (weightKg * 10).rounded() / 10
-        if let override { p["pace"] = override }
+        if let override { p["pace"] = override; p["targetDate"] = NSNull() }
         return p
     }
 
     private func loadPaces() async {
         var out: [String: Plan] = [:]
-        for p in ["relaxed", "moderate", "fast"] { if let plan = try? await APIClient.shared.planPreview(previewPatch(pace: p)) { out[p] = plan } }
+        for p in paceList.map(\.0) { if let plan = try? await APIClient.shared.planPreview(previewPatch(pace: p)) { out[p] = plan } }
         paceOptions = out
+    }
+    private func checkPace() async {
+        paceCheck = try? await APIClient.shared.planPreview(previewPatch())
     }
     private func loadReport() async {
         report = nil
@@ -450,6 +494,9 @@ struct OnboardingView: View {
         if step == .target {
             if goal == "lose" && targetKg >= weightKg { error = t("Your target weight should be below your current weight", "الوزن المستهدف يجب أن يكون أقل من وزنك الحالي"); return }
             if goal == "gain" && targetKg <= weightKg { error = t("Your target weight should be above your current weight", "الوزن المستهدف يجب أن يكون أعلى من وزنك الحالي"); return }
+        }
+        if step == .pace, paceCheck?.intense == true, !acked {
+            error = t("Read the advice and confirm to continue", "اقرأ النصائح وأكّد قبل المتابعة"); return
         }
         if !isLast { withAnimation(.snappy) { index += 1 }; return }
         Task { await finish() }
@@ -490,6 +537,7 @@ struct OnboardingView: View {
             if let tw = p.targetWeightKg { targetKg = tw; targetChosen = true } else { targetKg = (weightKg * 0.92).rounded() }
             activity = p.activityLevel
             pace = p.pace ?? "moderate"
+            if let td = p.targetDate, let d = DateFormatter.isoDay.date(from: td) { byDate = true; targetDate = d }
             diet = p.dietStyle ?? "normal"
             conditions = Set(p.conditions ?? [])
             meals = p.mealsPerDay ?? 3

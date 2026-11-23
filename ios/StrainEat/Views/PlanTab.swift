@@ -75,6 +75,13 @@ struct PlanSummaryCard: View {
                 }
             }
             ForEach(plan.notices, id: \.self) { Notice(text: $0.text, level: $0.level) }
+            IntenseAdvice(plan: plan)
+            if let dc = plan.deviceCalibration {
+                let how = dc.factor < 1 ? t("reads \(Int(((1 / dc.factor - 1) * 100).rounded()))% high", "تبالغ \(Int(((1 / dc.factor - 1) * 100).rounded()))%")
+                    : dc.factor > 1 ? t("reads \(Int(((1 - 1 / dc.factor) * 100).rounded()))% low", "تقلّل \(Int(((1 - 1 / dc.factor) * 100).rounded()))%") : t("spot on", "مطابقة")
+                Notice(text: t("Your watch's accuracy for you: \(dc.accuracyPct)% (\(how)). We correct its reading and give back 75% of extra burn instead of 50%.",
+                               "دقة ساعتك عندك: \(dc.accuracyPct)% (\(how)). نصحّح قراءتها ونرجّع لك 75% من الحرق الزايد بدل 50%."), level: "info")
+            }
         }
     }
     private func macro(_ label: String, _ g: Double, _ c: Color) -> some View {
@@ -608,5 +615,25 @@ struct MedRemindersCard: View {
             await MedNotifications.sync(meds)
             return true
         } catch { self.error = error.localizedDescription; return false }
+    }
+}
+
+/// Advice list shown with an intense plan (collapsed after onboarding).
+struct IntenseAdvice: View {
+    let plan: Plan
+    @State private var open = false
+    var body: some View {
+        if plan.intense == true, let adv = plan.advice, !adv.isEmpty {
+            DisclosureGroup(isExpanded: $open) {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(adv, id: \.self) { a in
+                        HStack(alignment: .top, spacing: 6) { Text("•"); Text(a.text).fixedSize(horizontal: false, vertical: true) }.font(.subheadline)
+                    }
+                }.padding(.top, 6)
+            } label: { Text(t("Intense loss advice", "نصائح النزول المكثّف")).font(.subheadline.weight(.bold)) }
+            .tint(Theme.ink)
+            .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.warn.opacity(0.18), in: RoundedRectangle(cornerRadius: 18))
+        }
     }
 }

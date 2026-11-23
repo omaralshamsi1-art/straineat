@@ -102,3 +102,20 @@ describe('insight notifications', () => {
     expect(sent).toEqual(['خلصت دراجة · 70 د · 800 سعرة']);
   });
 });
+
+describe('device calibration', () => {
+  it('corrects a watch that reads high and gives back more once calibrated', async () => {
+    const { deviceCalibration } = await import('../src/plan/plan.service');
+    const { burnBonus } = await import('../src/insights/insights');
+    const c = deviceCalibration(2300, 2600, 14)!; // watch says 2600, body says 2300
+    expect(c.factor).toBe(0.88);
+    expect(c.accuracyPct).toBe(88);
+    expect(deviceCalibration(null, 2600, 14)).toBeNull();
+    // finished day: watch 3000, expected 2300
+    const raw = burnBonus({ burnKcal: 3000, expectedKcal: 2300, partialDay: false, minuteOfDay: 0 });
+    const cal = burnBonus({ burnKcal: 3000, expectedKcal: 2300, partialDay: false, minuteOfDay: 0, deviceFactor: 0.88 });
+    expect(raw).toMatchObject({ bonusKcal: 350, share: 0.5 });
+    expect(cal.extraKcal).toBe(340); // 3000 × 0.88 − 2300
+    expect(cal).toMatchObject({ bonusKcal: 260, share: 0.75 });
+  });
+});

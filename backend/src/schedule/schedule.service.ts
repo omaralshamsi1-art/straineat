@@ -30,7 +30,7 @@ export class ScheduleService {
     let schedule = (p as any).mealSchedule?.slots?.length ? (p as any).mealSchedule : defaultSchedule(p.mealsPerDay, usualMealTimes(history.filter((m) => m.date < today), tz));
     if (ram.active) schedule = ramadanSchedule(p.ramadan.suhoorTime, p.ramadan.iftarTime);
     const burn = pickEnergy(await this.repo.listEnergy(userId, d), p.preferredEnergySource);
-    const bonus = burnBonus({ burnKcal: burn?.totalKcal, expectedKcal: plan.maintenanceKcal || estimatedTdee(p), partialDay: d === today, minuteOfDay: minuteIn(now.toISOString(), tz) }).bonusKcal;
+    const bonus = burnBonus({ burnKcal: burn?.totalKcal, expectedKcal: plan.maintenanceKcal || estimatedTdee(p), partialDay: d === today, minuteOfDay: minuteIn(now.toISOString(), tz), deviceFactor: plan.deviceCalibration?.factor }).bonusKcal;
     const dayTarget = plan.targetKcal + bonus;
     const targets = slotTargets(schedule.slots, dayTarget, ram.split);
     const meals = d >= addDays(today, -21) && d <= today ? history.filter((m) => m.date === d) : await this.repo.listMeals(userId, d);

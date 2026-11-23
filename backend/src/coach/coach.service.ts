@@ -212,7 +212,7 @@ Every option needs realistic kcal, protein, carbs and fat for what is described.
         protein: Math.round(ms.reduce((a, m) => a + m.final.totals.protein_g, 0)),
         fiber: Math.round(ms.reduce((a, m) => a + m.final.totals.fiber_g, 0)),
         burn: burn?.totalKcal ?? null,
-        target: plan.targetKcal + burnBonus({ burnKcal: burn?.totalKcal, expectedKcal: plan.maintenanceKcal, partialDay: false, minuteOfDay: 0 }).bonusKcal,
+        target: plan.targetKcal + burnBonus({ burnKcal: burn?.totalKcal, expectedKcal: plan.maintenanceKcal, partialDay: false, minuteOfDay: 0, deviceFactor: plan.deviceCalibration?.factor }).bonusKcal,
       });
     }
     const logged = days.filter((d) => d.logged);

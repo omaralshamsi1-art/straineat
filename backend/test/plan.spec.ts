@@ -172,3 +172,63 @@ describe('burn calibration (7–14 days)', () => {
     expect((await profiles.get('u')).activityLevel).toBe('moderate');
   });
 });
+
+describe('intense pace and target date', () => {
+  // 100 kg, 170 cm → BMI 34.6
+  const big = (o: Partial<PlanInput> = {}) => base({ weightKg: 100, heightCm: 170, targetWeightKg: 85, maintenanceKcal: 2900, bmr: 1750, ...o });
+
+  it('intense: ~1% body weight a week, under the gallstone line, more protein, advice attached', () => {
+    const p = computePlan(big({ pace: 'intense' }));
+    expect(p.intense).toBe(true);
+    expect(-p.weeklyChangeKg).toBeGreaterThan(0.75);
+    expect(-p.weeklyChangeKg).toBeLessThan(1.36); // 3 lb/week (NIDDK)
+    expect(p.dailyDeltaKcal).toBeGreaterThanOrEqual(-1300);
+    expect(p.targetKcal).toBeGreaterThanOrEqual(p.floorKcal);
+    expect(p.advice.length).toBeGreaterThanOrEqual(5);
+    expect(p.notices.map((n) => n.code)).toContain('intense');
+    expect(p.proteinG).toBeGreaterThan(computePlan(big({ pace: 'fast' })).proteinG);
+  });
+
+  it('intense is not offered under BMI 25, with a medical condition, or after 65', () => {
+    for (const o of [{ weightKg: 70, heightCm: 175, targetWeightKg: 65 }, { screening: { medicalSupervision: true } }, { age: 70 }] as Partial<PlanInput>[]) {
+      const p = computePlan(big({ pace: 'intense', ...o }));
+      expect(p.intense).toBe(false);
+      expect(p.notices.map((n) => n.code)).toContain('intense_unavailable');
+    }
+  });
+
+  it('target date sets the pace; an impossible date falls back to the safe maximum with a realistic ETA', () => {
+    const ok = computePlan(big({ targetDate: '2027-05-21' })); // 26 weeks for 15 kg → ~0.58 kg/wk
+    expect(ok.deadline).toMatchObject({ feasible: true });
+    expect(ok.deadline!.requiredKgWeek).toBeCloseTo(0.58, 1);
+    expect(-ok.weeklyChangeKg).toBeCloseTo(0.58, 1);
+    expect(ok.notices.map((n) => n.code)).toContain('deadline_ok');
+
+    const rush = computePlan(big({ targetDate: '2026-12-25' })); // 5 weeks for 15 kg
+    expect(rush.deadline).toMatchObject({ feasible: false });
+    expect(-rush.weeklyChangeKg).toBeLessThanOrEqual(rush.maxSafeKgWeek! + 0.01);
+    expect(rush.notices.map((n) => n.code)).toContain('deadline_unrealistic');
+    expect(rush.etaDate! > '2026-12-25').toBe(true);
+  });
+
+  it('a target date never unlocks intense for someone who is not eligible', () => {
+    const p = computePlan(base({ weightKg: 66, heightCm: 170, targetWeightKg: 60, maintenanceKcal: 2100, targetDate: '2027-01-01' }));
+    expect(p.intense).toBe(false);
+    expect(-p.weeklyChangeKg).toBeLessThanOrEqual(0.75 * 0.66 + 0.01);
+  });
+
+  it('validates pace and targetDate', () => {
+    expect(validateProfilePatch({ pace: 'intense' })).toEqual({ pace: 'intense' });
+    expect(() => validateProfilePatch({ targetDate: '2020-01-01' })).toThrow();
+    expect(validateProfilePatch({ targetDate: null })).toEqual({ targetDate: null });
+  });
+});
+
+describe('intense held by the floor', () => {
+  it('explains when the calorie floor makes intense no faster than fast', () => {
+    const p = computePlan(base({ sex: 'male', weightKg: 98, heightCm: 172, targetWeightKg: 82, maintenanceKcal: 2590, bmr: 1940, pace: 'intense' }));
+    expect(p.intense).toBe(false);
+    expect(p.targetKcal).toBe(1940);
+    expect(p.notices.find((n) => n.code === 'intense_unavailable')?.text_en).toMatch(/resting burn/);
+  });
+});

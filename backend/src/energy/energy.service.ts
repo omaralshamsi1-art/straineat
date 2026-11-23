@@ -93,7 +93,8 @@ export class EnergyService {
     // adds back half of the extra (device estimates are rough), never less than the plan.
     const expectedBurn = Math.round(plan.maintenanceKcal || estimatedTdee(profile) || 0) || null;
     const minuteOfDay = localMinuteOfDay(now, profile.timezone);
-    const bonus = burnBonus({ burnKcal: chosen?.totalKcal, expectedKcal: expectedBurn, partialDay: isToday, minuteOfDay });
+    const deviceFactor = plan.deviceCalibration?.factor ?? null;
+    const bonus = burnBonus({ burnKcal: chosen?.totalKcal, expectedKcal: expectedBurn, partialDay: isToday, minuteOfDay, deviceFactor });
     const target = plan.targetKcal + bonus.bonusKcal;
     const macroTargets = { protein_g: plan.proteinG, carbs_g: plan.carbsG, fat_g: plan.fatG, fiber_g: plan.fiberG };
     const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: profile.timezone, hour: '2-digit', hourCycle: 'h23' }).format(now));
@@ -115,6 +116,8 @@ export class EnergyService {
       baseTargetKcal: plan.targetKcal,
       /** kcal added today because the device shows a bigger day than expected */
       burnBonusKcal: bonus.bonusKcal,
+      /** why: share of the extra returned and this person's device accuracy (null until calibrated) */
+      burnBonusInfo: { share: bonus.share, deviceAccuracyPct: plan.deviceCalibration?.accuracyPct ?? null, deviceFactor },
       goal: plan.effectiveGoal,
       goalDeltaKcal: plan.dailyDeltaKcal,
       targetIntakeKcal: target,

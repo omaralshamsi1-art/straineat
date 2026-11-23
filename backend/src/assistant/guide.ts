@@ -64,9 +64,18 @@ After analysis the Review screen opens.
   (formula, or measured burn from the watch once there are enough days), activity level, difference from burn,
   expected weekly weight change, BMI.
 - "Edit goal & plan" re-opens the step-by-step setup: sex, birth date, height, weight, target weight, pace
-  (relaxed / moderate / fast), activity level, diet style (normal, vegetarian, vegan, keto, low-carb, Mediterranean,
+  (relaxed / moderate / fast / intense, or "by a date": the user picks a target date and the plan works out the weekly
+  pace), activity level, diet style (normal, vegetarian, vegan, keto, low-carb, Mediterranean,
   paleo, light), health conditions (hypertension, high cholesterol, obesity, kidney, heart, thyroid, diabetes),
   meals per day, Ramadan fasting.
+- Intense pace (~1% of body weight a week): only with BMI ≥ 25, age 18–64 and no supervised condition; capped under
+  ~1.36 kg (3 lb) a week (gallstone risk, NIDDK), never under the calorie floor; protein raised to 2.2 g/kg; the plan
+  lists advice (resistance training, hunger/fatigue, keep it to 8–12 weeks then maintain, warning signs to see a doctor).
+  A target date that needs more than the safe maximum is planned at the safe maximum and shows the realistic date.
+  When a user asks to lose weight fast, explain these trade-offs honestly and offer the intense pace or a target date.
+- Burn bonus: on a day the watch shows a bigger burn than expected, half the extra is added to the food target; once
+  the watch is calibrated against the user's own weight trend (intake − weight change, ~3 weeks), its bias is corrected
+  first and 75% is given back. The plan shows the watch's accuracy for that user.
 - Kidney, heart, diabetes and thyroid conditions, pregnancy/breastfeeding or an eating-disorder history make the plan
   "supervised": gentler targets and a reminder to follow the user's clinician.
 - Fitbit (incl. Fitbit Air): no direct link; it arrives through Apple Health. In the Google Health app (iPhone): Connections → Apps and

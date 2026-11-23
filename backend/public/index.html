@@ -1257,7 +1257,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       h: p.heightCm || 170, w: p.weightKg || 75, act: p.activityLevel || 'light', pace: p.pace || 'moderate',
       diet: p.dietStyle || 'normal', conds: [...(p.conditions || [])], meals: p.mealsPerDay || 3,
       preg: !!(p.screening && (p.screening.pregnant || p.screening.breastfeeding)), ed: !!(p.screening && p.screening.edHistory),
-      preview: null, paces: null,
+      preview: null, paces: null, mode: p.targetDate ? 'date' : 'pace', td: p.targetDate || '', ack: false,
     });
     ob.tw = p.targetWeightKg || Math.round(ob.w * 0.92);
     ob.twSet = !!p.targetWeightKg;
@@ -1271,6 +1271,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     return {
       goal: ob.goal, sex: ob.sex, birthDate: bd, heightCm: Math.round(ob.h), weightKg: Math.round(ob.w * 10) / 10,
       targetWeightKg: ob.goal === 'maintain' ? null : Math.round(ob.tw * 10) / 10, activityLevel: ob.act, pace: ob.pace,
+      targetDate: ob.goal !== 'maintain' && ob.mode === 'date' && ob.td ? ob.td : null,
       dietStyle: ob.diet, conditions: ob.conds, mealsPerDay: ob.meals,
       screening: { pregnant: ob.preg, breastfeeding: false, medicalSupervision: false, edHistory: ob.ed },
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dubai', ...extra,
@@ -1399,17 +1400,47 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       obFrame(T('ما مستوى نشاطك؟'), T('إذا ربطت ساعتك نصحّح هذا تلقائياً بعد 7 أيام من القياسات.'), `<div class="ob-opts">${A.map(([v, ic, t, s]) => obOpt('v', v, ic, t, s, ob.act === v)).join('')}</div>`);
       bindPick('v', (v) => { ob.act = v; });
     } else if (step === 'pace') {
-      obFrame(T('اختر سرعة تقدمك'), T('كل الخيارات ضمن الحدود الآمنة.'), `<div class="ob-opts" id="paceList"><div class="muted" style="text-align:center">${T('نحسب الخيارات…')}</div></div>`);
-      const P = [['relaxed', '🐢'], ['moderate', '🚶'], ['fast', '🚀']];
-      Promise.all(P.map(([v]) => obPreview({ pace: v }).catch(() => null))).then((rs) => {
+      obFrame(T('اختر سرعة تقدمك'), T('كل الخيارات ضمن الحدود الآمنة لك.'), `<div class="ob-opts" id="paceList"><div class="muted" style="text-align:center">${T('نحسب الخيارات…')}</div></div><div id="paceInfo"></div>`);
+      const P = [['relaxed', '🐢'], ['moderate', '🚶'], ['fast', '🚀'], ...(ob.goal === 'lose' ? [['intense', '🔥']] : [])];
+      const minDate = isoDay(new Date(Date.now() + 14 * 86400000));
+      Promise.all(P.map(([v]) => obPreview({ pace: v, targetDate: null }).catch(() => null))).then((rs) => {
         if (obSteps()[ob.i] !== 'pace') return;
-        $('paceList').innerHTML = P.map(([v, ic], k) => {
+        const line = (r) => r && r.weeklyChangeKg ? L`<span dir="ltr">${fmt1(Math.abs(r.weeklyChangeKg))}</span> كغ أسبوعياً · ${fmt(r.targetKcal)} سعرة يومياً` : '';
+        const opts = P.map(([v, ic], k) => {
           const r = rs[k];
+          if (v === 'intense') {
+            const off = !r || !r.intense;
+            const why = r && (r.notices || []).find((n) => n.code === 'intense_unavailable');
+            if (off) return `<div class="ob-opt" aria-disabled="true" style="opacity:.55;cursor:default"><span class="ic">${ic}</span><span class="tx"><b>${T('مكثّف')}</b><span>${why ? esc(tx(why, 'text')) : T('غير متاح لك')}</span></span></div>`;
+            return obOpt('v', v, ic, `${T('مكثّف')} · ${r.weeksToGoal ? L`${fmt(r.weeksToGoal)} أسبوعاً` : ''}`, line(r), ob.mode === 'pace' && ob.pace === v);
+          }
           const weeks = r && r.weeksToGoal ? L`${fmt(r.weeksToGoal)} أسبوعاً` : { relaxed: T('مريحة'), moderate: T('متوسطة'), fast: T('أسرع') }[v];
-          const per = r && r.weeklyChangeKg ? L`<span dir="ltr">${fmt1(Math.abs(r.weeklyChangeKg))}</span> كغ أسبوعياً · ${fmt(r.targetKcal)} سعرة يومياً` : '';
-          return obOpt('v', v, ic, weeks, per, ob.pace === v);
+          return obOpt('v', v, ic, weeks, line(r), ob.mode === 'pace' && ob.pace === v);
         }).join('');
-        bindPick('v', (v) => { ob.pace = v; });
+        const dateOpt = obOpt('v', 'date', '📅', T('أبي أوصل بتاريخ محدد'), ob.td ? L`الهدف: <span dir="ltr">${ob.td}</span>` : T('نحسب لك السرعة المطلوبة'), ob.mode === 'date')
+          + `<div id="tdBox" class="${ob.mode === 'date' ? '' : 'hidden'}" style="padding:4px 6px"><label class="small muted">${T('تاريخ الوصول للهدف')}</label><input type="date" id="tdIn" min="${minDate}" value="${ob.td || ''}" style="width:100%;margin-top:6px"></div>`;
+        $('paceList').innerHTML = opts + dateOpt;
+        const info = async () => {
+          ob.ack = false;
+          const box = $('paceInfo');
+          if (ob.mode === 'date' && !ob.td) { box.innerHTML = ''; return; }
+          let r = null; try { r = await obPreview(); } catch (e) { box.innerHTML = `<div class="notice warn">${esc(e.message)}</div>`; return; }
+          if (obSteps()[ob.i] !== 'pace') return;
+          ob.paceInfo = r;
+          const keep = (r.notices || []).filter((n) => ['deadline_ok', 'deadline_unrealistic', 'deadline_close', 'intense', 'floor'].includes(n.code));
+          const adv = r.intense && r.advice && r.advice.length
+            ? `<div class="notice warn" style="text-align:start"><b>${T('قبل ما تبدأ النزول المكثّف:')}</b><ul style="margin:6px 0 0;padding-inline-start:18px;line-height:1.6">${r.advice.map((a) => `<li>${esc(tx(a, 'text'))}</li>`).join('')}</ul>
+               <label style="display:flex;gap:10px;align-items:center;margin:12px 0 0;font-size:15px;font-weight:700;color:var(--ink);cursor:pointer"><input type="checkbox" id="paceAck" style="width:22px;height:22px;padding:0;flex:none;accent-color:var(--brand-2)"><span>${T('قرأت النصائح وأبي أكمل')}</span></label></div>` : '';
+          box.innerHTML = (ob.mode === 'date' ? `<div class="notice info">${line(r)}</div>` : '') + renderNotices(keep) + adv;
+          const ck = $('paceAck'); if (ck) ck.onchange = () => { ob.ack = ck.checked; };
+        };
+        bindPick('v', (v) => {
+          if (v === 'date') { ob.mode = 'date'; $('tdBox').classList.remove('hidden'); if (!ob.td) $('tdIn').focus(); }
+          else { ob.mode = 'pace'; ob.pace = v; $('tdBox').classList.add('hidden'); }
+          info();
+        });
+        $('tdIn').onchange = () => { ob.td = $('tdIn').value; info(); };
+        info();
       });
     } else if (step === 'report') {
       obFrame(T('تقرير التغذية حسب إجاباتك'), '', `<div id="repBox"><div class="muted" style="text-align:center">${T('نحسب خطتك…')}</div></div>`);
@@ -1495,6 +1526,10 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       if (ob.goal === 'lose' && ob.tw >= ob.w) return toast(T('الوزن المستهدف يجب أن يكون أقل من وزنك الحالي'));
       if (ob.goal === 'gain' && ob.tw <= ob.w) return toast(T('الوزن المستهدف يجب أن يكون أعلى من وزنك الحالي'));
     }
+    if (step === 'pace') {
+      if (ob.mode === 'date' && !ob.td) return toast(T('اختر تاريخ الوصول للهدف'));
+      if (ob.paceInfo && ob.paceInfo.intense && !ob.ack) { const c = $('paceAck'); if (c) c.closest('.notice').scrollIntoView({ block: 'center', behavior: 'smooth' }); return toast(T('اقرأ النصائح وأكّد قبل المتابعة'), 3000); }
+    }
     if (step === 'weight') {
       // suggest a realistic target from the new current weight unless the user already chose one that still fits
       const fits = ob.goal === 'lose' ? ob.tw < ob.w : ob.goal === 'gain' ? ob.tw > ob.w : true;
@@ -1554,9 +1589,14 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
         <div class="ob-sum"><div><span>${T('الجنس')}</span><b>${sexTxt}</b></div><div><span>${T('العمر')}</span><b class="num">${age ?? '—'}</b></div><div><span>${T('الطول')}</span><b class="num">${Math.round(ob.h)} ${T('سم')}</b></div></div>
       </div>
       ${renderNotices(p.notices)}
+      ${renderAdvice(p)}
       <div class="ob-next"><button type="button" class="btn" id="obGo">${T('ابدأ الآن')}</button></div>`;
     $('obGo').onclick = () => { toast(T('خطتك جاهزة ✓')); show('today'); };
     window.scrollTo(0, 0);
+  }
+  function renderAdvice(p) {
+    if (!p || !p.intense || !(p.advice || []).length) return '';
+    return `<details class="notice warn" style="text-align:start"><summary><b>${T('نصائح النزول المكثّف')}</b></summary><ul style="margin:6px 0 0;padding-inline-start:18px;line-height:1.6">${p.advice.map((a) => `<li>${esc(tx(a, 'text'))}</li>`).join('')}</ul></details>`;
   }
   function renderNotices(list) { return (list || []).map((n) => `<div class="notice ${n.level}">${esc(tx(n, 'text'))}</div>`).join(''); }
   $('editPlan').onclick = async () => { try { startOnboarding(await api('profile')); } catch (e) { toast(e.message); } };
@@ -2051,7 +2091,9 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     try {
       const [p, prof] = await Promise.all([api('plan'), api('profile')]);
       planCache = p;
-      $('planSub').textContent = L`${GOAL_AR[p.effectiveGoal]} · سرعة ${{ relaxed: T('مريحة'), moderate: T('متوسطة'), fast: T('أسرع') }[p.pace]}`;
+      $('planSub').textContent = p.deadline && p.effectiveGoal !== 'maintain'
+        ? L`${GOAL_AR[p.effectiveGoal]} · بتاريخ ${p.deadline.date}`
+        : L`${GOAL_AR[p.effectiveGoal]} · سرعة ${{ relaxed: T('مريحة'), moderate: T('متوسطة'), fast: T('أسرع'), intense: T('مكثّفة') }[p.pace] || ''}`;
       $('plKcal').textContent = L`${fmt(p.targetKcal)} سعرة`;
       $('plP').textContent = L`${fmt(p.proteinG)} غ`; $('plC').textContent = L`${fmt(p.carbsG)} غ`; $('plF').textContent = L`${fmt(p.fatG)} غ`;
       $('plMaint').textContent = L`${fmt(p.maintenanceKcal)} سعرة`;
@@ -2063,7 +2105,9 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       $('plDelta').textContent = p.dailyDeltaKcal < 0 ? L`عجز ${fmt(-p.dailyDeltaKcal)} سعرة` : p.dailyDeltaKcal > 0 ? L`فائض ${fmt(p.dailyDeltaKcal)} سعرة` : T('لا يوجد (محافظة)');
       $('plWeekly').textContent = p.weeklyChangeKg ? L`${p.weeklyChangeKg > 0 ? '+' : ''}${fmt1(p.weeklyChangeKg)} كغ/أسبوع` : '—';
       $('plBmi').textContent = p.bmi ?? '—'; $('plFiber').textContent = L`${fmt(p.fiberG)} غ`;
-      $('plNotices').innerHTML = renderNotices(p.notices);
+      const dc = p.deviceCalibration;
+      const calNote = dc ? `<div class="notice info">${L`دقة ساعتك عندك: ${dc.accuracyPct}% (${dc.factor < 1 ? L`تبالغ ${Math.round((1 / dc.factor - 1) * 100)}%` : dc.factor > 1 ? L`تقلّل ${Math.round((1 - 1 / dc.factor) * 100)}%` : T('مطابقة')}). نصحّح قراءتها ونرجّع لك 75% من الحرق الزايد بدل 50%.`}</div>` : '';
+      $('plNotices').innerHTML = renderNotices(p.notices) + renderAdvice(p) + calNote;
       $('pSrc').value = prof.preferredEnergySource || ''; paintSources(); checkApple(); scStatus();
       const rm = prof.ramadan || { enabled: null, suhoorTime: '04:45', iftarTime: '18:00' };
       $('rmMode').value = rm.enabled === null ? 'auto' : rm.enabled ? 'on' : 'off';
