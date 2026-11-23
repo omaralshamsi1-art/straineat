@@ -65,6 +65,7 @@ struct RootView: View {
                 .onReceive(NotificationCenter.default.publisher(for: .openAssistant)) { _ in showAssistant = true }
                 .onReceive(NotificationCenter.default.publisher(for: .openProgress)) { _ in tab = 1 }
                 .onReceive(NotificationCenter.default.publisher(for: .openPlan)) { _ in tab = 3 }
+                .onOpenURL { url in if url.host == "today" { tab = 0 } } // from the home-screen widget
                 .sheet(isPresented: $showAssistant) {
                     AssistantView(screen: screenName, onChanged: { Task { await store.refresh() } })
                         .environment(\.layoutDirection, appLayoutDirection)
@@ -134,6 +135,11 @@ final class AppStore {
         }
         if me == nil { me = try? await APIClient.shared.me() }
         if isToday { motivation = try? await APIClient.shared.motivation() }
+        if isToday, balance != nil { // home-screen widget
+            async let w = try? APIClient.shared.water()
+            async let st = try? APIClient.shared.steps()
+            WidgetBridge.update(balance: balance, water: await w, steps: await st)
+        }
     }
 
     func shiftDay(_ d: Int) {

@@ -103,6 +103,7 @@ struct WaterCard: View {
         busy = true; defer { busy = false }
         guard let d = try? await APIClient.shared.addWater(ml: ml) else { return }
         day = d
+        WidgetBridge.update(water: d)
         if let e = d.entries.last { await HealthKitManager.shared.saveWater(ml: e.ml, id: e.id, at: e.at) }
         await replan()
     }
@@ -110,6 +111,7 @@ struct WaterCard: View {
         busy = true; defer { busy = false }
         guard let d = try? await APIClient.shared.deleteWater(id: e.id) else { return }
         day = d
+        WidgetBridge.update(water: d)
         await HealthKitManager.shared.deleteWater(id: e.id)
         await replan()
     }

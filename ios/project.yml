@@ -9,7 +9,9 @@ targets:
   StrainEat:
     type: application
     platform: iOS
-    sources: [StrainEat]
+    sources: [StrainEat, Shared]
+    dependencies:
+      - target: StrainEatWidget
     info:
       path: StrainEat/Resources/Info.plist
       properties:
@@ -37,6 +39,7 @@ targets:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
         com.apple.developer.healthkit.background-delivery: true
+        com.apple.security.application-groups: [group.ae.sheen.straineat]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ae.sheen.straineat
@@ -46,3 +49,25 @@ targets:
         CURRENT_PROJECT_VERSION: "2"
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+  StrainEatWidget:
+    type: app-extension
+    platform: iOS
+    sources: [StrainEatWidget, Shared]
+    info:
+      path: StrainEatWidget/Info.plist
+      properties:
+        CFBundleDisplayName: StrainEat
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: StrainEatWidget/StrainEatWidget.entitlements
+      properties:
+        com.apple.security.application-groups: [group.ae.sheen.straineat]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ae.sheen.straineat.widget
+        SWIFT_VERSION: "5.10"
+        MARKETING_VERSION: "2.0"
+        CURRENT_PROJECT_VERSION: "2"
+        TARGETED_DEVICE_FAMILY: "1"
+        SKIP_INSTALL: YES
