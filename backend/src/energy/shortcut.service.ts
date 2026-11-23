@@ -1,4 +1,5 @@
-import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { StepsService } from '../steps/steps.service';
+import { BadRequestException, Inject, Injectable, UnauthorizedException, Optional } from '@nestjs/common';
 import { createHash, randomBytes } from 'crypto';
 import { isIsoDate, localDate } from '../common/dates';
 import { ProfileService } from '../profile/profile.service';
@@ -13,6 +14,15 @@ const LOOKUP_USER = '__shortcut__';
 const hash = (t: string) => createHash('sha256').update(t).digest('hex');
 
 /** Shortcuts may send 512, "512.3", "1,240 kcal" or a list of values — take the number(s) and sum. */
+/** step count from a Shortcut value (same parsing as kcal, wider range) */
+export function stepsOf(v: unknown): number | null {
+  if (v == null || v === '' || (Array.isArray(v) && !v.length)) return null;
+  const n = Array.isArray(v) ? v.map(stepsOf).reduce<number>((a, b) => a + (b ?? 0), 0)
+    : typeof v === 'object' ? stepsOf((v as any).value ?? (v as any).quantity ?? (v as any).sum)
+    : Number(String(v).replace(/[,٬]/g, '').replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x660)).match(/\d+(\.\d+)?/)?.[0]);
+  return n != null && Number.isFinite(n) && n >= 0 && n < 150000 ? Math.round(n) : null;
+}
+
 export function kcalOf(v: unknown): number | null {
   if (v == null || v === '') return null;
   if (Array.isArray(v)) {
@@ -35,6 +45,7 @@ export class ShortcutService {
     @Inject(REPOSITORY) private readonly repo: Repository,
     private readonly energy: EnergyService,
     private readonly profiles: ProfileService,
+    @Optional() private readonly steps?: StepsService,
   ) {}
 
   async token(userId: string, rotate = false) {
@@ -59,10 +70,18 @@ export class ShortcutService {
     const swapped: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(body ?? {})) {
       const name = typeof v === 'string' ? v.trim().toLowerCase() : '';
-      if (['active', 'basal', 'resting'].includes(name) && kcalOf(k) != null) swapped[name] = k;
+      if (['active', 'basal', 'resting', 'steps'].includes(name) && (name === 'steps' ? stepsOf(k) : kcalOf(k)) != null) swapped[name] = k;
     }
     const active = kcalOf(body?.active ?? body?.activeKcal ?? swapped.active);
     const basal = kcalOf(body?.basal ?? body?.basalKcal ?? body?.resting ?? swapped.basal ?? swapped.resting);
+    const stepCount = stepsOf(body?.steps ?? swapped.steps);
+    const p = await this.profiles.get(userId);
+    const date = isIsoDate(body?.date) ? (body.date as string) : localDate(new Date(), p.timezone);
+    if (stepCount != null && this.steps) await this.steps.ingest(userId, [{ date, steps: stepCount }], 'apple_health');
+    if (active == null && basal == null && stepCount != null) {
+      await this.repo.setCache({ userId, key: 'shortcut-last', payload: { at: new Date().toISOString(), date, active: null, basal: null, steps: stepCount }, createdAt: new Date().toISOString() });
+      return { ok: true, date, steps: stepCount };
+    }
     if (active == null && basal == null) {
       const raw = [body?.active, body?.basal];
       const empty = (x: unknown) => x == null || x === '' || (Array.isArray(x) && x.length === 0);
@@ -77,11 +96,9 @@ export class ShortcutService {
       const got = Object.keys(body ?? {}).slice(0, 5).join(', ') || 'nothing';
       throw new BadRequestException(`Send JSON like {"active": 612, "basal": 1650}: Key = the word active / basal, value = the Health number. Received keys: ${got}`);
     }
-    const p = await this.profiles.get(userId);
-    const date = isIsoDate(body?.date) ? (body.date as string) : localDate(new Date(), p.timezone);
     await this.energy.ingest(userId, [{ date, source: 'apple_health', activeKcal: active, basalKcal: basal } as any]);
-    await this.repo.setCache({ userId, key: 'shortcut-last', payload: { at: new Date().toISOString(), date, active, basal }, createdAt: new Date().toISOString() });
-    return { ok: true, date, activeKcal: active, basalKcal: basal, totalKcal: (active ?? 0) + (basal ?? 0) };
+    await this.repo.setCache({ userId, key: 'shortcut-last', payload: { at: new Date().toISOString(), date, active, basal, steps: stepCount }, createdAt: new Date().toISOString() });
+    return { ok: true, date, activeKcal: active, basalKcal: basal, totalKcal: (active ?? 0) + (basal ?? 0), steps: stepCount };
   }
 
   async status(userId: string) {

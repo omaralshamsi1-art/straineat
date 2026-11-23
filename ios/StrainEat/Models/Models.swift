@@ -482,3 +482,5 @@ struct WaterDay: Codable {
     let notes: [PlanNotice]
 }
 struct WaterHistory: Codable { struct Day: Codable, Identifiable { let date: String; let intakeMl: Double; let targetMl: Double?; var id: String { date } }; let days: [Day] }
+
+struct StepsDay: Codable { let date: String; let steps: Double?; let goal: Double; let fullGoal: Double; let avg7: Double? }

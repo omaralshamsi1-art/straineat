@@ -349,11 +349,30 @@ struct BodyTodayCard: View {
     var showWellness = true
     @State private var data: Wellness?
     @State private var open = false
+    @State private var steps: StepsDay?
 
     var body: some View {
         let workouts = activity?.workouts ?? []
         Card(title: showWellness ? t("Your body today", "جسمك اليوم") : t("Activity", "النشاط"),
              trailing: workouts.isEmpty ? nil : AnyView(Text(t("\(fmt(activity?.totalMin ?? 0)) min · \(fmt(activity?.totalKcal ?? 0)) kcal", "\(fmt(activity?.totalMin ?? 0)) د · \(fmt(activity?.totalKcal ?? 0)) سعرة")).font(.caption).foregroundStyle(Theme.muted))) {
+            if let st = steps, let n = st.steps {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("👣 " + t("\(fmt(n)) steps", "\(fmt(n)) خطوة")).font(.headline.weight(.heavy)).lineLimit(1)
+                        Spacer()
+                        Text(t("Goal \(fmt(st.goal))", "الهدف \(fmt(st.goal))") + (st.goal < st.fullGoal ? t(" · rising to \(fmt(st.fullGoal))", " · نرفعه لـ \(fmt(st.fullGoal))") : ""))
+                            .font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
+                    }
+                    GeometryReader { g in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Theme.card2)
+                            Capsule().fill(n >= st.goal ? Theme.good : Theme.brand2).frame(width: g.size.width * min(1, n / max(st.goal, 1)))
+                        }
+                    }
+                    .frame(height: 6)
+                }
+                .padding(.bottom, 4)
+            }
             if showWellness, isToday, let d = data, d.connected {
                 if d.needsReconnect {
                     Button { Task { _ = try? await WhoopConnector.shared.connect(); await load() } } label: {
@@ -394,6 +413,7 @@ struct BodyTodayCard: View {
             }
         }
         .task(id: store.refreshTick) { if isToday && showWellness { await load() } }
+        .task(id: "\(store.refreshTick)-\(store.selectedDateKey)") { steps = try? await APIClient.shared.steps(date: store.selectedDateKey) }
     }
 
     private func tile(_ label: String, _ value: String, _ sub: String, _ color: Color) -> some View {

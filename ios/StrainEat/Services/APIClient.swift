@@ -77,6 +77,12 @@ final class APIClient {
         try await send(request("balance?date=\(DateFormatter.isoDay.string(from: date))"))
     }
 
+    // MARK: Steps
+    func steps(date: String? = nil) async throws -> StepsDay { try await send(request("steps" + (date.map { "?date=\($0)" } ?? ""))) }
+    func pushSteps(_ samples: [[String: Any]]) async throws {
+        let _: [String: Int] = try await send(jsonRequest("steps/samples", method: "POST", ["samples": samples]))
+    }
+
     // MARK: Water
     func water(date: String? = nil) async throws -> WaterDay { try await send(request("water" + (date.map { "?date=\($0)" } ?? ""))) }
     func waterHistory(days: Int = 7) async throws -> WaterHistory { try await send(request("water/history?days=\(days)")) }

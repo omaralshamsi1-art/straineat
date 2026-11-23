@@ -17,6 +17,7 @@ final class HealthKitManager {
         HKQuantityType(.heartRate),
         HKObjectType.workoutType(),
         HKQuantityType(.dietaryWater),
+        HKQuantityType(.stepCount),
     ]
 
     private let dietary: [(KeyPath<Nutrients, Double>, HKQuantityTypeIdentifier, HKUnit)] = [
@@ -70,6 +71,24 @@ final class HealthKitManager {
         do { try await APIClient.shared.pushEnergy(samples) } catch { return nil }
         let today = DateFormatter.isoDay.string(from: Date())
         return samples.first { $0.date == today }.map { ($0.activeKcal ?? 0) + ($0.basalKcal ?? 0) }
+    }
+
+    // MARK: Steps
+
+    /// Daily step totals (Health merges iPhone + watch + other apps without double counting).
+    func syncStepsToServer(days: Int = 3) async {
+        guard isAvailable else { return }
+        var samples: [[String: Any]] = []
+        for offset in 0..<days {
+            let day = Calendar.current.date(byAdding: .day, value: -offset, to: Date())!
+            let start = Calendar.current.startOfDay(for: day)
+            let end = min(Calendar.current.date(byAdding: .day, value: 1, to: start)!, Date())
+            let q = HKStatisticsQueryDescriptor(predicate: HKSamplePredicate.quantitySample(type: HKQuantityType(.stepCount),
+                predicate: HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)), options: .cumulativeSum)
+            guard let n = try? await q.result(for: store)?.sumQuantity()?.doubleValue(for: .count()), n > 0 else { continue }
+            samples.append(["date": DateFormatter.isoDay.string(from: day), "steps": Int(n.rounded())])
+        }
+        if !samples.isEmpty { try? await APIClient.shared.pushSteps(samples) }
     }
 
     // MARK: Water

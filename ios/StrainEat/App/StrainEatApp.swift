@@ -110,6 +110,7 @@ final class AppStore {
         await HealthKitManager.shared.syncBurnToServer()
         await HealthKitManager.shared.syncWorkoutsToServer()
         await HealthKitManager.shared.syncWaterToServer()
+        await HealthKitManager.shared.syncStepsToServer()
         if whoopConnected {
             let lastSync = UserDefaults.standard.double(forKey: "whoopLastSync")
             if force || Date().timeIntervalSince1970 - lastSync > 15 * 60 { // at most every 15 min unless pulled

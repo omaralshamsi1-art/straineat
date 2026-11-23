@@ -37,6 +37,7 @@ import { AssistantService } from './assistant/assistant.service';
 import { ShortcutService } from './energy/shortcut.service';
 import { ScheduleService } from './schedule/schedule.service';
 import { WaterService } from './water/water.service';
+import { StepsService } from './steps/steps.service';
 import { validateProfilePatch } from './profile/profile.service';
 
 @Controller('health')
@@ -409,6 +410,28 @@ export class AssistantController {
   @Delete('history')
   clear(@UserId() userId: string) {
     return this.assistant.clear(userId);
+  }
+}
+
+@Controller('steps')
+export class StepsController {
+  constructor(private readonly steps: StepsService) {}
+
+  /** Steps for a day + goal (age-based, ramping up from the 7-day average). */
+  @Get()
+  day(@UserId() userId: string, @Query('date') date?: string) {
+    return this.steps.day(userId, date);
+  }
+
+  @Get('history')
+  history(@UserId() userId: string, @Query('days') days?: string) {
+    return this.steps.history(userId, Number(days) || 7);
+  }
+
+  /** Apple Health daily step totals from the iOS app: { samples: [{ date, steps }] } */
+  @Post('samples')
+  ingest(@UserId() userId: string, @Body() body: { samples?: { date: string; steps: number }[] }) {
+    return this.steps.ingest(userId, body?.samples ?? []);
   }
 }
 

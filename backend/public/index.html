@@ -1097,7 +1097,8 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
               <li>أضف <b>Find Health Samples</b> (البحث عن عينات الصحة): النوع <b>Active Energy</b> (الطاقة النشطة)، وأضف شرط <b>Start Date ← is today</b>.</li>
               <li>أضف <b>Calculate Statistics</b> (حساب الإحصائيات) ← <b>Sum</b>، ثم <b>Set Variable</b> باسم <b>active</b>.</li>
               <li>كرر الخطوتين 2 و3 مع <b>Resting Energy</b> (طاقة الراحة) واسم المتغير <b>basal</b>.</li>
-              <li>أضف <b>Get Contents of URL</b> والصق الرابط المنسوخ ← Method: <b>POST</b> ← Request Body: <b>JSON</b> وأضف حقلين رقميين: <b>active</b> = المتغير active، و<b>basal</b> = المتغير basal.</li>
+              <li>(اختياري) كررها مع <b>Steps</b> (الخطوات) واسم المتغير <b>steps</b>.</li>
+              <li>أضف <b>Get Contents of URL</b> والصق الرابط المنسوخ ← Method: <b>POST</b> ← Request Body: <b>JSON</b> وأضف حقولاً رقمية: <b>active</b> = المتغير active، و<b>basal</b> = المتغير basal، و(اختياري) <b>steps</b> = المتغير steps.</li>
               <li>شغّل الاختصار مرة واسمح بالوصول لبيانات الصحة، ثم اضغط «تحقق من وصول البيانات».</li>
               <li>من تبويب <b>Automation</b> (الأتمتة) ← <b>+</b> ← <b>Time of Day</b>: الساعة 12:00 يومياً ← <b>Run Immediately</b> ← اختر الاختصار. كرر للساعة 6 و10 مساءً.</li>
             </ol>
@@ -1906,13 +1907,13 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     const w = wellCache, t0 = w && w.connected && !w.needsReconnect ? w.today || {} : null;
     if (t0 && t0.recovery != null) {
       $('monBodyV').innerHTML = `<span class="num ${recCls(t0.recovery)}" dir="ltr">${t0.recovery}%</span>`;
-      $('monBodyS').textContent = `${T('الاستشفاء')}${t0.sleepMin ? ` · ${T('نوم')} ${hm(t0.sleepMin)}` : ''}`;
+      $('monBodyS').textContent = `${T('الاستشفاء')}${t0.sleepMin ? ` · ${T('نوم')} ${hm(t0.sleepMin)}` : ''}${stepsDay && stepsDay.steps != null ? ` · 👣 ${fmt(stepsDay.steps)}` : ''}`;
       $('monBody').onclick = () => openDetail('well');
     } else {
       const a = b.activity;
       $('monBodyV').textContent = a && a.workouts && a.workouts.length ? L`${a.workouts.length} تمرين` : T('لا تمرين بعد');
       $('monBodyV').style.color = '';
-      $('monBodyS').textContent = b.burn ? L`حرق ${fmt(b.burn.totalKcal)} سعرة` : T('اربط WHOOP أو Apple Health');
+      $('monBodyS').textContent = stepsDay && stepsDay.steps != null ? L`👣 ${fmt(stepsDay.steps)} / ${fmt(stepsDay.goal)} خطوة` : b.burn ? L`حرق ${fmt(b.burn.totalKcal)} سعرة` : T('اربط WHOOP أو Apple Health');
       $('monBody').onclick = () => openDetail('burn');
     }
   }
@@ -1955,7 +1956,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       const sched = await schedP; schedCache = sched;
       lastSt = st; renderStack(); renderMonitors();
       renderTimeline(b, sched);
-      loadWater();
+      loadWater(); loadSteps();
     } catch (e) { $('mealList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
 
@@ -2103,17 +2104,28 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   const ZONE_COLORS = ['#c9d3cd', '#7cc4e8', '#4fb37a', '#e8c23d', '#ef8f3a', '#d9473a'];
   const SRC_AR = { whoop: 'WHOOP', apple_health: 'Apple Health', health_connect: 'Health Connect', manual: T('يدوي') };
   function strainLabel(x) { return x >= 18 ? T('قصوى') : x >= 14 ? T('عالية') : x >= 10 ? T('متوسطة') : T('خفيفة'); }
+  let stepsDay = null;
+  async function loadSteps() {
+    try { stepsDay = await api(`steps?date=${isoDay(day)}`); } catch { stepsDay = null; }
+    renderMonitors(); renderActivity(lastBal && lastBal.activity);
+  }
+  function stepsRow() {
+    const s = stepsDay; if (!s || s.steps == null) return '';
+    const pct = Math.min(100, Math.round((s.steps / s.goal) * 100));
+    const ramp = s.goal < s.fullGoal ? L` · نرفعه تدريجياً لـ ${fmt(s.fullGoal)}` : '';
+    return `<div class="stepsrow"><div class="row" style="align-items:flex-start"><b style="white-space:nowrap">👣 ${L`${fmt(s.steps)} خطوة`}</b><span class="small muted" style="text-align:end">${L`الهدف ${fmt(s.goal)}`}${ramp ? `<br>${ramp.replace(/^\s*·\s*/, '')}` : ''}</span></div><div class="wbar" style="height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin:8px 0 10px"><i style="display:block;height:100%;width:${pct}%;background:${s.steps >= s.goal ? 'var(--good)' : 'var(--brand-2)'};border-radius:99px"></i></div></div>`;
+  }
   function renderActivity(a) {
     const list = (a && a.workouts) || [];
     $('actSub').textContent = list.length ? `${list.length} ${list.length === 1 ? T('تمرين') : T('تمارين')}` : '';
     if (!list.length) {
-      $('actList').innerHTML = `<div class="tl" style="border:0;padding:4px 0"><svg width="20" height="20" style="color:var(--muted);flex:none"><use href="#i-heart"/></svg><span class="small muted">${T('لا يوجد تمرين بعد · يُسحب من WHOOP و Apple Health')}</span></div>`;
+      $('actList').innerHTML = stepsRow() + `<div class="tl" style="border:0;padding:4px 0"><svg width="20" height="20" style="color:var(--muted);flex:none"><use href="#i-heart"/></svg><span class="small muted">${T('لا يوجد تمرين بعد · يُسحب من WHOOP و Apple Health')}</span></div>`;
       return;
     }
     const sum = L`<div class="actsum"><div><b class="num">${fmt(a.totalMin)}</b><span>دقيقة</span></div><div><b class="num">${a.totalKcal ? fmt(a.totalKcal) : '—'}</b><span>سعرة في التمارين</span></div>${a.maxStrain != null
       ? L`<div><b class="num">${fmt1(a.maxStrain)}</b><span>أعلى إجهاد (من 21)</span></div>`
       : L`<div><b class="num">${(() => { const h = list.filter((w) => w.avgHr); return h.length ? fmt(h.reduce((x, w) => x + w.avgHr, 0) / h.length) : '—'; })()}</b><span>متوسط النبض</span></div>`}</div>`;
-    $('actList').innerHTML = sum + list.map((w) => {
+    $('actList').innerHTML = stepsRow() + sum + list.map((w) => {
       const t0 = new Date(w.start).toLocaleTimeString(LOC, { hour: 'numeric', minute: '2-digit' });
       const chips = [
         w.kcal != null ? L`<span class="chip"><svg width="13" height="13"><use href="#i-flame"/></svg>${fmt(w.kcal)} سعرة</span>` : '',
@@ -2925,7 +2937,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   async function scStatus() {
     try {
       const r = await api('energy/shortcut-status');
-      $('scLast').textContent = r.last ? L`آخر إرسال من الاختصار: ${new Date(r.last.at).toLocaleString(LOC, { weekday: 'short', hour: 'numeric', minute: '2-digit' })} · ${fmt((r.last.active || 0) + (r.last.basal || 0))} سعرة` : T('لم يصل شيء من الاختصار بعد');
+      $('scLast').textContent = r.last ? L`آخر إرسال من الاختصار: ${new Date(r.last.at).toLocaleString(LOC, { weekday: 'short', hour: 'numeric', minute: '2-digit' })} · ${fmt((r.last.active || 0) + (r.last.basal || 0))} سعرة${r.last.steps != null ? L` · ${fmt(r.last.steps)} خطوة` : ''}` : T('لم يصل شيء من الاختصار بعد');
     } catch { $('scLast').textContent = ''; }
   }
   async function copyText(t) {

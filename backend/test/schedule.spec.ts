@@ -136,6 +136,7 @@ describe('schedule service + reminders', () => {
 });
 
 import { kcalOf, ShortcutService } from '../src/energy/shortcut.service';
+import { StepsService, stepGoal } from '../src/steps/steps.service';
 import { EnergyService } from '../src/energy/energy.service';
 import { WorkoutsService } from '../src/workouts/workouts.service';
 
@@ -167,11 +168,27 @@ describe('Apple Health via iPhone Shortcut', () => {
     await expect(sc.ingest(token, { active: '', basal: '' })).resolves.toMatchObject({ ok: true, skipped: true });
     await expect(sc.ingest(token, { active: 'abc', basal: 'x' })).rejects.toThrow(/must be numbers/);
     expect(kcalOf({ value: '120.4' })).toBe(120);
+    // steps alone, and steps with energy
+    const st = new StepsService(repo, profiles);
+    const sc2 = new ShortcutService(repo, energy, profiles, st);
+    await expect(sc2.ingest(token, { steps: '6,240' })).resolves.toMatchObject({ ok: true, steps: 6240 });
+    expect((await st.day('u')).steps).toBe(6240);
+    await expect(sc2.ingest(token, { active: 300, basal: 1500, steps: 7001 })).resolves.toMatchObject({ steps: 7001, totalKcal: 1800 });
     // Key/value swapped in the Shortcut (number as key, word as value) still works
     await expect(sc.ingest(token, { '540.3 kcal': 'active', '1702': 'basal' })).resolves.toMatchObject({ activeKcal: 540, basalKcal: 1702 });
     const { token: t2 } = await sc.token('u', true);
     expect(t2).not.toBe(token);
     await expect(sc.ingest(token, { active: 100 })).rejects.toThrow('Invalid sync token');
     await expect(sc.ingest(t2, { active: 100 })).resolves.toMatchObject({ ok: true });
+  });
+});
+
+describe('steps goal', () => {
+  it('age-based full goal, ramping up from the 7-day average', () => {
+    expect(stepGoal(30, null)).toEqual({ goal: 9000, fullGoal: 9000 });
+    expect(stepGoal(65, null).fullGoal).toBe(7000);
+    expect(stepGoal(30, 3000).goal).toBe(4000);
+    expect(stepGoal(30, 5200).goal).toBe(6500);
+    expect(stepGoal(30, 12000).goal).toBe(9000);
   });
 });

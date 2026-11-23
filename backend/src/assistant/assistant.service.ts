@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { WaterService } from '../water/water.service';
+import { StepsService } from '../steps/steps.service';
 import { ScheduleService } from '../schedule/schedule.service';
 import { randomUUID } from 'crypto';
 import { ChatTool, ChatTurn, NutritionAgentService } from '../agent/nutrition-agent.service';
@@ -68,6 +69,11 @@ const TOOLS: ChatTool[] = [
     name: 'get_motivation',
     description: 'Logging streak, on-target streak, badges and the weekly challenge.',
     parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'get_steps',
+    description: 'Steps for a day (from Apple Health via the iPhone app or the Shortcut), the goal (9,000 under 60 / 7,000 at 60+, ramping up from the 7-day average) and the 7-day average.',
+    parameters: { type: 'object', properties: { date: { type: 'string', description: 'YYYY-MM-DD, default today' } } },
   },
   {
     name: 'get_water',
@@ -147,6 +153,7 @@ export class AssistantService {
     private readonly motivation: MotivationService,
     @Optional() private readonly schedule?: ScheduleService,
     @Optional() private readonly water?: WaterService,
+    @Optional() private readonly steps?: StepsService,
   ) {}
 
   async history(userId: string): Promise<{ messages: AssistantMessage[] }> {
@@ -262,6 +269,8 @@ ${APP_GUIDE}`;
           return this.plans.weights(userId, Math.min(Math.max(Number(args.days) || 90, 7), 365));
         case 'get_motivation':
           return this.motivation.summary(userId);
+        case 'get_steps':
+          return this.steps ? this.steps.day(userId, isIsoDate(args.date) ? args.date : undefined) : { error: 'steps unavailable' };
         case 'get_water':
           return this.water ? this.water.day(userId, isIsoDate(args.date) ? args.date : undefined) : { error: 'water unavailable' };
         case 'get_schedule':

@@ -9,6 +9,16 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"(اختياري) كررها مع": "(Optional) repeat them with",
+"(الخطوات) واسم المتغير": "and the variable name",
+"وأضف حقولاً رقمية:": "and add number fields:",
+"= المتغير basal، و(اختياري)": "= the basal variable, and (optional)",
+"= المتغير steps.": "= the steps variable.",
+"👣 {} / {} خطوة": "👣 {} / {} steps",
+"· نرفعه تدريجياً لـ {}": "· rising gradually to {}",
+"{} خطوة": "{} steps",
+"· {} خطوة": "· {} steps",
+"آخر إرسال من الاختصار: {} · {} سعرة{}": "Last sent by the Shortcut: {} · {} kcal{}",
 "💧 الماء": "💧 Water",
 "+250 مل": "+250 ml",
 "+500 مل": "+500 ml",

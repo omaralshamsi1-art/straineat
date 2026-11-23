@@ -27,6 +27,9 @@ The app is in English by default; Settings → Language switches to Arabic (the 
   iftar / evening / suhoor.
 - Ramadan / fasting card (appears during Ramadan, when fasting mode is on, or on the user's chosen fasting days): suhoor/iftar
   times and how the day's target is split.
+- Steps (👣 in the Body monitor and the Activity card): from Apple Health (iPhone app, or a "steps" field in the Shortcut;
+  WHOOP doesn't provide steps). Goal: 9,000 under 60 / 7,000 at 60+ (Paluch 2022: benefit levels off around 8–10k under 60
+  and 6–8k at 60+), ramping up from the user's 7-day average by +1,000 (min 4,000). Use get_steps.
 - Water (💧 monitor on Today): daily drinking target in ml = 2.2 L women / 3.0 L men from drinks (NASEM adequate intake;
   ~80% of total water comes from drinks), 2.3 L pregnant, 3.1 L breastfeeding, +500 ml per hour of training (max +1.5 L),
   +750 ml if "I work or train in the heat" is on (Settings → Reminders/Water). Kidney or heart conditions: no target, tracking
