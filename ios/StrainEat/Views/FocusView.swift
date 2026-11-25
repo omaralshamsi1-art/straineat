@@ -3,7 +3,7 @@ import SwiftUI
 // Customisable Today: big ring (or the three rings) + tiles the user picks. Same ids as the web.
 let focusHeroes = ["rings", "left", "protein", "water", "steps", "week_budget", "week_protein"]
 let focusTiles = ["steps", "water", "sleep", "recovery", "strain", "burn", "protein", "carbs", "fat", "fiber", "week_budget", "week_protein", "week_water", "week_steps"]
-let defaultLayout = Profile.TodayLayout(hero: "rings", tiles: ["steps", "sleep", "week_budget", "week_protein"])
+let defaultLayout = Profile.TodayLayout(hero: "rings", tiles: ["steps", "water", "sleep", "burn"])
 
 func focusName(_ id: String) -> String {
     switch id {

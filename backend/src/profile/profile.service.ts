@@ -7,7 +7,7 @@ import { REPOSITORY, Repository } from '../storage/repository';
 /** Today customisation: big ring options and tile catalogue (web + iOS render the same ids). */
 export const TODAY_HEROES = ['rings', 'left', 'protein', 'water', 'steps', 'week_budget', 'week_protein'];
 export const TODAY_TILES = ['steps', 'water', 'sleep', 'recovery', 'strain', 'burn', 'protein', 'carbs', 'fat', 'fiber', 'week_budget', 'week_protein', 'week_water', 'week_steps'];
-export const DEFAULT_TODAY_LAYOUT = { hero: 'rings', tiles: ['steps', 'sleep', 'week_budget', 'week_protein'] };
+export const DEFAULT_TODAY_LAYOUT = { hero: 'rings', tiles: ['steps', 'water', 'sleep', 'burn'] };
 
 export const DEFAULT_PROFILE = (userId: string): Profile => ({
   userId,

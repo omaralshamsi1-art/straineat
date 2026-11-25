@@ -1939,7 +1939,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   }
 
   // ---------------- focus: customisable Today (big ring + tiles) ----------------
-  const DEFAULT_LAYOUT = { hero: 'rings', tiles: ['steps', 'sleep', 'week_budget', 'week_protein'] };
+  const DEFAULT_LAYOUT = { hero: 'rings', tiles: ['steps', 'water', 'sleep', 'burn'] };
   let layout = (() => { try { return JSON.parse(ls.get('ns_layout') || 'null') || DEFAULT_LAYOUT; } catch { return DEFAULT_LAYOUT; } })();
   let weekSum = null;
   const HEROES = ['rings', 'left', 'protein', 'water', 'steps', 'week_budget', 'week_protein'];
