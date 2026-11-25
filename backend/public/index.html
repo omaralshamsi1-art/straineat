@@ -1979,10 +1979,10 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       case 'fiber': if (!b || !mt.fiber_g) return null; return { ic: 'fi-leaf', c: '#3fb27f', l: T('الألياف'), v: fmt(it.fiber_g || 0), s: L`من ${fmt(mt.fiber_g)} غ`, f: pct(it.fiber_g || 0, mt.fiber_g), det: 'eaten' };
       case 'burn': if (!b || !b.burn) return null; return { ic: 'fi-bolt', c: '#1e90e8', l: T('الحرق'), v: fmt(b.burn.totalKcal), s: b.expectedBurnKcal ? L`من ~${fmt(b.expectedBurnKcal)}` : T('سعرة'), f: pct(b.burn.totalKcal, b.expectedBurnKcal), det: 'burn' };
       case 'water': if (!wd) return null; return { ic: 'fi-drop', c: '#4aa8ff', l: T('الماء'), v: `${fmt1(wd.intakeMl / 1000)}`, s: wd.targetMl ? L`من ${fmt1(wd.targetMl / 1000)} لتر` : T('لتر'), f: pct(wd.intakeMl, wd.targetMl), go: () => openWater() };
-      case 'steps': if (!sd || sd.steps == null) return null; return { ic: 'fi-steps', c: '#ff9e4d', l: T('الخطوات'), v: fmt(sd.steps), s: L`الهدف ${fmt(sd.goal)}`, f: pct(sd.steps, sd.goal), det: 'burn' };
-      case 'sleep': if (w.sleepMin == null) return null; return { ic: 'fi-moon', c: '#8b6cf6', l: T('النوم'), v: hm(w.sleepMin), s: w.sleepPerformance != null ? L`أداء ${w.sleepPerformance}%` : T('الليلة الماضية'), f: w.sleepPerformance != null ? w.sleepPerformance / 100 : 0, det: 'well' };
+      case 'steps': if (!sd || sd.steps == null) return null; return { ic: 'fi-steps', c: '#ff9e4d', l: T('الخطوات'), v: fmt(sd.steps), s: L`الهدف ${fmt(sd.goal)}`, f: pct(sd.steps, sd.goal), det: 'steps' };
+      case 'sleep': if (w.sleepMin == null) return null; return { ic: 'fi-moon', c: '#8b6cf6', l: T('النوم'), v: hm(w.sleepMin), s: w.sleepPerformance != null ? L`أداء ${w.sleepPerformance}%` : T('الليلة الماضية'), f: w.sleepPerformance != null ? w.sleepPerformance / 100 : 0, det: 'sleep' };
       case 'recovery': if (w.recovery == null) return null; return { ic: 'fi-heartpulse', c: w.recovery >= 67 ? '#2ba84a' : w.recovery >= 34 ? '#e0a43b' : '#e5534b', l: T('الاستشفاء'), v: `${w.recovery}%`, s: w.hrv ? L`HRV ${fmt(w.hrv)}` : '', f: w.recovery / 100, det: 'well' };
-      case 'strain': if (w.strain == null) return null; return { ic: 'fi-pulse', c: '#1e90e8', l: T('الجهد'), v: fmt1(w.strain), s: T('من 21'), f: w.strain / 21, det: 'well' };
+      case 'strain': if (w.strain == null) return null; return { ic: 'fi-pulse', c: '#1e90e8', l: T('الجهد'), v: fmt1(w.strain), s: T('من 21'), f: w.strain / 21, det: 'strain' };
       case 'week_budget': if (!ws) return null; { const r = ws.budget.remainingKcal; return { ic: 'fi-calendar', c: r < 0 ? '#e5534b' : '#f2b94b', l: T('ميزانية الأسبوع'), v: fmt(Math.abs(r)), s: r < 0 ? L`فوق ميزانية الأسبوع (${fmt(ws.budget.weekTargetKcal)})` : L`باقي من ${fmt(ws.budget.weekTargetKcal)} سعرة`, hl: r < 0 ? T('فوق الأسبوع') : T('باقي الأسبوع'), hs: L`من ${fmt(ws.budget.weekTargetKcal)}`, f: pct(ws.budget.eatenKcal, ws.budget.weekTargetKcal), go: () => openWeek() }; }
       case 'week_protein': if (!ws || !ws.proteinDays.targetG) return null; return { ic: 'fi-medal', c: '#8a7df0', l: T('أيام البروتين'), v: L`${ws.proteinDays.hit} من 7`, s: L`وصلت ${fmt(Math.round(ws.proteinDays.targetG * 0.9))}+ غ`, f: ws.proteinDays.hit / 7, go: () => openWeek() };
       case 'week_water': if (!ws) return null; return { ic: 'fi-drop', c: '#4aa8ff', l: T('أيام الماء'), v: L`${ws.waterDays.hit} من 7`, s: T('هذا الأسبوع'), f: ws.waterDays.hit / 7, go: () => openWeek() };
@@ -2990,6 +2990,50 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="margin-top:10px">${bars}${lineKey ? `<line x1="0" x2="${w}" y1="${ly}" y2="${ly}" stroke="var(--ink)" stroke-dasharray="4 4" opacity=".45"/>` : ''}${labels}</svg>`;
   }
   const tileHtml = (label, value, unit, chip, cls) => `<div class="tile"><div class="tl">${label}</div><div class="tv num"><span dir="ltr" style="unicode-bidi:isolate">${value}${unit === '%' ? '<small>%</small>' : ''}</span>${unit === '%' ? '' : `<small>${unit || ''}</small>`}</div>${chip ? `<span class="chip2 ${cls || 'ok'}">${chip}</span>` : ''}</div>`;
+  function detOpen(title) {
+    $('det').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+    $('detBack').textContent = '‹'; $('detTitle').textContent = title;
+  }
+  async function openSteps() {
+    const s = stepsDay; if (!s) return;
+    detOpen(T('الخطوات'));
+    const srcRows = (s.sources || []).map((x) => `<div class="row" style="padding:8px 0;border-top:1px solid var(--line)"><span>${esc(LANG === 'ar' ? x.name_ar : x.name)}${x.source === s.source ? ` <span class="chip2 ok">${T('المعتمد')}</span>` : ''}</span><span class="num">${fmt(x.steps)}</span><span class="small muted">${new Date(x.at).toLocaleTimeString(LOC, { hour: '2-digit', minute: '2-digit' })}</span></div>`).join('');
+    $('detBody').innerHTML = `<div class="dchart"><div class="t">${T('الخطوات آخر 7 أيام')}</div><div class="big num">${s.steps != null ? fmt(s.steps) : '—'}<small style="font-size:15px"> / ${fmt(s.goal)}</small></div><div id="stChart"><div class="loading"><div class="spinner"></div></div></div></div>
+      <div class="tiles">${tileHtml(T('اليوم'), s.steps != null ? fmt(s.steps) : '—', '', s.steps != null && s.steps >= s.goal ? T('✓ وصلت الهدف') : s.steps != null ? L`باقي ${fmt(s.goal - s.steps)}` : '', s.steps >= s.goal ? 'ok' : 'lo')}
+      ${tileHtml(T('هدف اليوم'), fmt(s.goal), '', s.goal < s.fullGoal ? L`يرتفع لـ ${fmt(s.fullGoal)}` : '', '')}
+      ${tileHtml(T('متوسط 7 أيام'), s.avg7 != null ? fmt(s.avg7) : '—', '', '', '')}
+      ${tileHtml(T('الهدف الكامل'), fmt(s.fullGoal), '', '', '')}</div>
+      ${srcRows ? `<div class="card" style="margin-top:10px"><h3>${T('المصادر')}</h3><div class="small muted" style="margin-bottom:4px">${T('كل مصدر ينحفظ لحاله، ونعرض الأعلى.')}</div>${srcRows}</div>` : ''}
+      <p class="small muted">${T('الهدف 9,000 خطوة تحت 60 سنة و7,000 فوقها (الفائدة الصحية تستقر عند 8–10 آلاف تحت 60 و6–8 آلاف فوقها — Paluch 2022). يبدأ من متوسطك + 1,000 ويرتفع تدريجياً.')}</p>`;
+    try {
+      const h = await api('steps/history?days=7');
+      $('stChart').innerHTML = barsSvg(h.days.map((d) => ({ ...d, steps: d.steps || 0, goal: s.goal })), 'steps', 'goal', '#ff9e4d');
+    } catch { $('stChart').innerHTML = ''; }
+  }
+  function wellDays() { return (wellCache && wellCache.days) || []; }
+  function openSleep() {
+    const w = wellCache && wellCache.today; if (!w) return;
+    detOpen(T('النوم'));
+    const days = wellDays().map((d) => ({ date: d.date, h: d.sleepMin != null ? d.sleepMin / 60 : 0, need: d.sleepNeededMin ? d.sleepNeededMin / 60 : null }));
+    const need = w.sleepNeededMin;
+    $('detBody').innerHTML = `<div class="dchart"><div class="t">${T('النوم آخر 7 أيام')}</div><div class="big num">${w.sleepMin != null ? hm(w.sleepMin) : '—'}</div>${days.length ? barsSvg(days, 'h', 'need', '#8b6cf6') : ''}</div>
+      <div class="tiles">${tileHtml(T('النوم'), w.sleepMin != null ? hm(w.sleepMin) : '—', '', need ? L`الاحتياج ${hm(need)}` : '', w.sleepMin != null && need && w.sleepMin >= need * 0.85 ? 'ok' : 'hi')}
+      ${tileHtml(T('أداء النوم'), w.sleepPerformance ?? '—', '%', '', w.sleepPerformance >= 70 ? 'ok' : 'hi')}
+      ${tileHtml(T('كفاءة النوم'), w.sleepEfficiency ?? '—', '%', '', '')}
+      ${tileHtml(T('ثبات النوم'), w.sleepConsistency ?? '—', '%', '', '')}
+      ${w.remMin != null ? tileHtml('REM', hm(w.remMin), '', '', '') : ''}${w.deepMin != null ? tileHtml(T('نوم عميق'), hm(w.deepMin), '', '', '') : ''}</div>
+      <p class="small muted">${T('من WHOOP. الخط المتقطع = احتياجك للنوم الليلة.')}</p>`;
+  }
+  function openStrain() {
+    const w = wellCache && wellCache.today; if (!w) return;
+    detOpen(T('الجهد'));
+    const days = wellDays().map((d) => ({ date: d.date, s: d.strain || 0 }));
+    const acts = (lastBal && lastBal.activity && lastBal.activity.workouts) || [];
+    const list = acts.map((a) => `<div class="row" style="padding:8px 0;border-top:1px solid var(--line)"><span>${esc(LANG === 'ar' ? a.sportAr || a.sportEn || '' : a.sportEn || a.sportAr || '')}</span><span class="num">${a.strain != null ? fmt1(a.strain) : ''}</span><span class="small muted">${a.durationMin ? L`${fmt(a.durationMin)} د` : ''}</span></div>`).join('');
+    $('detBody').innerHTML = `<div class="dchart"><div class="t">${T('الجهد آخر 7 أيام')}</div><div class="big num">${w.strain != null ? fmt1(w.strain) : '—'}<small style="font-size:15px"> / 21</small></div>${days.length ? barsSvg(days, 's', null, '#1e90e8') : ''}</div>
+      ${list ? `<div class="card" style="margin-top:10px"><h3>${T('تمارين اليوم')}</h3>${list}</div>` : ''}
+      <p class="small muted">${T('مقياس WHOOP من 0 إلى 21 لحمل القلب خلال اليوم: 0–9 خفيف، 10–13 متوسط، 14–17 عالي، 18–21 شديد.')}</p>`;
+  }
   async function openDetail(kind) {
     if (kind === 'reconnect') { try { const r = await api('integrations/whoop/connect?target=web'); location.href = r.url; } catch (e) { toast(e.message); } return; }
     if (kind === 'well') {
@@ -2997,6 +3041,9 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       $('detBack').textContent = '‹'; $('detTitle').textContent = T('الاستشفاء والنوم');
       $('detBody').innerHTML = wellnessDetail(); return;
     }
+    if (kind === 'steps') return openSteps();
+    if (kind === 'sleep') return openSleep();
+    if (kind === 'strain') return openStrain();
     const b = lastBal; if (!b) return;
     $('det').classList.remove('hidden'); document.body.style.overflow = 'hidden';
     $('detBack').textContent = '‹'; // bidi-mirrored: shows › in Arabic

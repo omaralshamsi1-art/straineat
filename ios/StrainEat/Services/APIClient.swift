@@ -81,6 +81,7 @@ final class APIClient {
 
     // MARK: Steps
     func steps(date: String? = nil) async throws -> StepsDay { try await send(request("steps" + (date.map { "?date=\($0)" } ?? ""))) }
+    func stepsHistory(days: Int = 7) async throws -> StepsHistory { try await send(request("steps/history?days=\(days)")) }
     func pushSteps(_ samples: [[String: Any]]) async throws {
         let _: [String: Int] = try await send(jsonRequest("steps/samples", method: "POST", ["samples": samples]))
     }

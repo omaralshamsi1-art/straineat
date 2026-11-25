@@ -485,7 +485,13 @@ struct WaterDay: Codable {
 }
 struct WaterHistory: Codable { struct Day: Codable, Identifiable { let date: String; let intakeMl: Double; let targetMl: Double?; var id: String { date } }; let days: [Day] }
 
-struct StepsDay: Codable { let date: String; let steps: Double?; let goal: Double; let fullGoal: Double; let avg7: Double? }
+struct StepsDay: Codable {
+    struct Source: Codable, Hashable { let source: String; let name: String; let nameAr: String; let steps: Double; let at: Date
+        enum CodingKeys: String, CodingKey { case source, name, steps, at; case nameAr = "name_ar" } }
+    let date: String; let steps: Double?; let goal: Double; let fullGoal: Double; let avg7: Double?
+    var source: String?; var updatedAt: Date?; var sources: [Source]?
+}
+struct StepsHistory: Codable { struct Day: Codable, Identifiable { let date: String; let steps: Double?; var id: String { date } }; let days: [Day] }
 
 struct WeekSummary: Codable {
     struct Budget: Codable { let eatenKcal: Double; let weekTargetKcal: Double; let remainingKcal: Double; let daysLeft: Int }

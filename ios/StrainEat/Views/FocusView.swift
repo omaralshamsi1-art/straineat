@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 // Customisable Today: big ring (or the three rings) + tiles the user picks. Same ids as the web.
 let focusHeroes = ["rings", "left", "protein", "water", "steps", "week_budget", "week_protein"]
@@ -30,7 +31,7 @@ func focusName(_ id: String) -> String {
 struct FocusDatum {
     let icon: String; let color: Color; let label: String; let value: String; let sub: String; let frac: Double
     var heroLabel: String? = nil; var heroSub: String? = nil
-    enum Action { case detail(OverviewDetail), wellness, week, water }
+    enum Action { case detail(OverviewDetail), wellness, week, water, steps }
     let action: Action
 }
 
@@ -50,6 +51,7 @@ struct FocusSection: View {
     @State private var showWeek = false
     @State private var showWell = false
     @State private var showWater = false
+    @State private var showSteps = false
 
     private var layout: Profile.TodayLayout {
         (try? JSONDecoder().decode(Profile.TodayLayout.self, from: Data(layoutJSON.utf8))) ?? defaultLayout
@@ -86,6 +88,7 @@ struct FocusSection: View {
         .sheet(isPresented: $showWeek) { if let w = week { WeekDetailView(week: w) } }
         .sheet(isPresented: $showWell) { if let w = well { WellnessDetailView(data: w) } }
         .sheet(isPresented: $showWater) { if let w = water { WaterDetailView(day: w) { water = $0 } } }
+        .sheet(isPresented: $showSteps) { if let s = steps { StepsDetailView(day: s) } }
     }
 
     private func tile(_ d: FocusDatum) -> some View {
@@ -119,6 +122,7 @@ struct FocusSection: View {
         case .wellness: showWell = well != nil
         case .week: showWeek = week != nil
         case .water: showWater = water != nil
+        case .steps: showSteps = steps != nil
         }
     }
 
@@ -162,7 +166,7 @@ struct FocusSection: View {
             return FocusDatum(icon: "drop.fill", color: hex(0x4AA8FF), label: t("Water", "الماء"), value: fmt1(w.intakeMl / 1000), sub: w.targetMl.map { t("of \(fmt1($0 / 1000)) L", "من \(fmt1($0 / 1000)) لتر") } ?? t("L", "لتر"), frac: f(w.intakeMl, w.targetMl), action: .water)
         case "steps":
             guard let s = steps, let n = s.steps else { return nil }
-            return FocusDatum(icon: "figure.walk", color: hex(0xFF9E4D), label: t("Steps", "الخطوات"), value: fmt(n), sub: t("Goal \(fmt(s.goal))", "الهدف \(fmt(s.goal))"), frac: f(n, s.goal), action: .detail(.burn))
+            return FocusDatum(icon: "figure.walk", color: hex(0xFF9E4D), label: t("Steps", "الخطوات"), value: fmt(n), sub: t("Goal \(fmt(s.goal))", "الهدف \(fmt(s.goal))"), frac: f(n, s.goal), action: .steps)
         case "sleep":
             guard let m = today?.sleepMin else { return nil }
             return FocusDatum(icon: "moon.zzz.fill", color: hex(0x8B6CF6), label: t("Sleep", "النوم"), value: hmText(m), sub: today?.sleepPerformance.map { t("\(Int($0))% performance", "أداء \(Int($0))%") } ?? t("Last night", "الليلة الماضية"), frac: (today?.sleepPerformance ?? 0) / 100, action: .wellness)
@@ -305,6 +309,75 @@ struct WeekDetailView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(l).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.7)
             Text("\(n)/7").font(.title2.weight(.heavy)).monospacedDigit()
+        }
+        .padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Theme.card, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+struct StepsDetailView: View {
+    @Environment(\.dismiss) private var dismiss
+    let day: StepsDay
+    @State private var hist: [StepsHistory.Day] = []
+    private let orange = Color(red: 1.0, green: 0.62, blue: 0.30)
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(t("Steps, last 7 days", "الخطوات آخر 7 أيام")).font(.caption.weight(.heavy)).foregroundStyle(Theme.muted)
+                        Text("\(day.steps.map { fmt($0) } ?? "—") / \(fmt(day.goal))").font(.largeTitle.weight(.heavy)).monospacedDigit()
+                            .environment(\.layoutDirection, .leftToRight)
+                        if !hist.isEmpty {
+                            Chart(hist) { d in
+                                BarMark(x: .value("day", String(d.date.suffix(2))), y: .value("steps", d.steps ?? 0))
+                                    .foregroundStyle(orange.opacity(d.id == hist.last?.id ? 1 : 0.45)).cornerRadius(5)
+                                RuleMark(y: .value("goal", day.goal)).foregroundStyle(Theme.ink.opacity(0.4)).lineStyle(StrokeStyle(dash: [4, 4]))
+                            }
+                            .frame(height: 140)
+                        }
+                    }
+                    .padding(14).background(Theme.card, in: RoundedRectangle(cornerRadius: 18))
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                        tile(t("Today", "اليوم"), day.steps.map { fmt($0) } ?? "—")
+                        tile(t("Today's goal", "هدف اليوم"), fmt(day.goal))
+                        tile(t("7-day average", "متوسط 7 أيام"), day.avg7.map { fmt($0) } ?? "—")
+                        tile(t("Full goal", "الهدف الكامل"), fmt(day.fullGoal))
+                    }
+                    if let src = day.sources, !src.isEmpty {
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(t("Sources", "المصادر")).font(.headline)
+                            Text(t("Each source is kept separately; we show the highest.", "كل مصدر ينحفظ لحاله، ونعرض الأعلى.")).font(.caption).foregroundStyle(Theme.muted).padding(.bottom, 6)
+                            ForEach(src, id: \.self) { x in
+                                HStack {
+                                    Text(appLang == .ar ? x.nameAr : x.name)
+                                    if x.source == day.source { Text(t("used", "المعتمد")).font(.caption2.weight(.bold)).padding(.horizontal, 6).padding(.vertical, 2).background(Theme.good.opacity(0.2), in: Capsule()) }
+                                    Spacer()
+                                    Text(fmt(x.steps)).monospacedDigit().bold()
+                                    Text(x.at.formatted(.dateTime.hour().minute().locale(appLocale))).font(.caption).foregroundStyle(Theme.muted)
+                                }
+                                .padding(.vertical, 8)
+                                Divider()
+                            }
+                        }
+                        .padding(14).background(Theme.card, in: RoundedRectangle(cornerRadius: 18))
+                    }
+                    Text(t("Goal: 9,000 steps under 60 and 7,000 at 60+ (the health benefit levels off around 8–10k under 60 and 6–8k at 60+ — Paluch 2022). It starts at your average + 1,000 and rises gradually.",
+                           "الهدف 9,000 خطوة تحت 60 سنة و7,000 فوقها (الفائدة الصحية تستقر عند 8–10 آلاف تحت 60 و6–8 آلاف فوقها — Paluch 2022). يبدأ من متوسطك + 1,000 ويرتفع تدريجياً."))
+                        .font(.caption).foregroundStyle(Theme.muted)
+                }
+                .padding()
+            }
+            .background(Theme.bg)
+            .navigationTitle(t("Steps", "الخطوات")).navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button(t("Done", "تم")) { dismiss() } } }
+            .task { hist = (try? await APIClient.shared.stepsHistory())?.days ?? [] }
+        }
+    }
+    private func tile(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label).font(.caption).foregroundStyle(Theme.muted)
+            Text(value).font(.title3.weight(.heavy)).monospacedDigit()
         }
         .padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Theme.card, in: RoundedRectangle(cornerRadius: 16))
     }

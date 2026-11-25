@@ -9,6 +9,22 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"المعتمد": "used",
+"الخطوات آخر 7 أيام": "Steps, last 7 days",
+"✓ وصلت الهدف": "✓ Goal reached",
+"هدف اليوم": "Today's goal",
+"يرتفع لـ {}": "rising to {}",
+"متوسط 7 أيام": "7-day average",
+"الهدف الكامل": "Full goal",
+"كل مصدر ينحفظ لحاله، ونعرض الأعلى.": "Each source is kept separately; we show the highest.",
+"الهدف 9,000 خطوة تحت 60 سنة و7,000 فوقها (الفائدة الصحية تستقر عند 8–10 آلاف تحت 60 و6–8 آلاف فوقها — Paluch 2022). يبدأ من متوسطك + 1,000 ويرتفع تدريجياً.": "Goal: 9,000 steps under 60 and 7,000 at 60+ (the health benefit levels off around 8–10k under 60 and 6–8k at 60+ — Paluch 2022). It starts at your average + 1,000 and rises gradually.",
+"النوم آخر 7 أيام": "Sleep, last 7 days",
+"ثبات النوم": "Sleep consistency",
+"من WHOOP. الخط المتقطع = احتياجك للنوم الليلة.": "From WHOOP. Dashed line = tonight's sleep need.",
+"{} د": "{} min",
+"الجهد آخر 7 أيام": "Strain, last 7 days",
+"تمارين اليوم": "Today's workouts",
+"مقياس WHOOP من 0 إلى 21 لحمل القلب خلال اليوم: 0–9 خفيف، 10–13 متوسط، 14–17 عالي، 18–21 شديد.": "WHOOP's 0–21 scale of cardiovascular load for the day: 0–9 light, 10–13 moderate, 14–17 high, 18–21 all out.",
 "من {}{}{}": "from {}{}{}",
 " (الأعلى من {} مصادر)": " (highest of {} sources)",
 "(الأعلى من {} مصادر)": "(highest of {} sources)",
