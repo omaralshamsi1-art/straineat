@@ -132,8 +132,8 @@ export class WhoopService {
       if (c.score.strain != null) strainByDate.set(date, Math.round(c.score.strain * 10) / 10);
     }
     // Steps follow the WHOOP cycle; count them on the same local day as the cycle's burn (its midpoint).
+    const stepRows: { date: string; steps: number }[] = [];
     if (this.steps) {
-      const stepRows: { date: string; steps: number }[] = [];
       for (const c of cycles) {
         const n = c.step_count ?? c.score?.step_count;
         if (n == null || !Number.isFinite(Number(n))) continue;
@@ -190,7 +190,7 @@ export class WhoopService {
     const scored = cycles.filter((c) => c.score_state === 'SCORED').length;
     const summary = { at: new Date().toISOString(), from, to, cycles: cycles.length, scored, days: byDate.size, wellness, workouts };
     await this.repo.setCache({ userId, key: 'whoop-last-sync', payload: summary, createdAt: summary.at });
-    this.log.log(`WHOOP sync ${short(userId)} ${from}..${to}: cycles ${cycles.length} (scored ${scored}), days ${byDate.size}, wellness ${wellness}, workouts ${workouts}`);
+    this.log.log(`WHOOP sync ${short(userId)} ${from}..${to}: cycles ${cycles.length} (scored ${scored}), days ${byDate.size}, wellness ${wellness}, workouts ${workouts}, step days ${stepRows.length}`);
     if (!(await this.repo.getCache(userId, 'whoop-account'))) await this.rememberAccount(userId).catch(() => undefined);
     return { cycles: cycles.length, scored, workouts, wellness, weightKg, days: Object.fromEntries([...byDate].map(([d, k]) => [d, Math.round(k)])) };
   }
