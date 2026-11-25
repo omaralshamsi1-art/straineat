@@ -91,7 +91,10 @@ struct FocusSection: View {
     private func tile(_ d: FocusDatum) -> some View {
         Button { act(d.action) } label: {
             HStack(spacing: 10) {
-                Text(d.icon).font(.system(size: 17)).frame(width: 36, height: 36).background(d.color.opacity(0.35), in: Circle())
+                Image(systemName: d.icon).font(.system(size: 17, weight: .semibold)).foregroundStyle(d.color)
+                    .frame(width: 38, height: 38)
+                    .background(d.color.opacity(0.22), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).stroke(d.color.opacity(0.35), lineWidth: 1))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(d.label).font(.caption.weight(.bold)).foregroundStyle(d.color).lineLimit(1)
                     Text(d.value).font(.title3.weight(.heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
@@ -137,54 +140,54 @@ struct FocusSection: View {
         switch id {
         case "left":
             let tg = b.targetIntakeKcal ?? 1, l = b.remainingKcal ?? (tg - it.calories)
-            return FocusDatum(icon: "🔥", color: l < 0 && b.goal != "gain" ? Theme.bad : hex(0x2BA84A), label: l < 0 ? t("Over target", "فوق الهدف") : t("Left", "متبقي"),
+            return FocusDatum(icon: "flame.fill", color: l < 0 && b.goal != "gain" ? Theme.bad : hex(0x2BA84A), label: l < 0 ? t("Over target", "فوق الهدف") : t("Left", "متبقي"),
                               value: fmt(abs(l)), sub: t("of \(fmt(tg)) kcal", "من \(fmt(tg)) سعرة"), frac: l < 0 ? 1 : f(it.calories, tg), action: .detail(.left))
         case "protein":
             guard let p = mt?.proteinG, p > 0 else { return nil }
-            return FocusDatum(icon: "🥩", color: hex(0x8A7DF0), label: t("Protein", "البروتين"), value: fmt(it.proteinG), sub: t("of \(fmt(p)) g", "من \(fmt(p)) غ"), frac: f(it.proteinG, p), action: .detail(.eaten))
+            return FocusDatum(icon: "fork.knife", color: hex(0x8A7DF0), label: t("Protein", "البروتين"), value: fmt(it.proteinG), sub: t("of \(fmt(p)) g", "من \(fmt(p)) غ"), frac: f(it.proteinG, p), action: .detail(.eaten))
         case "carbs":
             guard let c = mt?.carbsG, c > 0 else { return nil }
-            return FocusDatum(icon: "🍚", color: hex(0xE0A43B), label: t("Carbs", "الكربوهيدرات"), value: fmt(it.carbsG), sub: t("of \(fmt(c)) g", "من \(fmt(c)) غ"), frac: f(it.carbsG, c), action: .detail(.eaten))
+            return FocusDatum(icon: "basket.fill", color: hex(0xE0A43B), label: t("Carbs", "الكربوهيدرات"), value: fmt(it.carbsG), sub: t("of \(fmt(c)) g", "من \(fmt(c)) غ"), frac: f(it.carbsG, c), action: .detail(.eaten))
         case "fat":
             guard let c = mt?.fatG, c > 0 else { return nil }
-            return FocusDatum(icon: "🥑", color: hex(0xD9B44A), label: t("Fat", "الدهون"), value: fmt(it.fatG), sub: t("of \(fmt(c)) g", "من \(fmt(c)) غ"), frac: f(it.fatG, c), action: .detail(.eaten))
+            return FocusDatum(icon: "drop.halffull", color: hex(0xD9B44A), label: t("Fat", "الدهون"), value: fmt(it.fatG), sub: t("of \(fmt(c)) g", "من \(fmt(c)) غ"), frac: f(it.fatG, c), action: .detail(.eaten))
         case "fiber":
             guard let c = mt?.fiberG, c > 0 else { return nil }
-            return FocusDatum(icon: "🥦", color: hex(0x3FB27F), label: t("Fiber", "الألياف"), value: fmt(it.fiberG), sub: t("of \(fmt(c)) g", "من \(fmt(c)) غ"), frac: f(it.fiberG, c), action: .detail(.eaten))
+            return FocusDatum(icon: "leaf.fill", color: hex(0x3FB27F), label: t("Fiber", "الألياف"), value: fmt(it.fiberG), sub: t("of \(fmt(c)) g", "من \(fmt(c)) غ"), frac: f(it.fiberG, c), action: .detail(.eaten))
         case "burn":
             guard let bn = b.burn?.totalKcal else { return nil }
-            return FocusDatum(icon: "⚡", color: hex(0x1E90E8), label: t("Burn", "الحرق"), value: fmt(bn), sub: b.expectedBurnKcal.map { t("of ~\(fmt($0))", "من ~\(fmt($0))") } ?? t("kcal", "سعرة"), frac: f(bn, b.expectedBurnKcal), action: .detail(.burn))
+            return FocusDatum(icon: "bolt.fill", color: hex(0x1E90E8), label: t("Burn", "الحرق"), value: fmt(bn), sub: b.expectedBurnKcal.map { t("of ~\(fmt($0))", "من ~\(fmt($0))") } ?? t("kcal", "سعرة"), frac: f(bn, b.expectedBurnKcal), action: .detail(.burn))
         case "water":
             guard let w = water else { return nil }
-            return FocusDatum(icon: "💧", color: hex(0x4AA8FF), label: t("Water", "الماء"), value: fmt1(w.intakeMl / 1000), sub: w.targetMl.map { t("of \(fmt1($0 / 1000)) L", "من \(fmt1($0 / 1000)) لتر") } ?? t("L", "لتر"), frac: f(w.intakeMl, w.targetMl), action: .water)
+            return FocusDatum(icon: "drop.fill", color: hex(0x4AA8FF), label: t("Water", "الماء"), value: fmt1(w.intakeMl / 1000), sub: w.targetMl.map { t("of \(fmt1($0 / 1000)) L", "من \(fmt1($0 / 1000)) لتر") } ?? t("L", "لتر"), frac: f(w.intakeMl, w.targetMl), action: .water)
         case "steps":
             guard let s = steps, let n = s.steps else { return nil }
-            return FocusDatum(icon: "👣", color: hex(0xFF9E4D), label: t("Steps", "الخطوات"), value: fmt(n), sub: t("Goal \(fmt(s.goal))", "الهدف \(fmt(s.goal))"), frac: f(n, s.goal), action: .detail(.burn))
+            return FocusDatum(icon: "figure.walk", color: hex(0xFF9E4D), label: t("Steps", "الخطوات"), value: fmt(n), sub: t("Goal \(fmt(s.goal))", "الهدف \(fmt(s.goal))"), frac: f(n, s.goal), action: .detail(.burn))
         case "sleep":
             guard let m = today?.sleepMin else { return nil }
-            return FocusDatum(icon: "🌙", color: hex(0x8B6CF6), label: t("Sleep", "النوم"), value: hmText(m), sub: today?.sleepPerformance.map { t("\(Int($0))% performance", "أداء \(Int($0))%") } ?? t("Last night", "الليلة الماضية"), frac: (today?.sleepPerformance ?? 0) / 100, action: .wellness)
+            return FocusDatum(icon: "moon.zzz.fill", color: hex(0x8B6CF6), label: t("Sleep", "النوم"), value: hmText(m), sub: today?.sleepPerformance.map { t("\(Int($0))% performance", "أداء \(Int($0))%") } ?? t("Last night", "الليلة الماضية"), frac: (today?.sleepPerformance ?? 0) / 100, action: .wellness)
         case "recovery":
             guard let r = today?.recovery else { return nil }
-            return FocusDatum(icon: "💚", color: recoveryColor(r), label: t("Recovery", "الاستشفاء"), value: "\(Int(r))%", sub: today?.hrv.map { "HRV \(Int($0))" } ?? "", frac: r / 100, action: .wellness)
+            return FocusDatum(icon: "heart.fill", color: recoveryColor(r), label: t("Recovery", "الاستشفاء"), value: "\(Int(r))%", sub: today?.hrv.map { "HRV \(Int($0))" } ?? "", frac: r / 100, action: .wellness)
         case "strain":
             guard let s = today?.strain else { return nil }
-            return FocusDatum(icon: "📈", color: hex(0x1E90E8), label: t("Strain", "الجهد"), value: String(format: "%.1f", s), sub: t("of 21", "من 21"), frac: s / 21, action: .wellness)
+            return FocusDatum(icon: "waveform.path.ecg", color: hex(0x1E90E8), label: t("Strain", "الجهد"), value: String(format: "%.1f", s), sub: t("of 21", "من 21"), frac: s / 21, action: .wellness)
         case "week_budget":
             guard let w = week else { return nil }
             let r = w.budget.remainingKcal
-            return FocusDatum(icon: "📅", color: r < 0 ? Theme.bad : hex(0xF2B94B), label: t("Weekly budget", "ميزانية الأسبوع"), value: fmt(abs(r)),
+            return FocusDatum(icon: "calendar", color: r < 0 ? Theme.bad : hex(0xF2B94B), label: t("Weekly budget", "ميزانية الأسبوع"), value: fmt(abs(r)),
                               sub: r < 0 ? t("over the week (\(fmt(w.budget.weekTargetKcal)))", "فوق الأسبوع (\(fmt(w.budget.weekTargetKcal)))") : t("left of \(fmt(w.budget.weekTargetKcal)) kcal", "باقي من \(fmt(w.budget.weekTargetKcal)) سعرة"),
                               frac: f(w.budget.eatenKcal, w.budget.weekTargetKcal), heroLabel: r < 0 ? t("Over for the week", "فوق الأسبوع") : t("Week left", "باقي الأسبوع"),
                               heroSub: t("of \(fmt(w.budget.weekTargetKcal))", "من \(fmt(w.budget.weekTargetKcal))"), action: .week)
         case "week_protein":
             guard let w = week, let tg = w.proteinDays.targetG else { return nil }
-            return FocusDatum(icon: "🏅", color: hex(0x8A7DF0), label: t("Protein days", "أيام البروتين"), value: t("\(w.proteinDays.hit) of 7", "\(w.proteinDays.hit) من 7"), sub: t("reached \(fmt(tg * 0.9))+ g", "وصلت \(fmt(tg * 0.9))+ غ"), frac: Double(w.proteinDays.hit) / 7, action: .week)
+            return FocusDatum(icon: "rosette", color: hex(0x8A7DF0), label: t("Protein days", "أيام البروتين"), value: t("\(w.proteinDays.hit) of 7", "\(w.proteinDays.hit) من 7"), sub: t("reached \(fmt(tg * 0.9))+ g", "وصلت \(fmt(tg * 0.9))+ غ"), frac: Double(w.proteinDays.hit) / 7, action: .week)
         case "week_water":
             guard let w = week else { return nil }
-            return FocusDatum(icon: "💧", color: hex(0x4AA8FF), label: t("Water days", "أيام الماء"), value: t("\(w.waterDays.hit) of 7", "\(w.waterDays.hit) من 7"), sub: t("This week", "هذا الأسبوع"), frac: Double(w.waterDays.hit) / 7, action: .week)
+            return FocusDatum(icon: "drop.fill", color: hex(0x4AA8FF), label: t("Water days", "أيام الماء"), value: t("\(w.waterDays.hit) of 7", "\(w.waterDays.hit) من 7"), sub: t("This week", "هذا الأسبوع"), frac: Double(w.waterDays.hit) / 7, action: .week)
         case "week_steps":
             guard let w = week else { return nil }
-            return FocusDatum(icon: "👟", color: hex(0xFF9E4D), label: t("Steps days", "أيام الخطوات"), value: t("\(w.stepsDays.hit) of 7", "\(w.stepsDays.hit) من 7"), sub: t("This week", "هذا الأسبوع"), frac: Double(w.stepsDays.hit) / 7, action: .week)
+            return FocusDatum(icon: "shoeprints.fill", color: hex(0xFF9E4D), label: t("Steps days", "أيام الخطوات"), value: t("\(w.stepsDays.hit) of 7", "\(w.stepsDays.hit) من 7"), sub: t("This week", "هذا الأسبوع"), frac: Double(w.stepsDays.hit) / 7, action: .week)
         default: return nil
         }
     }

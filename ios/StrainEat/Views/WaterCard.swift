@@ -22,7 +22,8 @@ struct WaterCard: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Button { open = true } label: {
                         HStack(alignment: .firstTextBaseline) {
-                            Text(t("💧 WATER", "💧 الماء")).font(.caption.weight(.heavy)).tracking(appLang == .ar ? 0 : 1.2)
+                            Label(t("WATER", "الماء"), systemImage: "drop.fill").font(.caption.weight(.heavy)).tracking(appLang == .ar ? 0 : 1.2)
+                                .labelStyle(.titleAndIcon).symbolRenderingMode(.hierarchical).foregroundStyle(Theme.ink)
                             Spacer()
                             Text(w.targetMl.map { "\(liters(w.intakeMl)) / \(liters($0)) " + t("L", "لتر") } ?? "\(Int(w.intakeMl)) " + t("ml", "مل"))
                                 .font(.headline.weight(.heavy)).monospacedDigit().environment(\.layoutDirection, .leftToRight)

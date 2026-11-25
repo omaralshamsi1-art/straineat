@@ -358,7 +358,7 @@ struct BodyTodayCard: View {
             if let st = steps, let n = st.steps {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .firstTextBaseline) {
-                        Text("👣 " + t("\(fmt(n)) steps", "\(fmt(n)) خطوة")).font(.headline.weight(.heavy)).lineLimit(1)
+                        Label(t("\(fmt(n)) steps", "\(fmt(n)) خطوة"), systemImage: "shoeprints.fill").font(.headline.weight(.heavy)).lineLimit(1)
                         Spacer()
                         Text(t("Goal \(fmt(st.goal))", "الهدف \(fmt(st.goal))") + (st.goal < st.fullGoal ? t(" · rising to \(fmt(st.fullGoal))", " · نرفعه لـ \(fmt(st.fullGoal))") : ""))
                             .font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
