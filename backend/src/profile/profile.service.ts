@@ -4,6 +4,11 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { CONDITIONS, DIET_STYLES, Profile } from '../common/types';
 import { REPOSITORY, Repository } from '../storage/repository';
 
+/** Today customisation: big ring options and tile catalogue (web + iOS render the same ids). */
+export const TODAY_HEROES = ['rings', 'left', 'protein', 'water', 'steps', 'week_budget', 'week_protein'];
+export const TODAY_TILES = ['steps', 'water', 'sleep', 'recovery', 'strain', 'burn', 'protein', 'carbs', 'fat', 'fiber', 'week_budget', 'week_protein', 'week_water', 'week_steps'];
+export const DEFAULT_TODAY_LAYOUT = { hero: 'rings', tiles: ['steps', 'sleep', 'week_budget', 'week_protein'] };
+
 export const DEFAULT_PROFILE = (userId: string): Profile => ({
   userId,
   sex: null,
@@ -176,6 +181,14 @@ export function validateProfilePatch(patch: Partial<Profile>): Partial<Profile> 
       } catch (e: any) {
         throw new BadRequestException(e.message);
       }
+    } else if (k === 'todayLayout') {
+      const r = (v ?? {}) as { hero?: unknown; tiles?: unknown };
+      const hero = String(r.hero ?? 'rings');
+      if (!TODAY_HEROES.includes(hero)) throw new BadRequestException(`todayLayout.hero must be one of ${TODAY_HEROES.join(', ')}`);
+      const tiles = Array.isArray(r.tiles) ? [...new Set(r.tiles.map(String))] : [];
+      const bad = tiles.find((t) => !TODAY_TILES.includes(t));
+      if (bad) throw new BadRequestException(`unknown tile ${bad}`);
+      out.todayLayout = { hero, tiles: tiles.slice(0, 12) };
     } else if (k === 'hotEnvironment') {
       out.hotEnvironment = !!v;
     } else if (k === 'onboarded') {

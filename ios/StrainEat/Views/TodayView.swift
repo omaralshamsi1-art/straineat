@@ -11,7 +11,7 @@ struct TodayView: View {
                 VStack(spacing: 14) {
                     header
                     if let b = store.balance {
-                        TodayRings(balance: b, isToday: store.isToday)
+                        FocusSection(balance: b, isToday: store.isToday)
                         InsightStack(balance: b, schedule: store.isToday ? schedule : nil, motivation: store.motivation, isToday: store.isToday,
                                      onLog: onLog, onSuggest: { showIdeas = true }, onSchedule: { schedule = $0 })
                         if let r = b.ramadan, r.active || r.needsChoice { RamadanCard(view: r) }

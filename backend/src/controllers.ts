@@ -38,6 +38,7 @@ import { ShortcutService } from './energy/shortcut.service';
 import { ScheduleService } from './schedule/schedule.service';
 import { WaterService } from './water/water.service';
 import { StepsService } from './steps/steps.service';
+import { WeekService } from './week/week.service';
 import { validateProfilePatch } from './profile/profile.service';
 
 @Controller('health')
@@ -410,6 +411,17 @@ export class AssistantController {
   @Delete('history')
   clear(@UserId() userId: string) {
     return this.assistant.clear(userId);
+  }
+}
+
+@Controller('week')
+export class WeekController {
+  constructor(private readonly week: WeekService) {}
+
+  /** This week (Mon–Sun) so far: calorie budget and protein / water / steps days. */
+  @Get()
+  summary(@UserId() userId: string) {
+    return this.week.summary(userId);
   }
 }
 

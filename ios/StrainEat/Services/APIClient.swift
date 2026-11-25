@@ -77,6 +77,8 @@ final class APIClient {
         try await send(request("balance?date=\(DateFormatter.isoDay.string(from: date))"))
     }
 
+    func week() async throws -> WeekSummary { try await send(request("week")) }
+
     // MARK: Steps
     func steps(date: String? = nil) async throws -> StepsDay { try await send(request("steps" + (date.map { "?date=\($0)" } ?? ""))) }
     func pushSteps(_ samples: [[String: Any]]) async throws {

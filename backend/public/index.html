@@ -607,6 +607,39 @@ html[dir="rtl"] .mon2b .t i { transform: scaleX(-1); display: inline-block; }
 .mon2b .v { font-size: 16px; font-weight: 800; }
 .mon2b small { font-size: 12px; color: var(--muted); }
 .dayhead { display: flex; align-items: center; justify-content: space-between; margin: 16px 2px 2px; }
+.focus { position: relative; margin-top: 6px; }
+.focus .fbar { display: flex; justify-content: flex-end; margin: 4px 0 -4px; }
+.focus .fedit { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.fhero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: center; margin: 8px 0 4px; }
+.fring { position: relative; border: 0; background: none; color: var(--ink); aspect-ratio: 1 / 1; width: 100%; height: auto; max-height: none; justify-self: stretch; padding: 0; cursor: pointer; display: grid; place-items: center; }
+.fring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.fring .trk { fill: none; stroke: var(--ring-track); stroke-width: 11; }
+.fring .arc { fill: none; stroke-width: 11; stroke-linecap: round; stroke-dasharray: 251.3; transition: stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1); }
+.fring .in { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; width: 100%; box-sizing: border-box; padding: 0 19%; overflow: hidden; }
+.fring .in > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fring .in small { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: .04em; }
+html[dir="ltr"] .fring .in small { text-transform: uppercase; }
+.fring .in b { font-size: clamp(24px, 9vw, 38px); font-weight: 800; letter-spacing: -1px; line-height: 1.05; }
+.fring .in b.long { font-size: clamp(20px, 7.4vw, 32px); }
+.fring .in span { font-size: 12px; color: var(--muted); }
+.ftiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 4px; }
+.ftiles.side { grid-template-columns: 1fr; margin: 0; }
+.ftile { display: flex; align-items: center; gap: 10px; border: 0; border-radius: 22px; padding: 10px 12px; background: color-mix(in srgb, var(--tc) 22%, var(--card)); color: var(--ink); text-align: start; cursor: pointer; min-height: 64px; font: inherit; position: relative; overflow: hidden; }
+.ftile .ic { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--tc) 40%, #000); font-size: 17px; }
+.ftile .tx { min-width: 0; display: flex; flex-direction: column; }
+.ftile .tx small { font-size: 12px; font-weight: 700; color: color-mix(in srgb, var(--tc) 70%, var(--ink)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ftile .tx b { font-size: 19px; font-weight: 800; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ftile .tx span { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ftile i.pg { position: absolute; inset-block-end: 0; inset-inline-start: 0; height: 3px; background: var(--tc); opacity: .9; }
+.fsec { margin: 14px 0 6px; font-weight: 800; }
+.fchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.fchips button { min-height: 38px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card-2); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
+.fchips button[aria-pressed="true"] { background: var(--brand-2); border-color: var(--brand-2); color: #111; font-weight: 700; }
+.frow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.frow .nm { flex: 1; font-weight: 600; }
+.frow button { width: 34px; height: 34px; border-radius: 50%; border: 0; font-size: 18px; font-weight: 800; cursor: pointer; background: var(--card-2); color: var(--ink); }
+.frow button.add { background: #2a62c9; color: #fff; }
+.frow button.rm { background: #2a3a5a; color: #fff; }
 .fdays { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .fdays button { min-height: 38px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card-2); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
 .fdays button[aria-pressed="true"] { background: var(--brand-2); border-color: var(--brand-2); color: #111; font-weight: 700; }
@@ -763,10 +796,15 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     <!-- written by code, not shown -->
     <div hidden><span id="greet"></span><span id="goalLine"></span><div id="dayStatus"></div><div id="kPendRow"><b id="kPend"></b></div><div id="tips"></div></div>
 
-    <div class="rings3">
+    <div class="focus" id="focus">
+    <div class="fbar"><button class="fedit" id="focusEdit" aria-label="تخصيص اليوم"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div>
+    <div class="fhero hidden" id="heroOne"><button class="fring" id="heroBtn"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" class="trk"/><circle cx="50" cy="50" r="40" class="arc" id="heroArc" stroke="#2ba84a"/></svg><span class="in"><small id="heroL"></small><b class="num" id="heroV">—</b><span id="heroS"></span></span></button><div class="ftiles side" id="sideTiles"></div></div>
+    <div class="rings3" id="heroRings">
       <button data-det="left" aria-label="المتبقي اليوم"><span class="rg"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="43" class="trk"/><circle cx="50" cy="50" r="43" class="arc" id="rgLeft" stroke="#2ba84a"/></svg><b class="num" id="rgLeftV">—</b></span><span class="lb" id="rgLeftL">متبقي</span><small class="u">سعرة</small></button>
       <button data-det="eaten" aria-label="البروتين"><span class="rg"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="43" class="trk"/><circle cx="50" cy="50" r="43" class="arc" id="rgProt" stroke="#8a7df0"/></svg><b class="num" id="rgProtV">—</b></span><span class="lb">بروتين</span><small class="u" id="rgProtU">غ</small></button>
       <button data-det="burn" aria-label="الحرق"><span class="rg"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="43" class="trk"/><circle cx="50" cy="50" r="43" class="arc" id="rgBurn" stroke="#1e90e8"/></svg><b class="num" id="rgBurnV">—</b></span><span class="lb">حرق</span><small class="u" id="rgBurnU">سعرة</small></button>
+    </div>
+    <div class="ftiles" id="tilesGrid"></div>
     </div>
 
     <div class="stack" id="stack" aria-live="polite"></div><div id="stackMore"></div>
@@ -1854,6 +1892,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     else sub = L`باقي ${ltr(w.remainingMl)}${w.workoutMl ? L` · +${fmt(w.workoutMl)} للتمرين` : ''}`;
     $('wSub').innerHTML = sub;
     $('wUndo').classList.toggle('hidden', !(w.entries || []).length || !isTodayV);
+    renderFocus();
   }
   async function addWater(ml) {
     try {
@@ -1899,7 +1938,112 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     } catch { $('detChart').innerHTML = ''; }
   }
 
+  // ---------------- focus: customisable Today (big ring + tiles) ----------------
+  const DEFAULT_LAYOUT = { hero: 'rings', tiles: ['steps', 'sleep', 'week_budget', 'week_protein'] };
+  let layout = (() => { try { return JSON.parse(ls.get('ns_layout') || 'null') || DEFAULT_LAYOUT; } catch { return DEFAULT_LAYOUT; } })();
+  let weekSum = null;
+  const HEROES = ['rings', 'left', 'protein', 'water', 'steps', 'week_budget', 'week_protein'];
+  const TILES = ['steps', 'water', 'sleep', 'recovery', 'strain', 'burn', 'protein', 'carbs', 'fat', 'fiber', 'week_budget', 'week_protein', 'week_water', 'week_steps'];
+  const tName = (id) => ({ rings: T('الحلقات الثلاث'), left: T('السعرات المتبقية'), protein: T('البروتين'), water: T('الماء'), steps: T('الخطوات'), sleep: T('النوم'), recovery: T('الاستشفاء'), strain: T('الجهد'), burn: T('الحرق'), carbs: T('الكربوهيدرات'), fat: T('الدهون'), fiber: T('الألياف'), week_budget: T('ميزانية الأسبوع'), week_protein: T('أيام البروتين'), week_water: T('أيام الماء'), week_steps: T('أيام الخطوات') }[id] || id);
+  /** data for a tile / the big ring, or null when there's nothing to show yet */
+  function focusData(id) {
+    const b = lastBal, w = wellCache && wellCache.connected && !wellCache.needsReconnect ? wellCache.today || {} : {};
+    const mt = (b && b.macroTargets) || {}, it = (b && b.intake) || {};
+    const ws = weekSum, wd = waterDay, sd = stepsDay;
+    const pct = (a, c) => (c ? Math.max(0, Math.min(1, a / c)) : 0);
+    switch (id) {
+      case 'left': if (!b) return null; { const l = b.remainingKcal; return { ic: '🔥', c: l < 0 && b.goal !== 'gain' ? '#e5534b' : '#2ba84a', l: l < 0 ? T('فوق الهدف') : T('متبقي'), v: fmt(Math.abs(l)), s: L`من ${fmt(b.targetIntakeKcal)} سعرة`, f: l < 0 ? 1 : pct(b.intake.calories, b.targetIntakeKcal), det: 'left' }; }
+      case 'protein': if (!b || !mt.protein_g) return null; return { ic: '🥩', c: '#8a7df0', l: T('البروتين'), v: `${fmt(it.protein_g || 0)}`, s: L`من ${fmt(mt.protein_g)} غ`, f: pct(it.protein_g || 0, mt.protein_g), det: 'eaten' };
+      case 'carbs': if (!b || !mt.carbs_g) return null; return { ic: '🍚', c: '#e0a43b', l: T('الكربوهيدرات'), v: fmt(it.carbs_g || 0), s: L`من ${fmt(mt.carbs_g)} غ`, f: pct(it.carbs_g || 0, mt.carbs_g), det: 'eaten' };
+      case 'fat': if (!b || !mt.fat_g) return null; return { ic: '🥑', c: '#d9b44a', l: T('الدهون'), v: fmt(it.fat_g || 0), s: L`من ${fmt(mt.fat_g)} غ`, f: pct(it.fat_g || 0, mt.fat_g), det: 'eaten' };
+      case 'fiber': if (!b || !mt.fiber_g) return null; return { ic: '🥦', c: '#3fb27f', l: T('الألياف'), v: fmt(it.fiber_g || 0), s: L`من ${fmt(mt.fiber_g)} غ`, f: pct(it.fiber_g || 0, mt.fiber_g), det: 'eaten' };
+      case 'burn': if (!b || !b.burn) return null; return { ic: '⚡', c: '#1e90e8', l: T('الحرق'), v: fmt(b.burn.totalKcal), s: b.expectedBurnKcal ? L`من ~${fmt(b.expectedBurnKcal)}` : T('سعرة'), f: pct(b.burn.totalKcal, b.expectedBurnKcal), det: 'burn' };
+      case 'water': if (!wd) return null; return { ic: '💧', c: '#4aa8ff', l: T('الماء'), v: `${fmt1(wd.intakeMl / 1000)}`, s: wd.targetMl ? L`من ${fmt1(wd.targetMl / 1000)} لتر` : T('لتر'), f: pct(wd.intakeMl, wd.targetMl), go: () => openWater() };
+      case 'steps': if (!sd || sd.steps == null) return null; return { ic: '👣', c: '#ff9e4d', l: T('الخطوات'), v: fmt(sd.steps), s: L`الهدف ${fmt(sd.goal)}`, f: pct(sd.steps, sd.goal), det: 'burn' };
+      case 'sleep': if (w.sleepMin == null) return null; return { ic: '🌙', c: '#8b6cf6', l: T('النوم'), v: hm(w.sleepMin), s: w.sleepPerformance != null ? L`أداء ${w.sleepPerformance}%` : T('الليلة الماضية'), f: w.sleepPerformance != null ? w.sleepPerformance / 100 : 0, det: 'well' };
+      case 'recovery': if (w.recovery == null) return null; return { ic: '💚', c: w.recovery >= 67 ? '#2ba84a' : w.recovery >= 34 ? '#e0a43b' : '#e5534b', l: T('الاستشفاء'), v: `${w.recovery}%`, s: w.hrv ? L`HRV ${fmt(w.hrv)}` : '', f: w.recovery / 100, det: 'well' };
+      case 'strain': if (w.strain == null) return null; return { ic: '📈', c: '#1e90e8', l: T('الجهد'), v: fmt1(w.strain), s: T('من 21'), f: w.strain / 21, det: 'well' };
+      case 'week_budget': if (!ws) return null; { const r = ws.budget.remainingKcal; return { ic: '📅', c: r < 0 ? '#e5534b' : '#f2b94b', l: T('ميزانية الأسبوع'), v: fmt(Math.abs(r)), s: r < 0 ? L`فوق ميزانية الأسبوع (${fmt(ws.budget.weekTargetKcal)})` : L`باقي من ${fmt(ws.budget.weekTargetKcal)} سعرة`, hl: r < 0 ? T('فوق الأسبوع') : T('باقي الأسبوع'), hs: L`من ${fmt(ws.budget.weekTargetKcal)}`, f: pct(ws.budget.eatenKcal, ws.budget.weekTargetKcal), go: () => openWeek() }; }
+      case 'week_protein': if (!ws || !ws.proteinDays.targetG) return null; return { ic: '🏅', c: '#8a7df0', l: T('أيام البروتين'), v: L`${ws.proteinDays.hit} من 7`, s: L`وصلت ${fmt(Math.round(ws.proteinDays.targetG * 0.9))}+ غ`, f: ws.proteinDays.hit / 7, go: () => openWeek() };
+      case 'week_water': if (!ws) return null; return { ic: '💧', c: '#4aa8ff', l: T('أيام الماء'), v: L`${ws.waterDays.hit} من 7`, s: T('هذا الأسبوع'), f: ws.waterDays.hit / 7, go: () => openWeek() };
+      case 'week_steps': if (!ws) return null; return { ic: '👟', c: '#ff9e4d', l: T('أيام الخطوات'), v: L`${ws.stepsDays.hit} من 7`, s: T('هذا الأسبوع'), f: ws.stepsDays.hit / 7, go: () => openWeek() };
+    }
+    return null;
+  }
+  const tileBtn = (id, d) => `<button class="ftile" data-ft="${id}" style="--tc:${d.c}"><span class="ic">${d.ic}</span><span class="tx"><small>${esc(d.l)}</small><b class="num" dir="auto">${esc(d.v)}</b>${d.s ? `<span>${esc(d.s)}</span>` : ''}</span><i class="pg" style="width:${Math.round(d.f * 100)}%"></i></button>`;
+  function renderFocus() {
+    const ringsHero = layout.hero === 'rings';
+    const hd = ringsHero ? null : focusData(layout.hero);
+    $('heroRings').classList.toggle('hidden', !ringsHero && !!hd);
+    $('heroOne').classList.toggle('hidden', ringsHero || !hd);
+    const ready = layout.tiles.filter((id) => ringsHero || id !== layout.hero).map((id) => [id, focusData(id)]).filter(([, d]) => d); // tiles without data stay hidden
+    let side = [], rest = ready;
+    if (!ringsHero && hd) {
+      side = ready.slice(0, 3); rest = ready.slice(3);
+      $('heroArc').setAttribute('stroke', hd.c);
+      requestAnimationFrame(() => { $('heroArc').style.strokeDashoffset = String(251.3 * (1 - Math.max(0, Math.min(1, hd.f)))); });
+      $('heroL').textContent = hd.hl || hd.l; $('heroV').textContent = hd.v; $('heroS').textContent = hd.hs || hd.s || '';
+      $('heroV').classList.toggle('long', String(hd.v).length > 4);
+      $('heroBtn').onclick = () => (hd.go ? hd.go() : openDetail(hd.det));
+    }
+    $('sideTiles').innerHTML = side.map(([id, d]) => tileBtn(id, d)).join('');
+    $('tilesGrid').innerHTML = rest.map(([id, d]) => tileBtn(id, d)).join('');
+    $('focus').querySelectorAll('[data-ft]').forEach((el) => (el.onclick = () => { const d = focusData(el.dataset.ft); if (d) d.go ? d.go() : openDetail(d.det); }));
+  }
+  async function loadWeek() {
+    if (isoDay(day) !== isoDay(new Date())) { weekSum = null; renderFocus(); return; }
+    try { weekSum = await api('week'); } catch { weekSum = null; }
+    renderFocus();
+  }
+  async function loadLayout() {
+    try { const p = await api('profile'); if (p.todayLayout) { layout = p.todayLayout; ls.set('ns_layout', JSON.stringify(layout)); renderFocus(); } } catch {}
+  }
+  function openWeek() {
+    const ws = weekSum; if (!ws) return;
+    $('det').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+    $('detBack').textContent = '‹'; $('detTitle').textContent = T('هذا الأسبوع');
+    const dd = ws.days.map((d) => ({ ...d, tgt: d.targetKcal }));
+    while (dd.length < 7) { const last = dd[dd.length - 1]; const nd = new Date(last.date + 'T12:00'); nd.setDate(nd.getDate() + 1); dd.push({ date: isoDay(nd), intakeKcal: 0, tgt: null }); }
+    const mark = (h) => (h ? '✓' : '·');
+    const rows = ws.days.map((d) => `<div class="row" style="padding:8px 0;border-top:1px solid var(--line)"><span>${new Date(d.date + 'T12:00').toLocaleDateString(LOC, { weekday: 'long' })}</span><span class="num" dir="ltr">${fmt(d.intakeKcal)} / ${fmt(d.targetKcal)}</span><span title="${T('بروتين · ماء · خطوات')}">${mark(d.proteinHit)} ${mark(d.waterHit)} ${mark(d.stepsHit)}</span></div>`).join('');
+    const r = ws.budget.remainingKcal, left = ws.budget.daysLeft;
+    $('detBody').innerHTML = `<div class="dchart"><div class="t">${T('ميزانية الأسبوع')}</div><div class="big num">${fmt(ws.budget.eatenKcal)}<small style="font-size:15px"> / ${fmt(ws.budget.weekTargetKcal)} ${T('سعرة')}</small></div>${barsSvg(dd, 'intakeKcal', 'tgt', '#f2b94b')}</div>
+      <div class="tiles">${tileHtml(T('باقي للأسبوع'), fmt(Math.abs(r)), ' ' + T('سعرة'), r >= 0 && left > 0 ? L`~${fmt(Math.round(r / left))} لكل يوم باقي` : r < 0 ? T('فوق الميزانية') : '', r < 0 ? 'bad' : 'ok')}
+      ${tileHtml(T('أيام البروتين'), `${ws.proteinDays.hit}/7`, '', '', ws.proteinDays.hit >= Math.min(ws.dayIndex, 5) ? 'ok' : 'lo')}
+      ${tileHtml(T('أيام الماء'), `${ws.waterDays.hit}/7`, '', '', '')}
+      ${tileHtml(T('أيام الخطوات'), `${ws.stepsDays.hit}/7`, '', '', '')}</div>
+      <p class="small muted">${T('الأسبوع من الاثنين إلى الأحد. الميزانية = مجموع أهدافك اليومية (مع إضافة الحرق الزايد)، فيوم أكلت فيه أكثر يتعوّض بباقي الأسبوع بدل ما تحس إنك فشلت. لا تنزل تحت حدّك الأدنى اليومي للتعويض.')}</p>
+      <div class="card" style="margin-top:10px"><h3>${T('الأيام')}</h3><div class="small muted" style="margin-bottom:4px">${T('السعرات · ✓ بروتين ✓ ماء ✓ خطوات')}</div>${rows}</div>`;
+  }
+  function openFocusEditor() {
+    let draft = { hero: layout.hero, tiles: [...layout.tiles] };
+    $('det').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+    $('detBack').textContent = '‹'; $('detTitle').textContent = T('تخصيص اليوم');
+    const paint = () => {
+      const avail = TILES.filter((t) => !draft.tiles.includes(t));
+      $('detBody').innerHTML = `<p class="small muted">${T('اختر الحلقة الكبيرة والبطاقات اللي تبي تشوفها. البطاقة اللي ما فيها بيانات اليوم تختفي تلقائياً.')}</p>
+        <div class="fsec">${T('الحلقة الكبيرة')}</div><div class="fchips">${HEROES.map((h) => `<button data-hero="${h}" aria-pressed="${draft.hero === h}">${tName(h)}</button>`).join('')}</div>
+        <div class="fsec">${T('بطاقاتك')} <span class="small muted">(${draft.tiles.length})</span></div>
+        ${draft.tiles.map((t, i) => `<div class="frow"><span class="nm">${tName(t)}</span>${i ? `<button data-up="${t}" aria-label="${T('لفوق')}">↑</button>` : ''}<button class="rm" data-rm="${t}" aria-label="${T('إزالة')}">−</button></div>`).join('') || `<p class="small muted">${T('ما فيه بطاقات')}</p>`}
+        <div class="fsec">${T('أضف')}</div>
+        ${avail.map((t) => `<div class="frow"><span class="nm">${tName(t)}</span><button class="add" data-add="${t}" aria-label="${T('إضافة')}">+</button></div>`).join('')}
+        <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" id="fSave">${T('حفظ')}</button><button class="btn ghost" id="fReset">${T('الافتراضي')}</button></div>`;
+      $('detBody').querySelectorAll('[data-hero]').forEach((b) => (b.onclick = () => { draft.hero = b.dataset.hero; paint(); }));
+      $('detBody').querySelectorAll('[data-rm]').forEach((b) => (b.onclick = () => { draft.tiles = draft.tiles.filter((x) => x !== b.dataset.rm); paint(); }));
+      $('detBody').querySelectorAll('[data-add]').forEach((b) => (b.onclick = () => { if (draft.tiles.length < 12) draft.tiles.push(b.dataset.add); paint(); }));
+      $('detBody').querySelectorAll('[data-up]').forEach((b) => (b.onclick = () => { const i = draft.tiles.indexOf(b.dataset.up); [draft.tiles[i - 1], draft.tiles[i]] = [draft.tiles[i], draft.tiles[i - 1]]; paint(); }));
+      $('fReset').onclick = () => { draft = { hero: DEFAULT_LAYOUT.hero, tiles: [...DEFAULT_LAYOUT.tiles] }; paint(); };
+      $('fSave').onclick = async () => {
+        layout = draft; ls.set('ns_layout', JSON.stringify(layout)); renderFocus(); closeDetail();
+        try { await api('profile', { method: 'PUT', json: { todayLayout: layout } }); toast(T('تم الحفظ ✓')); } catch (e) { toast(e.message); }
+      };
+    };
+    paint();
+  }
+  $('focusEdit').onclick = openFocusEditor;
+
   function renderMonitors() {
+    renderFocus();
     const b = lastBal; if (!b || !lastSt) return;
     $('monNutV').textContent = lastSt.cls === 'good' ? T('✓ ضمن الهدف') : lastSt.cls === 'bad' ? T('تجاوزت الهدف') : T('في الطريق');
     $('monNutV').style.color = lastSt.color;
@@ -1918,8 +2062,10 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     }
   }
 
+  let layoutLoaded = false;
   async function loadToday() {
     if (ls.get('ns_lang_sync') !== LANG) api('profile', { method: 'PUT', json: { language: LANG } }).then(() => ls.set('ns_lang_sync', LANG)).catch(() => {});
+    if (!layoutLoaded) { layoutLoaded = true; loadLayout(); }
     $('dayLabel').textContent = dayLabel();
     const nm = ls.get('ns_name') || (user() === 'meera' ? T('ميرا') : user());
     $('greet').innerHTML = `<em class="acc">${esc(greeting())}</em> ${esc(nm)}`;
@@ -1956,7 +2102,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       const sched = await schedP; schedCache = sched;
       lastSt = st; renderStack(); renderMonitors();
       renderTimeline(b, sched);
-      loadWater(); loadSteps();
+      loadWater(); loadSteps(); loadWeek();
     } catch (e) { $('mealList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
 

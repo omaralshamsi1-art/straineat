@@ -389,6 +389,8 @@ struct Profile: Codable {
     struct Ramadan: Codable { var enabled: Bool?; var suhoorTime: String; var iftarTime: String; var fastDays: [Int]?; var whiteDays: Bool? }
     struct Reminders: Codable { var meals: Bool; var weight: Bool; var water: Bool? }
     var hotEnvironment: Bool?
+    struct TodayLayout: Codable, Equatable { var hero: String; var tiles: [String] }
+    var todayLayout: TodayLayout?
     struct Screening: Codable { var pregnant: Bool?; var breastfeeding: Bool?; var medicalSupervision: Bool?; var edHistory: Bool? }
     var sex: String?
     var birthYear: Int?
@@ -484,3 +486,16 @@ struct WaterDay: Codable {
 struct WaterHistory: Codable { struct Day: Codable, Identifiable { let date: String; let intakeMl: Double; let targetMl: Double?; var id: String { date } }; let days: [Day] }
 
 struct StepsDay: Codable { let date: String; let steps: Double?; let goal: Double; let fullGoal: Double; let avg7: Double? }
+
+struct WeekSummary: Codable {
+    struct Budget: Codable { let eatenKcal: Double; let weekTargetKcal: Double; let remainingKcal: Double; let daysLeft: Int }
+    struct Days: Codable { let hit: Int; let of: Int; let targetG: Double? }
+    struct Day: Codable, Identifiable { let date: String; let intakeKcal: Double; let targetKcal: Double; let proteinHit: Bool; let waterHit: Bool; let stepsHit: Bool; var id: String { date } }
+    let weekStart: String
+    let dayIndex: Int
+    let budget: Budget
+    let proteinDays: Days
+    let waterDays: Days
+    let stepsDays: Days
+    let days: [Day]
+}

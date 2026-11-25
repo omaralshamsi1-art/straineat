@@ -137,6 +137,8 @@ export interface Profile {
   reminders: { meals: boolean; weight: boolean; water?: boolean };
   /** works or trains outdoors / in the heat most days — raises the water target */
   hotEnvironment?: boolean;
+  /** Today screen layout chosen by the user: the big ring and the tiles, in order. */
+  todayLayout?: { hero: string; tiles: string[] };
   /** personal medicine / vitamin reminders (push at the set local times) */
   medReminders?: { id: string; name: string; dose: string; kind: 'medicine' | 'vitamin' | 'supplement' | 'other'; times: string[]; enabled: boolean }[];
   /** UI + AI output language */
