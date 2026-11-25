@@ -578,6 +578,13 @@ button.navcard span { font-size: 20px; }
 .rings3 .lb { font-size: 13px; font-weight: 800; margin-top: 6px; }
 html[dir="ltr"] .rings3 .lb { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; }
 .rings3 .u { font-size: 11px; color: var(--muted); }
+/* rings share the tile style: tinted disc, tinted track, coloured label */
+.rings3 button { --rc: #2ba84a; }
+.rings3 button:nth-child(2) { --rc: #8a7df0; } .rings3 button:nth-child(3) { --rc: #1e90e8; }
+.rings3 .rg::before { content: ''; position: absolute; inset: 11%; border-radius: 50%; background: color-mix(in srgb, var(--rc) 16%, var(--card)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rc) 28%, transparent); }
+.rings3 .rg b { position: relative; }
+.rings3 .trk { stroke: color-mix(in srgb, var(--rc) 22%, transparent); }
+.rings3 .lb { color: color-mix(in srgb, var(--rc) 75%, var(--ink)); }
 .stack { position: relative; margin: 14px 0 4px; min-height: 64px; }
 .stack .peek { pointer-events: none; position: absolute; inset: 10px 12px -8px; background: var(--card); opacity: .55; border-radius: 18px; }
 .scard { position: relative; background: var(--card); border-radius: 18px; padding: 14px 16px; touch-action: pan-y; user-select: none; cursor: grab; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
@@ -1973,9 +1980,9 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       case 'burn': if (!b || !b.burn) return null; return { ic: 'fi-bolt', c: '#1e90e8', l: T('الحرق'), v: fmt(b.burn.totalKcal), s: b.expectedBurnKcal ? L`من ~${fmt(b.expectedBurnKcal)}` : T('سعرة'), f: pct(b.burn.totalKcal, b.expectedBurnKcal), det: 'burn' };
       case 'water': if (!wd) return null; return { ic: 'fi-drop', c: '#4aa8ff', l: T('الماء'), v: `${fmt1(wd.intakeMl / 1000)}`, s: wd.targetMl ? L`من ${fmt1(wd.targetMl / 1000)} لتر` : T('لتر'), f: pct(wd.intakeMl, wd.targetMl), go: () => openWater() };
       case 'steps': if (!sd || sd.steps == null) return null; return { ic: 'fi-steps', c: '#ff9e4d', l: T('الخطوات'), v: fmt(sd.steps), s: L`الهدف ${fmt(sd.goal)}`, f: pct(sd.steps, sd.goal), det: 'burn' };
-      case 'sleep': if (w.sleepMin == null) return null; return { ic: 'fi-moon', c: '#8b6cf6', l: T('النوم'), v: hm(w.sleepMin), s: w.sleepPerformance != null ? L`أداء ${w.sleepPerformance}%` : T('الليلة الماضية'), f: w.sleepPerformance != null ? w.sleepPerformance / 100 : 0, det: 'well' };
-      case 'recovery': if (w.recovery == null) return null; return { ic: 'fi-heartpulse', c: w.recovery >= 67 ? '#2ba84a' : w.recovery >= 34 ? '#e0a43b' : '#e5534b', l: T('الاستشفاء'), v: `${w.recovery}%`, s: w.hrv ? L`HRV ${fmt(w.hrv)}` : '', f: w.recovery / 100, det: 'well' };
-      case 'strain': if (w.strain == null) return null; return { ic: 'fi-pulse', c: '#1e90e8', l: T('الجهد'), v: fmt1(w.strain), s: T('من 21'), f: w.strain / 21, det: 'well' };
+      case 'sleep': if (w.sleepMin == null) return null; return { ic: 'fi-moon', c: '#8b6cf6', l: LANG === 'ar' ? 'النوم' : 'Sleep', v: hm(w.sleepMin), s: w.sleepPerformance != null ? L`أداء ${w.sleepPerformance}%` : T('الليلة الماضية'), f: w.sleepPerformance != null ? w.sleepPerformance / 100 : 0, det: 'well' };
+      case 'recovery': if (w.recovery == null) return null; return { ic: 'fi-heartpulse', c: w.recovery >= 67 ? '#2ba84a' : w.recovery >= 34 ? '#e0a43b' : '#e5534b', l: LANG === 'ar' ? 'الاستشفاء' : 'Recovery', v: `${w.recovery}%`, s: w.hrv ? L`HRV ${fmt(w.hrv)}` : '', f: w.recovery / 100, det: 'well' };
+      case 'strain': if (w.strain == null) return null; return { ic: 'fi-pulse', c: '#1e90e8', l: LANG === 'ar' ? 'الجهد' : 'Strain', v: fmt1(w.strain), s: T('من 21'), f: w.strain / 21, det: 'well' };
       case 'week_budget': if (!ws) return null; { const r = ws.budget.remainingKcal; return { ic: 'fi-calendar', c: r < 0 ? '#e5534b' : '#f2b94b', l: T('ميزانية الأسبوع'), v: fmt(Math.abs(r)), s: r < 0 ? L`فوق ميزانية الأسبوع (${fmt(ws.budget.weekTargetKcal)})` : L`باقي من ${fmt(ws.budget.weekTargetKcal)} سعرة`, hl: r < 0 ? T('فوق الأسبوع') : T('باقي الأسبوع'), hs: L`من ${fmt(ws.budget.weekTargetKcal)}`, f: pct(ws.budget.eatenKcal, ws.budget.weekTargetKcal), go: () => openWeek() }; }
       case 'week_protein': if (!ws || !ws.proteinDays.targetG) return null; return { ic: 'fi-medal', c: '#8a7df0', l: T('أيام البروتين'), v: L`${ws.proteinDays.hit} من 7`, s: L`وصلت ${fmt(Math.round(ws.proteinDays.targetG * 0.9))}+ غ`, f: ws.proteinDays.hit / 7, go: () => openWeek() };
       case 'week_water': if (!ws) return null; return { ic: 'fi-drop', c: '#4aa8ff', l: T('أيام الماء'), v: L`${ws.waterDays.hit} من 7`, s: T('هذا الأسبوع'), f: ws.waterDays.hit / 7, go: () => openWeek() };
@@ -2958,6 +2965,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     const ring = (id, frac) => { const el = $(id); requestAnimationFrame(() => { el.style.strokeDasharray = String(C); el.style.strokeDashoffset = String(C * (1 - Math.max(0, Math.min(1, frac)))); }); };
     const eaten = b.intake.calories, target = b.targetIntakeKcal || 1, left = b.remainingKcal;
     $('rgLeft').setAttribute('stroke', left < 0 && b.goal !== 'gain' ? 'var(--bad)' : '#2ba84a');
+    $('rgLeft').closest('button').style.setProperty('--rc', left < 0 && b.goal !== 'gain' ? '#e5534b' : '#2ba84a');
     ring('rgLeft', left < 0 ? 1 : left / target);
     $('rgLeftV').textContent = `${left < 0 ? '+' : ''}${fmt(Math.abs(left))}`;
     $('rgLeftL').textContent = left < 0 ? T('فوق الهدف') : T('متبقي');

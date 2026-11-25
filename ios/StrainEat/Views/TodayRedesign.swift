@@ -471,7 +471,7 @@ struct TodayRings: View {
             ring(left < 0 ? 1 : left / target, left < 0 && b.goal != "gain" ? Theme.bad : ringGreen,
                  "\(left < 0 ? "+" : "")\(fmt(abs(left)))", left < 0 ? t("OVER", "فوق الهدف") : t("LEFT", "متبقي"),
                  (b.burnBonusKcal ?? 0) > 0 ? t("+\(fmt(b.burnBonusKcal!)) from burn", "+\(fmt(b.burnBonusKcal!)) من الحرق") : t("kcal", "سعرة")) { detail = .left }
-            ring(pw > 0 ? ph / pw : 0, Theme.protein, fmt(ph), t("PROTEIN", "بروتين"), pw > 0 ? t("of \(fmt(pw)) g", "من \(fmt(pw)) غ") : t("g", "غ")) { detail = .eaten }
+            ring(pw > 0 ? ph / pw : 0, Color(red: 0.54, green: 0.49, blue: 0.94), fmt(ph), t("PROTEIN", "بروتين"), pw > 0 ? t("of \(fmt(pw)) g", "من \(fmt(pw)) غ") : t("g", "غ")) { detail = .eaten }
             ring(burn != nil && expB > 0 ? burn! / expB : 0, Color(red: 0.12, green: 0.56, blue: 0.91), burn.map { fmt($0) } ?? "—",
                  t("BURN", "حرق"), burn != nil && b.burnIsPartialDay && expB > 0 ? t("of ~\(fmt(expB))", "من ~\(fmt(expB))") : t("kcal", "سعرة")) { detail = .burn }
         }
@@ -482,14 +482,16 @@ struct TodayRings: View {
         Button(action: action) {
             VStack(spacing: 3) {
                 ZStack {
-                    Circle().stroke(Theme.ringTrack, lineWidth: 7)
+                    // same look as the tiles below: tinted disc, tinted track
+                    Circle().fill(color.opacity(0.16)).overlay(Circle().stroke(color.opacity(0.28), lineWidth: 1)).padding(11)
+                    Circle().stroke(color.opacity(0.22), lineWidth: 7)
                     Circle().trim(from: 0, to: max(0, min(1, frac)))
                         .stroke(color, style: StrokeStyle(lineWidth: 7, lineCap: .round)).rotationEffect(.degrees(-90))
                         .animation(.easeOut(duration: 0.7), value: frac)
                     Text(value).font(.system(size: 21, weight: .heavy)).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).padding(12)
                 }
                 .frame(maxWidth: 104).aspectRatio(1, contentMode: .fit)
-                Text(label).font(.caption.weight(.heavy)).tracking(appLang == .ar ? 0 : 1.4).padding(.top, 5)
+                Text(label).font(.caption.weight(.heavy)).tracking(appLang == .ar ? 0 : 1.4).padding(.top, 5).foregroundStyle(color)
                 Text(unit).font(.caption2).foregroundStyle(Theme.muted)
             }
             .frame(maxWidth: .infinity)
