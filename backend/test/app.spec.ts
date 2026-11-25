@@ -315,14 +315,16 @@ describe('WHOOP', () => {
         return json({
           records: [
             // Dubai: sleep 23:00 Nov 14 → 23:30 Nov 15 ⇒ Nov 15
-            { id: 1, start: '2026-11-14T19:00:00Z', end: '2026-11-15T19:30:00Z', score_state: 'SCORED', score: { kilojoule: 10460, strain: 10 } },
+            { id: 1, start: '2026-11-14T19:00:00Z', end: '2026-11-15T19:30:00Z', score_state: 'SCORED', score: { kilojoule: 10460, strain: 10 }, step_count: 8123 },
             { id: 2, start: '2026-11-15T19:30:00Z', end: null, score_state: 'PENDING_SCORE' },
           ],
         });
       }
       throw new Error('unexpected ' + url);
     });
-    const whoop = new WhoopService(cfg, s.repo, s.energy, s.profiles, fetchFn);
+    const { StepsService } = await import('../src/steps/steps.service');
+    const stepsSvc = new StepsService(s.repo, s.profiles);
+    const whoop = new WhoopService(cfg, s.repo, s.energy, s.profiles, fetchFn, stepsSvc);
     const url = new URL(whoop.authorizeUrl('u1'));
     expect(url.searchParams.get('scope')).toContain('read:cycles');
     expect(await whoop.handleCallback('code', url.searchParams.get('state')!)).toBe('u1');
@@ -335,6 +337,7 @@ describe('WHOOP', () => {
 
     cycleCalls = 0;
     const r = await whoop.sync('u1', '2026-11-15', '2026-11-15');
+    expect(await stepsSvc.day('u1', '2026-11-15')).toMatchObject({ steps: 8123, source: 'whoop' }); // same day as the cycle's burn
     expect(cycleCalls).toBe(1); // token already refreshed
     expect(r.days).toEqual({ '2026-11-15': 2500 });
     const b = await s.energy.balance('u1', '2026-11-15');

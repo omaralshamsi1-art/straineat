@@ -46,3 +46,18 @@ describe('week summary', () => {
     expect(w.budget.remainingKcal).toBe(w.budget.weekTargetKcal - 900);
   });
 });
+
+describe('steps from several sources', () => {
+  it('keeps each source and shows the highest; a later lower reading from one source replaces only that source', async () => {
+    const { mergeSteps } = await import('../src/steps/steps.service');
+    let d = mergeSteps(null, 'shortcut', 53, '2026-11-25T03:00:00Z');
+    d = mergeSteps(d, 'whoop', 6400, '2026-11-25T09:00:00Z');
+    d = mergeSteps(d, 'apple_health', 5900, '2026-11-25T09:05:00Z');
+    expect(d).toMatchObject({ steps: 6400, source: 'whoop' });
+    d = mergeSteps(d, 'apple_health', 7100, '2026-11-25T10:00:00Z');
+    expect(d).toMatchObject({ steps: 7100, source: 'apple_health' });
+    expect(Object.keys(d.sources!)).toEqual(['shortcut', 'whoop', 'apple_health']);
+    // legacy single-source record upgrades
+    expect(mergeSteps({ steps: 53, source: 'apple_health', updatedAt: 'x' }, 'whoop', 900, 'y')).toMatchObject({ steps: 900, source: 'whoop' });
+  });
+});

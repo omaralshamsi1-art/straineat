@@ -1,3 +1,4 @@
+import { StepsService } from '../../steps/steps.service';
 import { BadRequestException, ConflictException, Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
@@ -22,7 +23,9 @@ interface WhoopCycle {
   start: string;
   end: string | null;
   score_state: 'SCORED' | 'PENDING_SCORE' | 'UNSCORABLE';
-  score?: { strain: number; kilojoule: number; average_heart_rate: number; max_heart_rate: number };
+  score?: { strain: number; kilojoule: number; average_heart_rate: number; max_heart_rate: number; step_count?: number | null };
+  /** steps so far in this cycle (wake → next wake); null when not worn. Added Oct 2026. */
+  step_count?: number | null;
 }
 
 @Injectable()
@@ -36,6 +39,7 @@ export class WhoopService {
     private readonly energy: EnergyService,
     private readonly profiles: ProfileService,
     @Optional() @Inject(FETCH) fetchFn?: FetchFn,
+    @Optional() private readonly steps?: StepsService,
   ) {
     this.fetchFn = fetchFn ?? fetch;
   }
@@ -126,6 +130,18 @@ export class WhoopService {
       if (date < from || date > to) continue;
       byDate.set(date, Math.max(byDate.get(date) ?? 0, c.score.kilojoule / KJ_PER_KCAL));
       if (c.score.strain != null) strainByDate.set(date, Math.round(c.score.strain * 10) / 10);
+    }
+    // Steps follow the WHOOP cycle; count them on the same local day as the cycle's burn (its midpoint).
+    if (this.steps) {
+      const stepRows: { date: string; steps: number }[] = [];
+      for (const c of cycles) {
+        const n = c.step_count ?? c.score?.step_count;
+        if (n == null || !Number.isFinite(Number(n))) continue;
+        const s0 = new Date(c.start).getTime(), e0 = c.end ? new Date(c.end).getTime() : Date.now();
+        const date = localDate(new Date((s0 + e0) / 2), profile.timezone);
+        if (date >= from && date <= to) stepRows.push({ date, steps: Math.round(Number(n)) });
+      }
+      if (stepRows.length) await this.steps.ingest(userId, stepRows, 'whoop').catch((e) => this.log.warn(`WHOOP steps: ${e?.message ?? e}`));
     }
     // Recovery + sleep (needs read:recovery / read:sleep — older connections must reconnect once)
     let wellness = 0;

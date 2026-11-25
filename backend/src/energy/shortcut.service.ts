@@ -77,7 +77,7 @@ export class ShortcutService {
     const stepCount = stepsOf(body?.steps ?? swapped.steps);
     const p = await this.profiles.get(userId);
     const date = isIsoDate(body?.date) ? (body.date as string) : localDate(new Date(), p.timezone);
-    if (stepCount != null && this.steps) await this.steps.ingest(userId, [{ date, steps: stepCount }], 'apple_health');
+    if (stepCount != null && this.steps) await this.steps.ingest(userId, [{ date, steps: stepCount }], 'shortcut');
     if (active == null && basal == null && stepCount != null) {
       await this.repo.setCache({ userId, key: 'shortcut-last', payload: { at: new Date().toISOString(), date, active: null, basal: null, steps: stepCount }, createdAt: new Date().toISOString() });
       return { ok: true, date, steps: stepCount };

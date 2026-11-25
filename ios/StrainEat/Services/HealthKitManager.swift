@@ -83,9 +83,14 @@ final class HealthKitManager {
             let day = Calendar.current.date(byAdding: .day, value: -offset, to: Date())!
             let start = Calendar.current.startOfDay(for: day)
             let end = min(Calendar.current.date(byAdding: .day, value: 1, to: start)!, Date())
+            // Health's merged total, and each source on its own (iPhone, Watch, Google Health/Fitbit, WHOOP…): keep the highest
             let q = HKStatisticsQueryDescriptor(predicate: HKSamplePredicate.quantitySample(type: HKQuantityType(.stepCount),
-                predicate: HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)), options: .cumulativeSum)
-            guard let n = try? await q.result(for: store)?.sumQuantity()?.doubleValue(for: .count()), n > 0 else { continue }
+                predicate: HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)), options: [.cumulativeSum, .separateBySource])
+            guard let st = try? await q.result(for: store) else { continue }
+            let merged = st.sumQuantity()?.doubleValue(for: .count()) ?? 0
+            let perSource = (st.sources ?? []).compactMap { st.sumQuantity(for: $0)?.doubleValue(for: .count()) }.max() ?? 0
+            let n = max(merged, perSource)
+            guard n > 0 else { continue }
             samples.append(["date": DateFormatter.isoDay.string(from: day), "steps": Int(n.rounded())])
         }
         if !samples.isEmpty { try? await APIClient.shared.pushSteps(samples) }

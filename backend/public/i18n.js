@@ -9,6 +9,9 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+"من {}{}{}": "from {}{}{}",
+" (الأعلى من {} مصادر)": " (highest of {} sources)",
+"(الأعلى من {} مصادر)": "(highest of {} sources)",
 "باقي الأسبوع": "Week left",
 "فوق الأسبوع": "Over for the week",
 "تخصيص اليوم": "Customize Today",

@@ -17,7 +17,21 @@ export function stepGoal(age: number | null, avg7: number | null): { goal: numbe
   return { goal: Math.min(fullGoal, ramp), fullGoal };
 }
 
-type StepDay = { steps: number; source: string; updatedAt: string };
+type StepDay = { steps: number; source: string; updatedAt: string; sources?: Record<string, { steps: number; at: string }> };
+
+export const STEP_SOURCE_NAMES: Record<string, [string, string]> = {
+  whoop: ['WHOOP', 'WHOOP'],
+  apple_health: ['Apple Health', 'Apple Health'],
+  shortcut: ['Shortcut', 'الاختصار'],
+};
+
+/** Each source keeps its own latest count for the day; the day shows the highest (different devices miss different steps). */
+export function mergeSteps(prev: StepDay | null, source: string, steps: number, at: string): StepDay {
+  const sources = { ...(prev?.sources ?? (prev ? { [prev.source]: { steps: prev.steps, at: prev.updatedAt } } : {})) };
+  sources[source] = { steps, at };
+  const [best, v] = Object.entries(sources).sort((a, b) => b[1].steps - a[1].steps)[0];
+  return { steps: v.steps, source: best, updatedAt: v.at, sources };
+}
 
 @Injectable()
 export class StepsService {
@@ -27,6 +41,7 @@ export class StepsService {
   ) {}
 
   async ingest(userId: string, samples: { date?: unknown; steps?: unknown }[], source = 'apple_health') {
+    if (!(source in STEP_SOURCE_NAMES)) source = 'apple_health';
     if (!Array.isArray(samples) || !samples.length) throw new BadRequestException('samples[] required');
     let saved = 0;
     for (const s of samples.slice(0, 31)) {
@@ -34,7 +49,8 @@ export class StepsService {
       const steps = Math.round(Number(s?.steps));
       if (!isIsoDate(date) || !Number.isFinite(steps) || steps < 0 || steps > 150000) throw new BadRequestException('each sample needs date and steps');
       const at = new Date().toISOString();
-      await this.repo.setCache({ userId, key: `steps:${date}`, payload: { steps, source, updatedAt: at } satisfies StepDay, createdAt: at });
+      const merged = mergeSteps(await this.get(userId, date), source, steps, at);
+      await this.repo.setCache({ userId, key: `steps:${date}`, payload: merged, createdAt: at });
       saved++;
     }
     return { saved };
@@ -53,7 +69,10 @@ export class StepsService {
     const avg7 = prev.length >= 3 ? Math.round(prev.reduce((a, x) => a + x.steps, 0) / prev.length) : null;
     const { goal, fullGoal } = stepGoal(ageOf(p), avg7);
     const cur = await this.get(userId, d);
-    return { date: d, steps: cur?.steps ?? null, source: cur?.source ?? null, updatedAt: cur?.updatedAt ?? null, goal, fullGoal, avg7 };
+    const sources = Object.entries(cur?.sources ?? {}).map(([k, v]) => ({ source: k, name: STEP_SOURCE_NAMES[k]?.[0] ?? k, name_ar: STEP_SOURCE_NAMES[k]?.[1] ?? k, steps: v.steps, at: v.at }))
+      .sort((a, b) => b.steps - a.steps);
+    return { date: d, steps: cur?.steps ?? null, source: cur?.source ?? null, sourceName: cur ? STEP_SOURCE_NAMES[cur.source]?.[0] ?? cur.source : null,
+      sourceName_ar: cur ? STEP_SOURCE_NAMES[cur.source]?.[1] ?? cur.source : null, updatedAt: cur?.updatedAt ?? null, sources, goal, fullGoal, avg7 };
   }
 
   async history(userId: string, days = 7) {
