@@ -140,10 +140,10 @@ struct TodayHero: View {
     private func stat(_ label: String, _ value: String, _ unit: String, _ color: Color, bar: Double? = nil, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 1) {
-                Text(label).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
+                Text(label).font(.footnote.weight(.semibold)).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(value).font(.title3.weight(.bold)).monospacedDigit().foregroundStyle(color)
-                    Text(unit).font(.caption).foregroundStyle(Theme.muted)
+                    Text(value).font(.title2.weight(.heavy)).monospacedDigit().foregroundStyle(color)
+                    Text(unit).font(.footnote).foregroundStyle(Theme.muted)
                 }
                 if let bar {
                     GeometryReader { g in

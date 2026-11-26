@@ -716,6 +716,43 @@ html[data-theme="dark"] .status.bad { background: #44221d; color: #ffb4a6; }
 html[data-theme="dark"] .status.pending { background: #3d3720; color: #f0d36a; }
 html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
 
+/* ---- Type scale v2: bigger, bolder (modelled on Google Health; nothing below 12.5px) ---- */
+body { font-size: 16.5px; }
+.small { font-size: 14px; }
+.sub { font-size: 15px; }
+.greet { font-size: 29px; font-weight: 800; }
+.card h3 { font-size: 17px; font-weight: 700; color: var(--ink); }
+.chip { font-size: 13px; font-weight: 600; }
+.pill { font-size: 12px; font-weight: 700; }
+.kv div { font-size: 15.5px; }
+.mrow .top2 { font-size: 14.5px; font-weight: 600; }
+.stats b { font-size: 26px; font-weight: 800; }
+.stats span, .actsum span, .legend, .legend2 { font-size: 13px; font-weight: 500; }
+.actsum b { font-size: 24px; font-weight: 800; }
+nav button { font-size: 12.5px; font-weight: 600; }
+.daynav span { font-size: 15.5px; font-weight: 700; }
+/* Focus: ring + tiles */
+.fring .in small { font-size: 13px; }
+.fring .in b { font-size: clamp(30px, 10.5vw, 44px); }
+.fring .in b.long { font-size: clamp(24px, 8.4vw, 36px); }
+.fring .in span { font-size: 13.5px; font-weight: 600; }
+.ftile { min-height: 78px; padding: 12px 14px; gap: 12px; }
+.ftile .ic { width: 44px; height: 44px; border-radius: 15px; }
+.ftile .tx small { font-size: 14.5px; font-weight: 700; }
+.ftile .tx b { font-size: 25px; font-weight: 800; letter-spacing: -.3px; }
+.ftile .tx span { font-size: 12.5px; font-weight: 500; }
+/* 3-ring hero */
+.rings3 .rg b { font-size: 25px; }
+.rings3 .lb { font-size: 15px; margin-top: 8px; }
+html[dir="ltr"] .rings3 .lb { font-size: 13px; letter-spacing: .1em; }
+.rings3 .u { font-size: 13px; font-weight: 500; }
+/* monitor cards */
+.mon2b .t { font-size: 15px; }
+html[dir="ltr"] .mon2b .t { font-size: 13px; }
+.mon2b small { font-size: 13.5px; }
+.mon .mh, .wcard .mh { font-size: 14px; }
+.mon .mb b { font-size: 14.5px; }
+.mon2b small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>
 </head>
 <body>

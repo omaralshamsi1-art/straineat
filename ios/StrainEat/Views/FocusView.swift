@@ -93,20 +93,20 @@ struct FocusSection: View {
 
     private func tile(_ d: FocusDatum) -> some View {
         Button { act(d.action) } label: {
-            HStack(spacing: 10) {
-                Image(systemName: d.icon).font(.system(size: 17, weight: .semibold)).foregroundStyle(d.color)
-                    .frame(width: 38, height: 38)
-                    .background(d.color.opacity(0.22), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).stroke(d.color.opacity(0.35), lineWidth: 1))
+            HStack(spacing: 12) {
+                Image(systemName: d.icon).font(.system(size: 19, weight: .semibold)).foregroundStyle(d.color)
+                    .frame(width: 44, height: 44)
+                    .background(d.color.opacity(0.22), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).stroke(d.color.opacity(0.35), lineWidth: 1))
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(d.label).font(.caption.weight(.bold)).foregroundStyle(d.color).lineLimit(1)
-                    Text(d.value).font(.title3.weight(.heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
-                    if !d.sub.isEmpty { Text(d.sub).font(.caption2).foregroundStyle(Theme.muted).lineLimit(1) }
+                    Text(d.label).font(.subheadline.weight(.bold)).foregroundStyle(d.color).lineLimit(1)
+                    Text(d.value).font(.system(size: 25, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
+                    if !d.sub.isEmpty { Text(d.sub).font(.footnote).foregroundStyle(Theme.muted).lineLimit(1) }
                 }
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 12).padding(.vertical, 10)
-            .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .frame(maxWidth: .infinity, minHeight: 78, alignment: .leading)
             .background(d.color.opacity(0.18), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(alignment: .bottomLeading) {
                 GeometryReader { g in Capsule().fill(d.color).frame(width: g.size.width * d.frac, height: 3).frame(maxHeight: .infinity, alignment: .bottom) }
@@ -205,9 +205,9 @@ struct BigRing: View {
             Circle().trim(from: 0, to: d.frac).stroke(d.color, style: StrokeStyle(lineWidth: 14, lineCap: .round)).rotationEffect(.degrees(-90))
                 .animation(.easeOut(duration: 0.8), value: d.frac)
             VStack(spacing: 2) {
-                Text(d.heroLabel ?? d.label).font(.caption.weight(.heavy)).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.7)
-                Text(d.value).font(.system(size: 34, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
-                Text(d.heroSub ?? d.sub).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.7)
+                Text(d.heroLabel ?? d.label).font(.footnote.weight(.heavy)).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.7)
+                Text(d.value).font(.system(size: 40, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
+                Text(d.heroSub ?? d.sub).font(.footnote.weight(.semibold)).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.7)
             }
             .padding(.horizontal, 24)
         }

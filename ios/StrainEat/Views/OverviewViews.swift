@@ -57,11 +57,11 @@ struct MiniRing: View {
                 Circle().stroke(Theme.ringTrack, lineWidth: 9)
                 Circle().trim(from: 0, to: max(0, min(1, fraction)))
                     .stroke(color, style: StrokeStyle(lineWidth: 9, lineCap: .round)).rotationEffect(.degrees(-90))
-                Text(value).font(.system(size: 24, weight: .heavy)).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).padding(10)
+                Text(value).font(.system(size: 27, weight: .heavy)).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).padding(10)
             }
             .frame(width: 98, height: 98)
             HStack(spacing: 2) { Text(label); Image(systemName: "chevron.forward").font(.caption2.weight(.bold)) }
-                .font(.caption.weight(.heavy)).tracking(0.8).foregroundStyle(Theme.ink)
+                .font(.subheadline.weight(.heavy)).tracking(0.8).foregroundStyle(Theme.ink)
         }
         .frame(maxWidth: .infinity)
     }
@@ -111,13 +111,13 @@ struct OverviewSection: View {
         let (fg, bg) = chipColors(state)
         return Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
-                HStack { Text(title).font(.caption.weight(.heavy)).tracking(0.8).lineLimit(1).minimumScaleFactor(0.8); Spacer(); Image(systemName: "chevron.forward").font(.caption.weight(.bold)).foregroundStyle(Theme.muted) }
+                HStack { Text(title).font(.subheadline.weight(.heavy)).tracking(0.8).lineLimit(1).minimumScaleFactor(0.8); Spacer(); Image(systemName: "chevron.forward").font(.caption.weight(.bold)).foregroundStyle(Theme.muted) }
                 HStack(spacing: 10) {
                     Text(badge).font(.system(size: badge.count > 3 ? 12 : 15, weight: .heavy)).foregroundStyle(fg)
                         .frame(minWidth: 38, minHeight: 38).padding(.horizontal, 2).background(bg, in: RoundedRectangle(cornerRadius: 10))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(headline).font(.caption.weight(.heavy)).foregroundStyle(fg).lineLimit(1).minimumScaleFactor(0.7)
-                        Text(sub).font(.caption2).foregroundStyle(Theme.muted).lineLimit(2)
+                        Text(headline).font(.subheadline.weight(.heavy)).foregroundStyle(fg).lineLimit(1).minimumScaleFactor(0.7)
+                        Text(sub).font(.caption).foregroundStyle(Theme.muted).lineLimit(2)
                     }
                 }
             }
