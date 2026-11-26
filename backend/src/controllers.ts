@@ -41,6 +41,7 @@ import { WaterService } from './water/water.service';
 import { StepsService } from './steps/steps.service';
 import { WeekService } from './week/week.service';
 import { McpService } from './mcp/mcp.service';
+import { OAuthError, OAuthService } from './mcp/oauth.service';
 import { validateProfilePatch } from './profile/profile.service';
 
 @Controller('health')
@@ -529,5 +530,87 @@ export class ScheduleController {
   @Post('skip')
   skip(@UserId() userId: string, @Body() body: { slot?: string; undo?: boolean; date?: string }) {
     return this.schedule.skip(userId, String(body?.slot || ''), !!body?.undo, body?.date);
+  }
+}
+
+/** OAuth 2.1 for the MCP connector: discovery, registration, authorize (consent in the web app), token, revoke. */
+@Controller()
+export class OAuthController {
+  constructor(private readonly oauth: OAuthService) {}
+
+  private fail(res: Response, e: unknown) {
+    if (e instanceof OAuthError) return res.status(e.status).set('Cache-Control', 'no-store').json({ error: e.error, error_description: e.description });
+    throw e;
+  }
+
+  @Public()
+  @Get(['.well-known/oauth-protected-resource', '.well-known/oauth-protected-resource/mcp'])
+  resourceMeta(@Req() req: Request) {
+    return this.oauth.resourceMetadata(this.oauth.base(req));
+  }
+
+  @Public()
+  @Get(['.well-known/oauth-authorization-server', '.well-known/openid-configuration'])
+  serverMeta(@Req() req: Request) {
+    return this.oauth.serverMetadata(this.oauth.base(req));
+  }
+
+  @Public()
+  @Post(['oauth/register', 'register'])
+  async register(@Body() body: any, @Res() res: Response) {
+    try { res.status(201).set('Cache-Control', 'no-store').json(await this.oauth.register(body)); } catch (e) { this.fail(res, e); }
+  }
+
+  @Public()
+  @Get(['oauth/authorize', 'authorize'])
+  async authorize(@Query() q: Record<string, string>, @Req() req: Request, @Res() res: Response) {
+    try {
+      const r = await this.oauth.startAuthorize(q);
+      if (r.redirect) return res.redirect(302, r.redirect);
+      return res.redirect(302, `${this.oauth.base(req)}/app/#oauth=${r.requestId}`);
+    } catch (e) {
+      if (!(e instanceof OAuthError)) throw e;
+      const msg = String(e.description).replace(/[<>&"]/g, '');
+      res.status(400).type('html').send(`<!doctype html><meta name="viewport" content="width=device-width"><body style="font-family:system-ui;padding:24px;background:#111;color:#eee"><h3>StrainEat</h3><p>Can't start the connection: ${msg}.</p><p>Remove the connector in your AI app and add it again.</p></body>`);
+    }
+  }
+
+  @Public()
+  @Post(['oauth/token', 'token'])
+  async token(@Body() body: any, @Headers('authorization') basic: string | undefined, @Res() res: Response) {
+    try { res.status(200).set({ 'Cache-Control': 'no-store', Pragma: 'no-cache' }).json(await this.oauth.token(body, basic)); } catch (e) { this.fail(res, e); }
+  }
+
+  @Public()
+  @Post('oauth/revoke')
+  async revoke(@Body() body: any, @Headers('authorization') basic: string | undefined) {
+    await this.oauth.revokeToken(body, basic);
+    return {};
+  }
+
+  // ---- signed-in web app ----
+  @Get('oauth/request/:id')
+  describe(@Param('id') id: string) {
+    return this.oauth.describeRequest(id);
+  }
+
+  @Post('oauth/request/:id/approve')
+  approve(@UserId() userId: string, @Param('id') id: string) {
+    return this.oauth.decide(userId, id, true);
+  }
+
+  @Post('oauth/request/:id/deny')
+  deny(@UserId() userId: string, @Param('id') id: string) {
+    return this.oauth.decide(userId, id, false);
+  }
+
+  @Get('oauth/grants')
+  grants(@UserId() userId: string) {
+    return this.oauth.listGrants(userId);
+  }
+
+  @Delete('oauth/grants/:clientId')
+  revokeGrant(@UserId() userId: string, @Param('clientId') clientId: string) {
+    return this.oauth.revokeGrant(userId, clientId);
   }
 }

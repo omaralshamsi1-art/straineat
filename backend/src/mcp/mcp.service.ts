@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional, UnauthorizedException } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
 import type { Request, Response } from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -12,6 +12,7 @@ import { WaterService } from '../water/water.service';
 import { StepsService } from '../steps/steps.service';
 import { normalizeKey } from '../common/nutrition-math';
 import { MealItem } from '../common/types';
+import { OAuthService } from './oauth.service';
 
 const LOOKUP_USER = '__lookup__';
 export const MCP_RATE_LIMIT = 60; // requests per key per minute
@@ -35,6 +36,7 @@ export class McpService {
     private readonly plans: PlanService,
     private readonly water: WaterService,
     private readonly steps: StepsService,
+    @Optional() private readonly oauth?: OAuthService,
   ) {}
 
   /** Personal connector link token (trial: the secret lives in the URL; OAuth comes later). */
@@ -52,6 +54,11 @@ export class McpService {
 
   async userFor(token: string | undefined): Promise<string> {
     if (!token || token.length < 20) throw new UnauthorizedException('Missing connector token');
+    if (token.startsWith('sea_')) {
+      const viaOAuth = await this.oauth?.userForAccessToken(token);
+      if (!viaOAuth) throw new UnauthorizedException('Invalid or expired access token');
+      return viaOAuth;
+    }
     const hit = await this.repo.getCache(LOOKUP_USER, `mcp:${hash(token)}`);
     const userId = (hit?.payload as any)?.userId as string | undefined;
     if (!userId) throw new UnauthorizedException('Invalid connector token');
@@ -83,7 +90,12 @@ export class McpService {
     const key = McpService.keyFrom(req, pathToken);
     if (key && !this.allow(key)) { res.set('Retry-After', '60'); rpcError(429, -32029, 'Too many requests — try again in a minute'); return; }
     let userId: string;
-    try { userId = await this.userFor(key); } catch (e: any) { rpcError(401, -32001, e.message); return; }
+    try { userId = await this.userFor(key); } catch (e: any) {
+      // Point MCP clients at the OAuth flow (RFC 9728) — only on the header endpoint, legacy links stay key-only.
+      if (!pathToken && this.oauth) res.set('WWW-Authenticate', `Bearer resource_metadata="${this.oauth.base(req)}/.well-known/oauth-protected-resource/mcp", scope="straineat"`);
+      rpcError(401, -32001, e.message);
+      return;
+    }
     const server = this.build(userId);
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     res.on('close', () => { transport.close().catch(() => undefined); server.close().catch(() => undefined); });

@@ -1,4 +1,5 @@
 import { McpService } from './mcp/mcp.service';
+import { OAuthService } from './mcp/oauth.service';
 import { WeekService } from './week/week.service';
 import { StepsService } from './steps/steps.service';
 import { WaterService } from './water/water.service';
@@ -23,7 +24,7 @@ import {
   ProfileController,
   WhoopController,
   AssistantController,
-  ScheduleController, WaterController, StepsController, WeekController, McpController,
+  ScheduleController, WaterController, StepsController, WeekController, McpController, OAuthController,
 } from './controllers';
 import { ScheduleService } from './schedule/schedule.service';
 import { ShortcutService } from './energy/shortcut.service';
@@ -44,7 +45,7 @@ import { REPOSITORY } from './storage/repository';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true })],
-  controllers: [HealthController, AuthController, FoodsController, MotivationController, PushController, MealsController, PlanController, WorkoutsController, CoachController, EnergyController, ProfileController, WhoopController, AssistantController, ScheduleController, WaterController, StepsController, WeekController, McpController],
+  controllers: [HealthController, AuthController, FoodsController, MotivationController, PushController, MealsController, PlanController, WorkoutsController, CoachController, EnergyController, ProfileController, WhoopController, AssistantController, ScheduleController, WaterController, StepsController, WeekController, McpController, OAuthController],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_FILTER, useClass: LocalizedErrorFilter },
@@ -77,6 +78,7 @@ import { REPOSITORY } from './storage/repository';
     StepsService,
     WeekService,
     McpService,
+    OAuthService,
   ],
 })
 export class AppModule {}

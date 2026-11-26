@@ -1098,22 +1098,24 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     <div class="card" id="aiCard">
       <h3>سجّل من ChatGPT أو Claude أو Gemini <span class="chip2 lo" style="font-size:11px">تجريبي</span></h3>
       <p class="small muted" style="margin-top:-4px">اربط StrainEat مرة وحدة، وبعدها صوّر وجبتك أو اكتبها في المحادثة هناك، وتنحفظ في حسابك هنا. التحليل يمشي على اشتراكك في تلك الخدمة.</p>
-      <button class="btn ghost" id="aiShow">أظهر رابط الربط</button>
-      <div id="aiBox" class="hidden">
-        <p class="small" style="margin:12px 0 4px"><b>Claude</b> <span class="small muted">— الأفضل: المفتاح يروح في الترويسة وما يظهر في أي رابط</span></p>
-        <p class="small muted" style="line-height:1.7;margin:0 0 6px">الإعدادات ← Connectors ← Add custom connector. الصق رابط الخادم، اختر No sign-in، وبعدين Add header: الاسم <b dir="ltr">Authorization</b> والقيمة اللي تحت.</p>
-        <label class="small muted">رابط الخادم</label>
-        <div style="display:flex;gap:8px;margin-top:4px"><input id="aiServer" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiServer" style="width:auto;padding:0 16px">نسخ</button></div>
-        <label class="small muted" style="margin-top:8px">قيمة Authorization (سرية مثل كلمة السر)</label>
-        <div style="display:flex;gap:8px;margin-top:4px"><input id="aiHeader" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiHeader" style="width:auto;padding:0 16px">نسخ</button></div>
-        <p class="small" style="margin:16px 0 4px"><b>ChatGPT و Gemini</b> <span class="small muted">— هنا المفتاح داخل الرابط نفسه</span></p>
-        <label class="small muted">رابط الربط الخاص فيك (سري مثل كلمة السر)</label>
-        <div style="display:flex;gap:8px;margin-top:4px"><input id="aiUrl" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiUrl" style="width:auto;padding:0 16px">نسخ</button></div>
-        <details class="small" style="margin-top:10px;line-height:1.7"><summary><b>ChatGPT</b></summary>من chatgpt.com على الكمبيوتر: الإعدادات ← Apps ← Advanced settings ← فعّل Developer mode، ثم Create app، الصق الرابط واختر بدون مصادقة (No authentication).</details>
-        <details class="small" style="margin-top:6px;line-height:1.7"><summary><b>Gemini</b></summary>من gemini.google.com/devmode على الكمبيوتر (Settings ← Gemini Apps Developer Mode): ‏+ Create new، الصق الرابط في MCP Server URL، وافق واضغط Connect.</details>
-        <p class="small muted" style="margin-top:10px">جرّب: «سجّل غدائي» مع صورة الوجبة، أو «كم باقي لي اليوم؟». الخيارات تختلف حسب خطتك في كل خدمة. الأرقام تقدير من الذكاء الاصطناعي، وإذا سجّلت نفس الوجبة قبل نستخدم قيمك المحفوظة.</p>
-        <button class="btn text" id="aiRotate" style="margin-top:4px">مفتاح جديد (يلغي القديم في كل الخدمات)</button>
-      </div>
+      <label class="small muted">رابط الخادم</label>
+      <div style="display:flex;gap:8px;margin-top:4px"><input id="aiServer" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiServer" style="width:auto;padding:0 16px">نسخ</button></div>
+      <p class="small muted" style="margin:8px 0 0">أضفه كـ connector مخصص، وبيفتح لك StrainEat عشان توافق. ما فيه مفاتيح تنسخها.</p>
+      <details class="small" style="margin-top:10px;line-height:1.7"><summary><b>Claude</b></summary>الإعدادات ← Connectors ← Add custom connector ← الصق الرابط ← اختر Sign in ← Add، وبعدين Connect ووافق في StrainEat.</details>
+      <details class="small" style="margin-top:6px;line-height:1.7"><summary><b>ChatGPT</b></summary>من chatgpt.com على الكمبيوتر: الإعدادات ← Apps ← Advanced settings ← فعّل Developer mode، ثم Create app، الصق الرابط واختر OAuth، وبعدين وافق في StrainEat.</details>
+      <details class="small" style="margin-top:6px;line-height:1.7"><summary><b>Gemini</b></summary>من gemini.google.com/devmode على الكمبيوتر (Settings ← Gemini Apps Developer Mode): ‏+ Create new، الصق الرابط في MCP Server URL، اضغط Connect ووافق في StrainEat.</details>
+      <div id="aiApps" style="margin-top:12px"></div>
+      <p class="small muted" style="margin-top:10px">جرّب: «سجّل غدائي» مع صورة الوجبة، أو «كم باقي لي اليوم؟». الخيارات تختلف حسب خطتك في كل خدمة. الأرقام تقدير من الذكاء الاصطناعي، وإذا سجّلت نفس الوجبة قبل نستخدم قيمك المحفوظة.</p>
+      <details class="small" style="margin-top:8px;line-height:1.7"><summary class="muted">متقدم: ربط بمفتاح (للتطبيقات اللي ما تدعم تسجيل الدخول)</summary>
+        <button class="btn ghost" id="aiShow" style="margin-top:8px">أظهر المفتاح</button>
+        <div id="aiBox" class="hidden">
+          <label class="small muted" style="margin-top:8px">قيمة Authorization (سرية مثل كلمة السر)</label>
+          <div style="display:flex;gap:8px;margin-top:4px"><input id="aiHeader" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiHeader" style="width:auto;padding:0 16px">نسخ</button></div>
+          <label class="small muted" style="margin-top:8px">رابط الربط الخاص فيك (سري مثل كلمة السر)</label>
+          <div style="display:flex;gap:8px;margin-top:4px"><input id="aiUrl" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiUrl" style="width:auto;padding:0 16px">نسخ</button></div>
+          <button class="btn text" id="aiRotate" style="margin-top:4px">مفتاح جديد (يلغي القديم في كل الخدمات)</button>
+        </div>
+      </details>
     </div>
 
     <div class="card">
@@ -1318,6 +1320,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     if (v === 'progress') loadProgress();
     if (v === 'plan') { loadLocation(); loadScheduleSettings(); }
     if (v === 'plan' || v === 'settings') loadPlan();
+    if (v === 'settings') loadAiApps();
   }
   document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
 
@@ -2573,16 +2576,44 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   async function showConnector(rotate) {
     try {
       const r = await api(`connector/token${rotate ? '?rotate=1' : ''}`);
-      $('aiServer').value = `${location.origin}/mcp`;
       $('aiHeader').value = `Bearer ${r.token}`;
       $('aiUrl').value = `${location.origin}/mcp/${r.token}`;
       $('aiBox').classList.remove('hidden'); $('aiShow').classList.add('hidden');
       if (rotate) toast(T('تم إنشاء مفتاح جديد — حدّثه في الخدمات المربوطة'), 3500);
     } catch (e) { toast(e.message); }
   }
+  async function loadAiApps() {
+    $('aiServer').value = `${location.origin}/mcp`;
+    let apps = [];
+    try { apps = await api('oauth/grants'); } catch { return; }
+    $('aiApps').innerHTML = apps.length ? `<div class="small muted" style="margin-bottom:4px">${T('التطبيقات المربوطة')}</div>` + apps.map((a) => `<div class="row" style="padding:8px 0;border-top:1px solid var(--line);align-items:center"><span><b>${esc(a.name)}</b> <span class="small muted" dir="ltr">${esc(a.host)}</span><br><span class="small muted">${a.lastUsedAt ? L`آخر استخدام ${new Date(a.lastUsedAt).toLocaleString(LOC, { dateStyle: 'medium', timeStyle: 'short' })}` : T('ما استُخدم بعد')}</span></span><button class="btn text" data-revoke="${esc(a.clientId)}" style="width:auto">${T('إلغاء الربط')}</button></div>`).join('') : '';
+    $('aiApps').querySelectorAll('[data-revoke]').forEach((b) => { b.onclick = async () => {
+      if (!confirmTap(b)) return;
+      try { await api(`oauth/grants/${encodeURIComponent(b.dataset.revoke)}`, { method: 'DELETE' }); toast(T('تم إلغاء الربط ✓')); loadAiApps(); } catch (e) { toast(e.message); }
+    }; });
+  }
+  async function openOAuthConsent(id) {
+    let r;
+    try { r = await api(`oauth/request/${encodeURIComponent(id)}`); } catch (e) { ls.del('ns_oauth_req'); return toast(e.message, 5000); }
+    detOpen(T('ربط تطبيق ذكاء اصطناعي'));
+    $('detBody').innerHTML = `<div class="card"><h3>${L`«${esc(r.clientName)}» يبي يوصل لحسابك في StrainEat`}</h3>
+      <p class="small muted" dir="ltr" style="text-align:start">${esc(r.host)}</p>
+      <p class="small" style="line-height:1.8">${T('بيقدر:')}<br>• ${T('يسجّل وجباتك والماء والوزن')}<br>• ${T('يقرأ ملخص اليوم: السعرات والماكروز والماء والخطوات والحرق ووجبات اليوم')}</p>
+      <p class="small muted">${T('ما يقدر يحذف شي أو يغيّر خطتك وإعداداتك. تقدر تلغي الربط أي وقت من الإعدادات.')}</p>
+      <p class="small muted">${T('وافق بس إذا أنت اللي بديت الربط الحين من تطبيق الذكاء الاصطناعي.')}</p>
+      <button class="btn" id="oaAllow">${T('سماح')}</button>
+      <button class="btn ghost" id="oaDeny" style="margin-top:8px">${T('رفض')}</button></div>`;
+    const go = async (ok) => {
+      $('oaAllow').disabled = $('oaDeny').disabled = true;
+      try { const d = await api(`oauth/request/${encodeURIComponent(id)}/${ok ? 'approve' : 'deny'}`, { method: 'POST' }); ls.del('ns_oauth_req'); location.href = d.redirect; }
+      catch (e) { ls.del('ns_oauth_req'); toast(e.message, 5000); $('oaAllow').disabled = $('oaDeny').disabled = false; }
+    };
+    $('oaAllow').onclick = () => go(true);
+    $('oaDeny').onclick = () => go(false);
+  }
   $('aiShow').onclick = () => showConnector(false);
   $('aiRotate').onclick = () => { if (confirmTap($('aiRotate'))) showConnector(true); };
-  document.querySelectorAll('#aiBox [data-copy]').forEach((b) => { b.onclick = async () => { const el = $(b.dataset.copy); try { await navigator.clipboard.writeText(el.value); toast(T('تم النسخ ✓')); } catch { el.select(); } }; });
+  document.querySelectorAll('#aiCard [data-copy]').forEach((b) => { b.onclick = async () => { const el = $(b.dataset.copy); try { await navigator.clipboard.writeText(el.value); toast(T('تم النسخ ✓')); } catch { el.select(); } }; });
   $('hotEnv').onchange = async () => {
     try { await api('profile', { method: 'PUT', json: { hotEnvironment: $('hotEnv').checked } }); toast(T('تم الحفظ ✓')); } catch (e) { toast(e.message); }
   };
@@ -3304,12 +3335,17 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   };
 
   async function boot() {
-    if (!signedIn()) return show('setup');
+    if (!signedIn()) { if (ls.get('ns_oauth_req')) setTimeout(() => toast(T('سجّل دخولك عشان تكمل ربط تطبيق الذكاء الاصطناعي'), 5000), 300); return show('setup'); }
+    if (ls.get('ns_oauth_req')) setTimeout(() => openOAuthConsent(ls.get('ns_oauth_req')), 0);
     const prof = await api('profile');
     // keep the AI / notification language in step with the UI
     if (prof.language !== LANG) api('profile', { method: 'PUT', json: { language: LANG } }).catch(() => {});
     if (!prof.onboarded) return startOnboarding(prof);
     show('today');
+  }
+  if (location.hash.startsWith('#oauth=')) {
+    ls.set('ns_oauth_req', decodeURIComponent(location.hash.slice(7)));
+    history.replaceState(null, '', location.pathname);
   }
   if (location.hash.startsWith('#invite=')) {
     const code = decodeURIComponent(location.hash.slice(8));
