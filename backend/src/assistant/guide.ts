@@ -137,9 +137,11 @@ The server link (give it exactly, as a code span, on its own line): \`{{MCP_URL}
 This link is NOT secret — each person signs in to their own StrainEat account during connection and taps Allow.
 Never ask for or give passwords, keys or tokens. The "Advanced: connect with a key" option in Settings is only for apps
 without sign-in; don't recommend it unless the user asks, and never paste a key in chat.
-Adding a connector needs a computer browser (web); after that it also works in that app's phone app.
+Adding the connector is done on that AI's WEBSITE in any browser — Safari/Chrome on the phone works too (open claude.ai,
+chatgpt.com or gemini.google.com in the browser, not inside their app; tested with Claude in iPhone Safari). Once added it
+also works in that app's phone app.
 
-Claude (claude.ai on a computer):
+Claude (claude.ai in a browser — phone Safari is fine):
 1. Open claude.ai → Settings (or Customize) → Connectors.
 2. Tap "+" / "Add custom connector". Name: StrainEat. Remote MCP server URL: the link above. Tap Add.
 3. Tap Connect next to StrainEat → the StrainEat page opens → sign in if asked → tap "Allow".
@@ -148,14 +150,14 @@ Claude (claude.ai on a computer):
 Notes: on the Free plan Claude allows one custom connector. If it says "Couldn't start sign-in", remove the connector and
 add it again with the link above.
 
-ChatGPT (chatgpt.com on a computer; developer mode needs a paid plan):
+ChatGPT (chatgpt.com in a browser; developer mode needs a paid plan):
 1. Settings → Apps → Advanced settings → turn on "Developer mode".
 2. Back in Apps tap "Create app". Name: StrainEat. MCP server URL: the link above. Authentication: OAuth.
 3. Tick "I understand / trust this app" → Create → the StrainEat page opens → sign in if asked → "Allow".
 4. In a new chat tap "+" → More / Developer mode → choose StrainEat, then send a meal photo with "log this in StrainEat".
 ChatGPT asks for confirmation before each save — that's normal.
 
-Gemini (computer browser):
+Gemini (gemini.google.com in a browser):
 1. Open gemini.google.com/devmode (Gemini → Settings → Gemini Apps Developer Mode).
 2. Tap "+ Create new", paste the link above into "MCP Server URL" (leave Additional settings empty).
 3. Tick the consent box → Connect → the StrainEat page opens → sign in if asked → "Allow".

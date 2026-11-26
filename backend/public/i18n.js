@@ -9,6 +9,9 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "افتح claude.ai في المتصفح (سفاري أو كروم، حتى من الجوال — مب من داخل تطبيق Claude): الإعدادات ← Connectors ← Add custom connector ← الصق الرابط ← اختر Sign in ← Add، وبعدين Connect ووافق في StrainEat.": "Open claude.ai in a browser (Safari or Chrome, phone is fine — not inside the Claude app): Settings → Connectors → Add custom connector → paste the URL → choose Sign in → Add, then Connect and approve in StrainEat.",
+    "افتح chatgpt.com في المتصفح (سفاري أو كروم، حتى من الجوال): الإعدادات ← Apps ← Advanced settings ← فعّل Developer mode، ثم Create app، الصق الرابط واختر OAuth، وبعدين وافق في StrainEat.": "Open chatgpt.com in a browser (Safari or Chrome, phone is fine): Settings → Apps → Advanced settings → turn on Developer mode, then Create app, paste the URL, choose OAuth, then approve in StrainEat.",
+    "افتح gemini.google.com/devmode في المتصفح (Settings ← Gemini Apps Developer Mode): ‏+ Create new، الصق الرابط في MCP Server URL، اضغط Connect ووافق في StrainEat.": "Open gemini.google.com/devmode in a browser (Settings → Gemini Apps Developer Mode): + Create new, paste the URL as the MCP Server URL, click Connect and approve in StrainEat.",
     "الخصوصية والبيانات": "Privacy & data",
     "التحليل بالذكاء الاصطناعي": "AI analysis",
     "StrainEat أداة تتبّع وليس بديلاً عن الطبيب. الأرقام تقديرية؛ استشر طبيبك قبل أي تغيير كبير في أكلك أو نشاطك.": "StrainEat is a tracking tool, not a substitute for a doctor. Numbers are estimates; check with your doctor before major changes to your diet or activity.",
