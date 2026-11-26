@@ -80,3 +80,20 @@ describe('MCP connector key transport + rate limit', () => {
     expect(r2.status).toHaveBeenCalledWith(401);
   });
 });
+
+import { mealCardHtml, scaleItem } from '../src/mcp/mcp.service';
+describe('MCP meal card', () => {
+  it('scales an item by grams, or by quantity when grams are unknown', () => {
+    const it1 = scaleItem({ name: 'Rice', grams: 150, quantity: 1, unit: 'g', calories: 195, protein_g: 4, carbs_g: 42, fat_g: 1, sodium_mg: 10 } as any, 0.75);
+    expect(it1).toMatchObject({ grams: 113, calories: 146.3, carbs_g: 31.5, sodium_mg: 8 });
+    const it2 = scaleItem({ name: 'Bread', grams: null, quantity: 2, unit: 'piece', calories: 200, protein_g: 6, carbs_g: 40, fat_g: 2 } as any, 1.25);
+    expect(it2).toMatchObject({ grams: null, quantity: 2.5, calories: 250 });
+  });
+  it('serves a self-contained card with the MCP Apps client inlined', () => {
+    const h = mealCardHtml();
+    expect(h).toContain('globalThis.McpApps=');
+    expect(h).not.toContain('/*__MCP_APPS__*/');
+    expect(h).not.toMatch(/\bexport\{/);
+    expect(h).toContain('meal_card_adjust');
+  });
+});

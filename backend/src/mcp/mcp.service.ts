@@ -13,6 +13,37 @@ import { StepsService } from '../steps/steps.service';
 import { normalizeKey } from '../common/nutrition-math';
 import { MealItem } from '../common/types';
 import { OAuthService } from './oauth.service';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+export const MEAL_CARD_URI = 'ui://straineat/meal-card.html';
+/** MCP Apps (SEP-1865) resource MIME type. */
+export const RESOURCE_MIME_TYPE = 'text/html;profile=mcp-app';
+let cardHtml: string | null = null;
+/** The meal review card (MCP Apps UI). The ext-apps client bundle is inlined: the sandboxed iframe can't load scripts from elsewhere. */
+export function mealCardHtml(): string {
+  if (cardHtml) return cardHtml;
+  const bundle = readFileSync(require.resolve('@modelcontextprotocol/ext-apps/app-with-deps'), 'utf8');
+  const at = bundle.lastIndexOf('export{');
+  const names = bundle.slice(at + 7, bundle.indexOf('}', at)).split(',').map((p) => p.trim().split(/\s+as\s+/));
+  const glue = `globalThis.McpApps={${names.map(([local, exported]) => `${exported ?? local}:${local}`).join(',')}};`;
+  const lib = bundle.slice(0, at) + glue + bundle.slice(bundle.indexOf('}', at) + 1).replace(/^;/, '');
+  const tpl = readFileSync(join(__dirname, '..', '..', 'public', 'mcp', 'meal-card.html'), 'utf8');
+  cardHtml = tpl.replace('/*__MCP_APPS__*/', () => lib.replace(/<\/script/gi, '<\\/script'));
+  return cardHtml;
+}
+
+/** Scale one item's amount and nutrients by `f`. */
+export function scaleItem(it: MealItem, f: number): MealItem {
+  const r1 = (v: unknown) => Math.round(Number(v ?? 0) * f * 10) / 10;
+  return {
+    ...it,
+    grams: it.grams ? Math.round(it.grams * f) : it.grams,
+    quantity: it.grams ? it.quantity : Math.round((it.quantity ?? 1) * f * 100) / 100,
+    calories: r1(it.calories), protein_g: r1(it.protein_g), carbs_g: r1(it.carbs_g), fat_g: r1(it.fat_g),
+    fiber_g: r1(it.fiber_g), sugar_g: r1(it.sugar_g), sodium_mg: Math.round(Number(it.sodium_mg ?? 0) * f),
+  };
+}
 
 const LOOKUP_USER = '__lookup__';
 export const MCP_RATE_LIMIT = 60; // requests per key per minute
@@ -96,7 +127,7 @@ export class McpService {
       rpcError(401, -32001, e.message);
       return;
     }
-    const server = this.build(userId);
+    const server = this.build(userId, this.oauth?.base(req) ?? '');
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     res.on('close', () => { transport.close().catch(() => undefined); server.close().catch(() => undefined); });
     await server.connect(transport);
@@ -127,7 +158,22 @@ export class McpService {
     };
   }
 
-  private build(userId: string) {
+  /** What the meal card renders: the saved meal plus today's balance. */
+  async card(userId: string, meal: any, base: string) {
+    const day = await this.today(userId).catch(() => null);
+    const f = meal.final;
+    return {
+      meal: {
+        id: meal.id, status: meal.status, name: f.meal_name, name_ar: f.meal_name_ar, restaurant: f.restaurant ?? null, source: f.source,
+        items: (f.items ?? []).map((i: MealItem) => ({ name: i.name, name_ar: i.name_ar, quantity: i.quantity, unit: i.unit, grams: i.grams, calories: i.calories, protein_g: i.protein_g, carbs_g: i.carbs_g, fat_g: i.fat_g })),
+        totals: { calories: f.totals.calories, protein_g: f.totals.protein_g, carbs_g: f.totals.carbs_g, fat_g: f.totals.fat_g },
+      },
+      today: day && { leftKcal: day.leftKcal, targetKcal: day.targetKcal, eatenKcal: day.eatenKcal, protein: day.protein },
+      appUrl: `${base}/app/`,
+    };
+  }
+
+  private build(userId: string, base = '') {
     const server = new McpServer({ name: 'StrainEat', version: '1.0.0' }, { instructions: INSTRUCTIONS });
     const text = (o: unknown) => ({ content: [{ type: 'text' as const, text: typeof o === 'string' ? o : JSON.stringify(o) }] });
 
@@ -146,7 +192,13 @@ export class McpService {
       sodium_mg: z.number().optional(),
     });
 
+    server.registerResource('StrainEat meal card', MEAL_CARD_URI, { description: 'Review card for a logged meal: items, amounts, macros and what is left today.', mimeType: RESOURCE_MIME_TYPE },
+      async () => ({ contents: [{ uri: MEAL_CARD_URI, mimeType: RESOURCE_MIME_TYPE, text: mealCardHtml() }] }));
+    // Both spellings: `ui.resourceUri` (current spec) and the legacy flat key older hosts read.
+    const ui = (extra: Record<string, unknown> = {}) => ({ ui: { resourceUri: MEAL_CARD_URI, ...extra }, 'ui/resourceUri': MEAL_CARD_URI });
+
     server.registerTool('log_meal', {
+      _meta: ui(),
       title: 'StrainEat: log a meal',
       description: 'Save a meal, snack or drink to StrainEat with per-item nutrition. Totals are recomputed from the items. If the user has logged this exact meal before, or the restaurant has published values, StrainEat uses those instead.',
       inputSchema: {
@@ -174,11 +226,44 @@ export class McpService {
       const t = meal.final.totals;
       const day = await this.today(userId).catch(() => null);
       this.log.log(`MCP log_meal ${userId.slice(0, 3)}… ${known ? 'known' : 'estimate'} ${Math.round(t.calories)} kcal`);
-      return text({
-        saved: true, status: meal.status, usedSavedValues: !!known,
-        meal: { name: meal.final.meal_name, kcal: Math.round(t.calories), protein_g: Math.round(t.protein_g), carbs_g: Math.round(t.carbs_g), fat_g: Math.round(t.fat_g) },
-        today: day && { leftKcal: day.leftKcal, targetKcal: day.targetKcal, protein: day.protein },
-      });
+      const card = await this.card(userId, meal, base);
+      return {
+        ...text({
+          saved: true, status: meal.status, usedSavedValues: !!known,
+          meal: { name: meal.final.meal_name, kcal: Math.round(t.calories), protein_g: Math.round(t.protein_g), carbs_g: Math.round(t.carbs_g), fat_g: Math.round(t.fat_g) },
+          today: day && { leftKcal: day.leftKcal, targetKcal: day.targetKcal, protein: day.protein },
+          note: 'A StrainEat review card is shown to the user; they can adjust amounts or delete there.',
+        }),
+        structuredContent: card,
+      };
+    });
+
+    // Card-only actions (hidden from the model; the card calls them).
+    server.registerTool('meal_card_adjust', {
+      title: 'StrainEat: adjust an item in the meal card',
+      description: 'Scale one item of a logged meal (used by the review card).',
+      inputSchema: { meal_id: z.string(), item_index: z.number().int().min(0), factor: z.number().min(0.1).max(10) },
+      _meta: ui({ visibility: ['app'] }),
+    }, async (a) => {
+      const meal = await this.meals.get(userId, a.meal_id);
+      const items: MealItem[] = [...(meal.final.items ?? [])];
+      if (!items[a.item_index]) throw new Error('No such item');
+      items[a.item_index] = scaleItem(items[a.item_index], a.factor);
+      const updated = await this.meals.update(userId, a.meal_id, { items });
+      const card = await this.card(userId, updated, base);
+      return { ...text({ adjusted: true, kcal: Math.round(card.meal.totals.calories) }), structuredContent: card };
+    });
+
+    server.registerTool('meal_card_delete', {
+      title: 'StrainEat: delete a meal from the card',
+      description: 'Delete a logged meal (used by the review card).',
+      inputSchema: { meal_id: z.string() },
+      annotations: { destructiveHint: true },
+      _meta: ui({ visibility: ['app'] }),
+    }, async (a) => {
+      await this.meals.remove(userId, a.meal_id);
+      const day = await this.today(userId).catch(() => null);
+      return { ...text({ deleted: true }), structuredContent: { deleted: true, today: day && { leftKcal: day.leftKcal, targetKcal: day.targetKcal, eatenKcal: day.eatenKcal, protein: day.protein } } };
     });
 
     server.registerTool('today_summary', {

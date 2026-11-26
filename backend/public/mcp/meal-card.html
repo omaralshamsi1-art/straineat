@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StrainEat</title>
+<style>
+  :root{--bg:#ffffff;--card:#f6f6f3;--ink:#111113;--muted:#6b6f76;--line:#e6e6e1;--brand:#111113;--brand-ink:#ffffff;--accent:#e9e37a;
+    --p:#3b82f6;--c:#f59e0b;--f:#ec4899;--ok:#16a34a;--bad:#dc2626;--r:18px;
+    font-family:var(--font-sans,-apple-system,system-ui,"Segoe UI",Tahoma,sans-serif)}
+  [data-theme=dark]{--bg:#141618;--card:#1d2024;--ink:#f2f2f0;--muted:#9aa1a9;--line:#2c3036;--brand:#f3ef9e;--brand-ink:#111113;--accent:#f3ef9e;
+    --p:#60a5fa;--c:#fbbf24;--f:#f472b6;--ok:#4ade80;--bad:#f87171}
+  *{box-sizing:border-box}
+  body{margin:0;background:transparent;color:var(--ink);font-size:14px;line-height:1.45}
+  .wrap{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:16px;max-width:560px}
+  .top{display:flex;align-items:flex-start;gap:12px}
+  .title{flex:1;min-width:0}
+  .title h1{font-size:17px;margin:0 0 2px;font-weight:800;overflow-wrap:anywhere}
+  .sub{color:var(--muted);font-size:12.5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .chip{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700;background:var(--card);border:1px solid var(--line)}
+  .chip.ok{color:var(--ok)}
+  .kcal{text-align:end}
+  .kcal b{font-size:30px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+  .kcal small{display:block;color:var(--muted);font-size:12px;margin-top:-4px}
+  .macros{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 6px}
+  .m{background:var(--card);border-radius:12px;padding:8px 10px}
+  .m span{color:var(--muted);font-size:11.5px}
+  .m b{display:block;font-size:16px;font-variant-numeric:tabular-nums}
+  .bar{height:5px;border-radius:9px;background:var(--line);margin-top:6px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:9px}
+  .items{margin-top:10px;border-top:1px solid var(--line)}
+  .it{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .it .n{flex:1;min-width:0}
+  .it .n b{display:block;font-weight:650;overflow-wrap:anywhere}
+  .it .n span{color:var(--muted);font-size:12px}
+  .step{display:flex;align-items:center;gap:4px}
+  .step button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;line-height:1;cursor:pointer}
+  .step button:disabled{opacity:.4;cursor:default}
+  .step em{font-style:normal;min-width:62px;text-align:center;font-variant-numeric:tabular-nums;font-size:13px}
+  .day{display:flex;align-items:center;gap:14px;margin-top:14px;background:var(--card);border-radius:14px;padding:12px}
+  .ring{flex:none}
+  .day .t{flex:1}
+  .day .t b{font-size:15px}
+  .day .t div{color:var(--muted);font-size:12.5px}
+  .acts{display:flex;gap:8px;margin-top:12px}
+  .btn{flex:1;border:0;border-radius:999px;padding:10px 12px;font-weight:700;font-size:14px;cursor:pointer;background:var(--brand);color:var(--brand-ink)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .btn.danger{background:transparent;color:var(--bad);border:1px solid var(--line);flex:none;padding:10px 16px}
+  .note{color:var(--muted);font-size:11.5px;margin-top:10px}
+  .busy{opacity:.55;pointer-events:none}
+  .empty{color:var(--muted);padding:18px;text-align:center}
+  .gone{text-align:center;padding:10px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap" id="root"><div class="empty" id="empty">…</div></div>
+<script>/*__MCP_APPS__*/</script>
+<script>
+(async () => {
+  const { App, applyDocumentTheme, applyHostStyleVariables, applyHostFonts } = globalThis.McpApps;
+  const app = new App({ name: 'StrainEat meal card', version: '1.0.0' }, {}, { autoResize: true });
+  let data = null, lang = 'ar', busy = false;
+  const root = document.getElementById('root');
+  const AR = {
+    kcal: 'سعرة', p: 'بروتين', c: 'كارب', f: 'دهون', g: 'غ', left: 'باقي لك اليوم', of: 'من', over: 'فوق هدفك بـ',
+    proteinLeft: 'بروتين باقي', saved: 'محفوظة', draft: 'مسودة', known: 'قيمك المحفوظة', est: 'تقدير الذكاء الاصطناعي',
+    open: 'افتح في StrainEat', del: 'حذف', deleted: 'انحذفت الوجبة من StrainEat.', undo: 'سجّلها من جديد من المحادثة إذا تبي.',
+    note: 'عدّل الكميات بالأزرار — السعرات والماكروز تتحدّث فوراً.', fail: 'ما قدرنا نحفظ التعديل، جرّب مرة ثانية.', confirmDel: 'اضغط مرة ثانية للحذف',
+    serving: 'حصة',
+  };
+  const EN = {
+    kcal: 'kcal', p: 'Protein', c: 'Carbs', f: 'Fat', g: 'g', left: 'Left today', of: 'of', over: 'Over target by',
+    proteinLeft: 'protein left', saved: 'Saved', draft: 'Draft', known: 'Your saved values', est: 'AI estimate',
+    open: 'Open in StrainEat', del: 'Delete', deleted: 'Meal removed from StrainEat.', undo: 'Log it again from the chat if you like.',
+    note: 'Adjust amounts with the buttons — calories and macros update instantly.', fail: 'Couldn’t save that change, try again.', confirmDel: 'Tap again to delete',
+    serving: 'serving',
+  };
+  const t = (k) => (lang === 'ar' ? AR : EN)[k];
+  const fmt = (n) => (n == null || !isFinite(n)) ? '—' : Math.round(n).toLocaleString(lang === 'ar' ? 'ar-AE-u-nu-latn' : 'en-US');
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+  function applyCtx(ctx) {
+    if (!ctx) return;
+    if (ctx.theme) applyDocumentTheme(ctx.theme);
+    document.documentElement.dataset.theme = ctx.theme === 'dark' ? 'dark' : 'light';
+    if (ctx.styles?.variables) applyHostStyleVariables(ctx.styles.variables);
+    if (ctx.styles?.css?.fonts) applyHostFonts(ctx.styles.css.fonts);
+    if (ctx.locale) setLang(/^ar/i.test(ctx.locale) ? 'ar' : 'en');
+  }
+  function setLang(l) {
+    lang = l;
+    document.documentElement.lang = l; document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+    if (data) render();
+  }
+
+  function ring(left, target) {
+    const pct = target > 0 ? Math.max(0, Math.min(1, (target - left) / target)) : 0;
+    const r = 22, C = 2 * Math.PI * r, over = left < 0;
+    return `<svg class="ring" width="56" height="56" viewBox="0 0 56 56"><circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--line)" stroke-width="7"/>
+      <circle cx="28" cy="28" r="${r}" fill="none" stroke="${over ? 'var(--bad)' : 'var(--accent)'}" stroke-width="7" stroke-linecap="round"
+        stroke-dasharray="${(over ? 1 : pct) * C} ${C}" transform="rotate(-90 28 28)"/></svg>`;
+  }
+  const amount = (it) => it.grams ? `${fmt(it.grams)} ${t('g')}` : `${+(it.quantity ?? 1).toFixed(2)} ${esc(it.unit && it.unit !== 'serving' ? it.unit : t('serving'))}`;
+
+  function render() {
+    const m = data.meal, d = data.today;
+    if (data.deleted) { root.innerHTML = `<div class="gone"><b>${t('deleted')}</b><br>${t('undo')}</div>`; return; }
+    const name = lang === 'ar' ? (m.name_ar || m.name) : m.name;
+    const tot = m.totals, sumMacroKcal = Math.max(1, tot.protein_g * 4 + tot.carbs_g * 4 + tot.fat_g * 9);
+    const macro = (k, v, col) => `<div class="m"><span>${t(k)}</span><b>${fmt(v)} ${t('g')}</b><div class="bar"><i style="width:${Math.round(((k === 'f' ? 9 : 4) * v / sumMacroKcal) * 100)}%;background:var(--${col})"></i></div></div>`;
+    const items = m.items.map((it, i) => `<div class="it"><div class="n"><b>${esc(lang === 'ar' ? (it.name_ar || it.name) : it.name)}</b><span>${fmt(it.calories)} ${t('kcal')} · ${t('p')} ${fmt(it.protein_g)} ${t('g')}</span></div>
+      <div class="step"><button data-i="${i}" data-f="0.75" aria-label="-">−</button><em>${amount(it)}</em><button data-i="${i}" data-f="1.25" aria-label="+">+</button></div></div>`).join('');
+    const left = d ? d.leftKcal : null;
+    const dayHtml = d ? `<div class="day">${ring(left, d.targetKcal)}<div class="t"><b>${left >= 0 ? `${t('left')}: ${fmt(left)} ${t('kcal')}` : `${t('over')} ${fmt(-left)} ${t('kcal')}`}</b>
+      <div>${fmt(d.eatenKcal)} ${t('of')} ${fmt(d.targetKcal)} ${t('kcal')}${d.protein && d.protein.targetG ? ` · ${fmt(Math.max(0, d.protein.targetG - d.protein.eatenG))} ${t('g')} ${t('proteinLeft')}` : ''}</div></div></div>` : '';
+    root.innerHTML = `<div class="top"><div class="title"><h1>${esc(name)}</h1><div class="sub">${m.restaurant ? `<span>${esc(m.restaurant)}</span>·` : ''}
+        <span class="chip ${m.status === 'confirmed' ? 'ok' : ''}">${m.status === 'confirmed' ? '✓ ' + t('saved') : t('draft')}</span>
+        <span class="chip">${m.source === 'known_meal' ? t('known') : t('est')}</span></div></div>
+      <div class="kcal"><b>${fmt(tot.calories)}</b><small>${t('kcal')}</small></div></div>
+      <div class="macros">${macro('p', tot.protein_g, 'p')}${macro('c', tot.carbs_g, 'c')}${macro('f', tot.fat_g, 'f')}</div>
+      <div class="items">${items}</div>
+      ${dayHtml}
+      <div class="acts"><button class="btn" id="open">${t('open')}</button><button class="btn danger" id="del">${t('del')}</button></div>
+      <div class="note" id="note">${t('note')}</div>`;
+    root.querySelectorAll('.step button').forEach((b) => b.onclick = () => adjust(+b.dataset.i, +b.dataset.f));
+    document.getElementById('open').onclick = () => app.openLink({ url: data.appUrl }).catch(() => {});
+    const del = document.getElementById('del');
+    del.onclick = () => {
+      if (del.dataset.armed !== '1') { del.dataset.armed = '1'; del.textContent = t('confirmDel'); setTimeout(() => { if (del.isConnected) { del.dataset.armed = ''; del.textContent = t('del'); } }, 4000); return; }
+      remove();
+    };
+  }
+
+  async function call(name, args) {
+    if (busy) return null;
+    busy = true; root.classList.add('busy');
+    try {
+      const r = await app.callServerTool({ name, arguments: args });
+      if (r.isError || !r.structuredContent) throw new Error('failed');
+      return r.structuredContent;
+    } catch {
+      const n = document.getElementById('note'); if (n) n.textContent = t('fail');
+      return null;
+    } finally { busy = false; root.classList.remove('busy'); }
+  }
+  async function tellModel() {
+    const m = data.meal, d = data.today;
+    const text = data.deleted
+      ? `The user deleted the meal "${m.name}" from StrainEat in the card.`
+      : `The user adjusted "${m.name}" in the StrainEat card: now ${Math.round(m.totals.calories)} kcal (P ${Math.round(m.totals.protein_g)} g, C ${Math.round(m.totals.carbs_g)} g, F ${Math.round(m.totals.fat_g)} g).${d ? ` Calories left today: ${Math.round(d.leftKcal)}.` : ''}`;
+    try { await app.updateModelContext({ content: [{ type: 'text', text }] }); } catch {}
+  }
+  async function adjust(i, factor) {
+    const r = await call('meal_card_adjust', { meal_id: data.meal.id, item_index: i, factor });
+    if (r) { data = { ...data, ...r }; render(); tellModel(); }
+  }
+  async function remove() {
+    const r = await call('meal_card_delete', { meal_id: data.meal.id });
+    if (r) { data = { ...data, deleted: true }; render(); tellModel(); }
+  }
+
+  app.ontoolresult = (res) => {
+    const sc = res && res.structuredContent;
+    if (sc && sc.meal) { data = sc; render(); }
+    else if (!data) root.innerHTML = `<div class="empty">${esc((res?.content || []).map((c) => c.text || '').join(' ').slice(0, 300))}</div>`;
+  };
+  app.onhostcontextchanged = (ctx) => applyCtx(ctx);
+  await app.connect();
+  applyCtx(app.getHostContext());
+})();
+</script>
+</body>
+</html>
