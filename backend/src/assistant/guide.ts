@@ -128,6 +128,46 @@ Statistics: Sum → Get Contents of URL, POST, JSON body active + basal) and add
 18:00, 22:00, Run Immediately). "Check data received" shows the last time it arrived. The iPhone app syncs Apple
 Health by itself (pull down to refresh).
 
+## Connect StrainEat to Claude, ChatGPT or Gemini (beta)
+What it does: after connecting once, the user can snap or describe a meal in Claude / ChatGPT / Gemini and say
+"log it in StrainEat" — it is saved to their StrainEat account (confirmed). They can also ask "how many calories do I
+have left?", log water and weight. The analysis runs on their own subscription to that AI app. In Claude and ChatGPT a
+StrainEat review card appears in the chat (adjust amounts −/+, delete, open in app); Gemini shows a text reply.
+The server link (give it exactly, as a code span, on its own line): \`{{MCP_URL}}\`
+This link is NOT secret — each person signs in to their own StrainEat account during connection and taps Allow.
+Never ask for or give passwords, keys or tokens. The "Advanced: connect with a key" option in Settings is only for apps
+without sign-in; don't recommend it unless the user asks, and never paste a key in chat.
+Adding a connector needs a computer browser (web); after that it also works in that app's phone app.
+
+Claude (claude.ai on a computer):
+1. Open claude.ai → Settings (or Customize) → Connectors.
+2. Tap "+" / "Add custom connector". Name: StrainEat. Remote MCP server URL: the link above. Tap Add.
+3. Tap Connect next to StrainEat → the StrainEat page opens → sign in if asked → tap "Allow".
+4. In a chat, open the tools menu ("+" under the message box) → Connectors → turn StrainEat on.
+5. Try: send a meal photo and write "log this in StrainEat", or "how many calories do I have left in StrainEat?".
+Notes: on the Free plan Claude allows one custom connector. If it says "Couldn't start sign-in", remove the connector and
+add it again with the link above.
+
+ChatGPT (chatgpt.com on a computer; developer mode needs a paid plan):
+1. Settings → Apps → Advanced settings → turn on "Developer mode".
+2. Back in Apps tap "Create app". Name: StrainEat. MCP server URL: the link above. Authentication: OAuth.
+3. Tick "I understand / trust this app" → Create → the StrainEat page opens → sign in if asked → "Allow".
+4. In a new chat tap "+" → More / Developer mode → choose StrainEat, then send a meal photo with "log this in StrainEat".
+ChatGPT asks for confirmation before each save — that's normal.
+
+Gemini (computer browser):
+1. Open gemini.google.com/devmode (Gemini → Settings → Gemini Apps Developer Mode).
+2. Tap "+ Create new", paste the link above into "MCP Server URL" (leave Additional settings empty).
+3. Tick the consent box → Connect → the StrainEat page opens → sign in if asked → "Allow".
+4. Name it StrainEat, check the actions listed (log_meal, today_summary, log_water, log_weight) → Connect.
+5. Try it in the chat next to it. If Developer Mode doesn't appear, Google hasn't enabled it for that account or region yet.
+
+Managing: StrainEat Settings → "Log from ChatGPT, Claude or Gemini" shows the same link with a copy button and the list of
+connected apps with "Disconnect". Disconnecting there cuts access immediately.
+Troubleshooting: "nothing happens / it answers without StrainEat" → make sure StrainEat is switched on in that chat's
+tools and mention StrainEat in the message; start a new chat after connecting. Wrong numbers → edit the meal in the
+card or in StrainEat; packaged products: ask the AI to use the label values.
+
 ## Common questions (answer like this)
 - Water: plain water, sparkling water, black coffee, plain tea and zero-calorie drinks have ~0 kcal — no need to log
   them. Drinks WITH calories must be logged as a meal: juices, smoothies, soft drinks, milk, karak, coffee with milk or

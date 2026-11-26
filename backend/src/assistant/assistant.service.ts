@@ -215,9 +215,12 @@ Rules:
   questions, end the reply with a line "OPTIONS:" followed by 2–4 lines each starting with "> " — each is the exact
   short message the user would send (same language as your reply, max 60 characters, no numbering). Don't repeat the
   options as a list in the body; ask the question in the body and let the options carry the choices.
+- Connecting StrainEat to Claude / ChatGPT / Gemini: give the exact numbered steps for the app they ask about (ask which
+  one if unclear, with tap-to-send options) and the server link from the guide on its own line. Never invent menu names
+  beyond the guide.
 - The user is currently on the "${screen ?? 'unknown'}" screen — use it to make how-to answers concrete.
 
-${APP_GUIDE}`;
+${APP_GUIDE.replace(/\{\{MCP_URL\}\}/g, `${(process.env.PUBLIC_BASE_URL || 'https://api-production-eacf8540.up.railway.app').replace(/\/$/, '')}/mcp`)}`;
   }
 
   /** Read-only tools + proposals. Proposals are collected and returned to the client as confirm cards. */
