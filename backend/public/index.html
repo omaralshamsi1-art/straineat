@@ -1095,6 +1095,21 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       </div>
     </div>
 
+    <div class="card" id="aiCard">
+      <h3>سجّل من ChatGPT أو Claude أو Gemini <span class="chip2 lo" style="font-size:11px">تجريبي</span></h3>
+      <p class="small muted" style="margin-top:-4px">اربط StrainEat مرة وحدة، وبعدها صوّر وجبتك أو اكتبها في المحادثة هناك، وتنحفظ في حسابك هنا. التحليل يمشي على اشتراكك في تلك الخدمة.</p>
+      <button class="btn ghost" id="aiShow">أظهر رابط الربط</button>
+      <div id="aiBox" class="hidden">
+        <label class="small muted" style="margin-top:10px">رابط الربط الخاص فيك (عامله مثل كلمة السر)</label>
+        <div style="display:flex;gap:8px;margin-top:6px"><input id="aiUrl" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" id="aiCopy" style="width:auto;padding:0 16px">نسخ</button></div>
+        <details class="small" style="margin-top:12px;line-height:1.7"><summary><b>Claude</b></summary>من claude.ai على الكمبيوتر: الإعدادات ← Connectors ← Add custom connector، الصق الرابط واحفظ. بعدها فعّله من قائمة الأدوات في المحادثة.</details>
+        <details class="small" style="margin-top:6px;line-height:1.7"><summary><b>ChatGPT</b></summary>من chatgpt.com على الكمبيوتر: الإعدادات ← Apps ← Advanced settings ← فعّل Developer mode، ثم Create app، الصق الرابط واختر بدون مصادقة (No authentication).</details>
+        <details class="small" style="margin-top:6px;line-height:1.7"><summary><b>Gemini</b></summary>من إعدادات Gemini ← Connected Apps ← أضف تطبيقاً مخصصاً (خادم MCP) والصق الرابط.</details>
+        <p class="small muted" style="margin-top:10px">جرّب: «سجّل غدائي» مع صورة الوجبة، أو «كم باقي لي اليوم؟». الخيارات تختلف حسب خطتك في كل خدمة. الأرقام تقدير من الذكاء الاصطناعي، وإذا سجّلت نفس الوجبة قبل نستخدم قيمك المحفوظة.</p>
+        <button class="btn text" id="aiRotate" style="margin-top:4px">رابط جديد (يلغي القديم)</button>
+      </div>
+    </div>
+
     <div class="card">
       <h3>التذكيرات <span class="small" id="pushState">—</span></h3>
       <p class="small muted" style="margin-top:-4px">نذكّرك في أوقات وجباتك المعتادة إذا لم تسجّل، وبقياس الوزن صباحاً. على الآيفون: أضف التطبيق للشاشة الرئيسية أولاً.</p>
@@ -2542,6 +2557,24 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   for (const id of ['rmMeals', 'rmWeight', 'rmWater']) $(id).onchange = async () => {
     try { await api('profile', { method: 'PUT', json: { reminders: { meals: $('rmMeals').checked, weight: $('rmWeight').checked, water: $('rmWater').checked } } }); toast(T('تم الحفظ ✓')); } catch (e) { toast(e.message); }
   };
+  /** first tap arms the button, second tap within 4 s confirms (no blocking dialogs) */
+  function confirmTap(btn) {
+    if (btn.dataset.armed === '1') { btn.dataset.armed = ''; btn.textContent = btn.dataset.label; return true; }
+    btn.dataset.label = btn.textContent; btn.dataset.armed = '1'; btn.textContent = T('اضغط مرة ثانية للتأكيد');
+    setTimeout(() => { if (btn.dataset.armed === '1') { btn.dataset.armed = ''; btn.textContent = btn.dataset.label; } }, 4000);
+    return false;
+  }
+  async function showConnector(rotate) {
+    try {
+      const r = await api(`connector/token${rotate ? '?rotate=1' : ''}`);
+      $('aiUrl').value = `${location.origin}/mcp/${r.token}`;
+      $('aiBox').classList.remove('hidden'); $('aiShow').classList.add('hidden');
+      if (rotate) toast(T('تم إنشاء رابط جديد — حدّثه في الخدمات المربوطة'), 3500);
+    } catch (e) { toast(e.message); }
+  }
+  $('aiShow').onclick = () => showConnector(false);
+  $('aiRotate').onclick = () => { if (confirmTap($('aiRotate'))) showConnector(true); };
+  $('aiCopy').onclick = async () => { try { await navigator.clipboard.writeText($('aiUrl').value); toast(T('تم النسخ ✓')); } catch { $('aiUrl').select(); } };
   $('hotEnv').onchange = async () => {
     try { await api('profile', { method: 'PUT', json: { hotEnvironment: $('hotEnv').checked } }); toast(T('تم الحفظ ✓')); } catch (e) { toast(e.message); }
   };

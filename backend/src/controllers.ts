@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   Res,
   UploadedFile,
   UseInterceptors,
@@ -17,7 +18,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { Public, Role, UserId, ViaApiKey } from './auth/auth.guard';
 import { AuthService, UsageService } from './auth/auth.service';
 import { isIsoDate, localDate } from './common/dates';
@@ -39,6 +40,7 @@ import { ScheduleService } from './schedule/schedule.service';
 import { WaterService } from './water/water.service';
 import { StepsService } from './steps/steps.service';
 import { WeekService } from './week/week.service';
+import { McpService } from './mcp/mcp.service';
 import { validateProfilePatch } from './profile/profile.service';
 
 @Controller('health')
@@ -411,6 +413,32 @@ export class AssistantController {
   @Delete('history')
   clear(@UserId() userId: string) {
     return this.assistant.clear(userId);
+  }
+}
+
+/**
+ * Connector for ChatGPT / Claude / Gemini (Model Context Protocol, streamable HTTP, stateless).
+ * Trial: personal secret link /mcp/<token>; the user adds it as a custom connector.
+ */
+@Controller()
+export class McpController {
+  constructor(private readonly mcp: McpService) {}
+
+  @Get('connector/token')
+  token(@UserId() userId: string, @Query('rotate') rotate?: string) {
+    return this.mcp.token(userId, rotate === '1');
+  }
+
+  @Public()
+  @Post('mcp/:token')
+  async post(@Param('token') token: string, @Req() req: Request, @Res() res: Response) {
+    await this.mcp.handle(req, res, token);
+  }
+
+  @Public()
+  @Get('mcp/:token')
+  get(@Res() res: Response) {
+    res.status(405).set('Allow', 'POST').json({ jsonrpc: '2.0', error: { code: -32000, message: 'Use POST (stateless server)' }, id: null });
   }
 }
 

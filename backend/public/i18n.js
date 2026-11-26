@@ -9,6 +9,19 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "سجّل من ChatGPT أو Claude أو Gemini": "Log from ChatGPT, Claude or Gemini",
+    "تجريبي": "Beta",
+    "اربط StrainEat مرة وحدة، وبعدها صوّر وجبتك أو اكتبها في المحادثة هناك، وتنحفظ في حسابك هنا. التحليل يمشي على اشتراكك في تلك الخدمة.": "Connect StrainEat once, then snap or describe your meal in that chat and it's saved to your account here. The analysis runs on your subscription to that service.",
+    "أظهر رابط الربط": "Show connector link",
+    "رابط الربط الخاص فيك (عامله مثل كلمة السر)": "Your private connector link (treat it like a password)",
+    "نسخ": "Copy",
+    "من claude.ai على الكمبيوتر: الإعدادات ← Connectors ← Add custom connector، الصق الرابط واحفظ. بعدها فعّله من قائمة الأدوات في المحادثة.": "On claude.ai (desktop): Settings → Connectors → Add custom connector, paste the link and save. Then enable it from the tools menu in a chat.",
+    "من chatgpt.com على الكمبيوتر: الإعدادات ← Apps ← Advanced settings ← فعّل Developer mode، ثم Create app، الصق الرابط واختر بدون مصادقة (No authentication).": "On chatgpt.com (desktop): Settings → Apps → Advanced settings → turn on Developer mode, then Create app, paste the link and choose No authentication.",
+    "من إعدادات Gemini ← Connected Apps ← أضف تطبيقاً مخصصاً (خادم MCP) والصق الرابط.": "In Gemini settings → Connected Apps → add a custom app (MCP server) and paste the link.",
+    "جرّب: «سجّل غدائي» مع صورة الوجبة، أو «كم باقي لي اليوم؟». الخيارات تختلف حسب خطتك في كل خدمة. الأرقام تقدير من الذكاء الاصطناعي، وإذا سجّلت نفس الوجبة قبل نستخدم قيمك المحفوظة.": "Try: \"log my lunch\" with a photo, or \"how much do I have left today?\". Options vary by your plan on each service. Numbers are AI estimates; if you've logged the same meal before, your saved values are used.",
+    "رابط جديد (يلغي القديم)": "New link (revokes the old one)",
+    "تم إنشاء رابط جديد — حدّثه في الخدمات المربوطة": "New link created — update it in your connected services",
+    "تم النسخ ✓": "Copied ✓",
 "المعتمد": "used",
 "الخطوات آخر 7 أيام": "Steps, last 7 days",
 "✓ وصلت الهدف": "✓ Goal reached",

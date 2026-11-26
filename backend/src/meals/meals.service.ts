@@ -168,6 +168,7 @@ export class MealsService {
       assumptions: [],
       warnings: [],
     });
+    if (body.kind === 'meal' || body.kind === 'snack' || body.kind === 'drink') estimate.kind = body.kind;
     return this.createMeal(userId, estimate, body.eatenAt, profile.timezone);
   }
 
