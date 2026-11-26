@@ -17,7 +17,7 @@
     "نسخ": "Copy",
     "من claude.ai على الكمبيوتر: الإعدادات ← Connectors ← Add custom connector، الصق الرابط واحفظ. بعدها فعّله من قائمة الأدوات في المحادثة.": "On claude.ai (desktop): Settings → Connectors → Add custom connector, paste the link and save. Then enable it from the tools menu in a chat.",
     "من chatgpt.com على الكمبيوتر: الإعدادات ← Apps ← Advanced settings ← فعّل Developer mode، ثم Create app، الصق الرابط واختر بدون مصادقة (No authentication).": "On chatgpt.com (desktop): Settings → Apps → Advanced settings → turn on Developer mode, then Create app, paste the link and choose No authentication.",
-    "من إعدادات Gemini ← Connected Apps ← أضف تطبيقاً مخصصاً (خادم MCP) والصق الرابط.": "In Gemini settings → Connected Apps → add a custom app (MCP server) and paste the link.",
+    "من gemini.google.com/devmode على الكمبيوتر (Settings ← Gemini Apps Developer Mode): ‏+ Create new، الصق الرابط في MCP Server URL، وافق واضغط Connect.": "On gemini.google.com/devmode (desktop; Settings → Gemini Apps Developer Mode): + Create new, paste the link as the MCP Server URL, accept and click Connect.",
     "جرّب: «سجّل غدائي» مع صورة الوجبة، أو «كم باقي لي اليوم؟». الخيارات تختلف حسب خطتك في كل خدمة. الأرقام تقدير من الذكاء الاصطناعي، وإذا سجّلت نفس الوجبة قبل نستخدم قيمك المحفوظة.": "Try: \"log my lunch\" with a photo, or \"how much do I have left today?\". Options vary by your plan on each service. Numbers are AI estimates; if you've logged the same meal before, your saved values are used.",
     "رابط جديد (يلغي القديم)": "New link (revokes the old one)",
     "تم إنشاء رابط جديد — حدّثه في الخدمات المربوطة": "New link created — update it in your connected services",
