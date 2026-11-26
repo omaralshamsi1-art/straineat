@@ -111,7 +111,7 @@ export class McpService {
     });
 
     server.registerTool('log_meal', {
-      title: 'Log a meal',
+      title: 'StrainEat: log a meal',
       description: 'Save a meal, snack or drink to StrainEat with per-item nutrition. Totals are recomputed from the items. If the user has logged this exact meal before, or the restaurant has published values, StrainEat uses those instead.',
       inputSchema: {
         meal_name: z.string(),
@@ -146,14 +146,14 @@ export class McpService {
     });
 
     server.registerTool('today_summary', {
-      title: "Today's numbers",
-      description: "Calories target / eaten / left, macros vs targets, burn, water, steps, fasting window and today's meals.",
+      title: "StrainEat: today's calories left",
+      description: "The user's live StrainEat numbers for today: calories left (remaining), target and eaten; protein/carbs/fat vs targets; burn; water; steps; fasting window; today's meals. Always call this for questions like 'how many calories do I have left', 'كم باقي لي سعرات', 'what should I eat next' — never estimate or answer from other tools.",
       inputSchema: {},
       annotations: { readOnlyHint: true },
     }, async () => text(await this.today(userId)));
 
     server.registerTool('log_water', {
-      title: 'Log water',
+      title: 'StrainEat: log water',
       description: 'Add water the user drank (ml).',
       inputSchema: { ml: z.number().min(10).max(3000) },
     }, async (a) => {
@@ -162,7 +162,7 @@ export class McpService {
     });
 
     server.registerTool('log_weight', {
-      title: 'Log weight',
+      title: 'StrainEat: log weight',
       description: "Save today's body weight in kg.",
       inputSchema: { kg: z.number().min(25).max(350) },
     }, async (a) => {
