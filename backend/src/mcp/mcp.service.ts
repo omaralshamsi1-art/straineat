@@ -14,6 +14,7 @@ import { normalizeKey } from '../common/nutrition-math';
 import { MealItem } from '../common/types';
 
 const LOOKUP_USER = '__lookup__';
+export const MCP_RATE_LIMIT = 60; // requests per key per minute
 const hash = (t: string) => createHash('sha256').update(t).digest('hex');
 const n = (v: unknown) => (Number.isFinite(Number(v)) ? Math.round(Number(v) * 10) / 10 : 0);
 
@@ -57,9 +58,32 @@ export class McpService {
     return userId;
   }
 
-  async handle(req: Request, res: Response, token: string) {
+  /** Key from `Authorization: Bearer <key>` / `X-Api-Key` (preferred: never in URLs or proxy logs), else the legacy link path. */
+  static keyFrom(req: Pick<Request, 'headers'>, pathToken?: string): string | undefined {
+    const auth = String(req.headers?.authorization ?? '');
+    const bearer = /^Bearer\s+(\S+)$/i.exec(auth.trim())?.[1];
+    const apiKey = req.headers?.['x-api-key'];
+    return bearer || (typeof apiKey === 'string' && apiKey.trim()) || pathToken || undefined;
+  }
+
+  private readonly hits = new Map<string, number[]>();
+  /** Per-key sliding window (in-memory; one instance). */
+  allow(key: string, limit = MCP_RATE_LIMIT, windowMs = 60_000, now = Date.now()): boolean {
+    const k = hash(key);
+    const recent = (this.hits.get(k) ?? []).filter((t) => now - t < windowMs);
+    if (recent.length >= limit) { this.hits.set(k, recent); return false; }
+    recent.push(now);
+    this.hits.set(k, recent);
+    if (this.hits.size > 5000) for (const [kk, v] of this.hits) if (!v.some((t) => now - t < windowMs)) this.hits.delete(kk);
+    return true;
+  }
+
+  async handle(req: Request, res: Response, pathToken?: string) {
+    const rpcError = (status: number, code: number, message: string) => res.status(status).json({ jsonrpc: '2.0', error: { code, message }, id: null });
+    const key = McpService.keyFrom(req, pathToken);
+    if (key && !this.allow(key)) { res.set('Retry-After', '60'); rpcError(429, -32029, 'Too many requests — try again in a minute'); return; }
     let userId: string;
-    try { userId = await this.userFor(token); } catch (e: any) { res.status(401).json({ jsonrpc: '2.0', error: { code: -32001, message: e.message }, id: null }); return; }
+    try { userId = await this.userFor(key); } catch (e: any) { rpcError(401, -32001, e.message); return; }
     const server = this.build(userId);
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     res.on('close', () => { transport.close().catch(() => undefined); server.close().catch(() => undefined); });

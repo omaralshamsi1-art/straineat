@@ -9,6 +9,16 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "— الأفضل: المفتاح يروح في الترويسة وما يظهر في أي رابط": "— recommended: the key goes in a header and never appears in a URL",
+    "الإعدادات ← Connectors ← Add custom connector. الصق رابط الخادم، اختر No sign-in، وبعدين Add header: الاسم": "Settings → Connectors → Add custom connector. Paste the server URL, choose No sign-in, then Add header: name",
+    "والقيمة اللي تحت.": "and the value below.",
+    "رابط الخادم": "Server URL",
+    "قيمة Authorization (سرية مثل كلمة السر)": "Authorization value (secret, like a password)",
+    "ChatGPT و Gemini": "ChatGPT & Gemini",
+    "— هنا المفتاح داخل الرابط نفسه": "— here the key is inside the link itself",
+    "رابط الربط الخاص فيك (سري مثل كلمة السر)": "Your private connector link (secret, like a password)",
+    "مفتاح جديد (يلغي القديم في كل الخدمات)": "New key (revokes the old one everywhere)",
+    "تم إنشاء مفتاح جديد — حدّثه في الخدمات المربوطة": "New key created — update it in your connected services",
     "سجّل من ChatGPT أو Claude أو Gemini": "Log from ChatGPT, Claude or Gemini",
     "تجريبي": "Beta",
     "اربط StrainEat مرة وحدة، وبعدها صوّر وجبتك أو اكتبها في المحادثة هناك، وتنحفظ في حسابك هنا. التحليل يمشي على اشتراكك في تلك الخدمة.": "Connect StrainEat once, then snap or describe your meal in that chat and it's saved to your account here. The analysis runs on your subscription to that service.",

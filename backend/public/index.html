@@ -1100,13 +1100,19 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       <p class="small muted" style="margin-top:-4px">اربط StrainEat مرة وحدة، وبعدها صوّر وجبتك أو اكتبها في المحادثة هناك، وتنحفظ في حسابك هنا. التحليل يمشي على اشتراكك في تلك الخدمة.</p>
       <button class="btn ghost" id="aiShow">أظهر رابط الربط</button>
       <div id="aiBox" class="hidden">
-        <label class="small muted" style="margin-top:10px">رابط الربط الخاص فيك (عامله مثل كلمة السر)</label>
-        <div style="display:flex;gap:8px;margin-top:6px"><input id="aiUrl" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" id="aiCopy" style="width:auto;padding:0 16px">نسخ</button></div>
-        <details class="small" style="margin-top:12px;line-height:1.7"><summary><b>Claude</b></summary>من claude.ai على الكمبيوتر: الإعدادات ← Connectors ← Add custom connector، الصق الرابط واحفظ. بعدها فعّله من قائمة الأدوات في المحادثة.</details>
-        <details class="small" style="margin-top:6px;line-height:1.7"><summary><b>ChatGPT</b></summary>من chatgpt.com على الكمبيوتر: الإعدادات ← Apps ← Advanced settings ← فعّل Developer mode، ثم Create app، الصق الرابط واختر بدون مصادقة (No authentication).</details>
+        <p class="small" style="margin:12px 0 4px"><b>Claude</b> <span class="small muted">— الأفضل: المفتاح يروح في الترويسة وما يظهر في أي رابط</span></p>
+        <p class="small muted" style="line-height:1.7;margin:0 0 6px">الإعدادات ← Connectors ← Add custom connector. الصق رابط الخادم، اختر No sign-in، وبعدين Add header: الاسم <b dir="ltr">Authorization</b> والقيمة اللي تحت.</p>
+        <label class="small muted">رابط الخادم</label>
+        <div style="display:flex;gap:8px;margin-top:4px"><input id="aiServer" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiServer" style="width:auto;padding:0 16px">نسخ</button></div>
+        <label class="small muted" style="margin-top:8px">قيمة Authorization (سرية مثل كلمة السر)</label>
+        <div style="display:flex;gap:8px;margin-top:4px"><input id="aiHeader" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiHeader" style="width:auto;padding:0 16px">نسخ</button></div>
+        <p class="small" style="margin:16px 0 4px"><b>ChatGPT و Gemini</b> <span class="small muted">— هنا المفتاح داخل الرابط نفسه</span></p>
+        <label class="small muted">رابط الربط الخاص فيك (سري مثل كلمة السر)</label>
+        <div style="display:flex;gap:8px;margin-top:4px"><input id="aiUrl" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiUrl" style="width:auto;padding:0 16px">نسخ</button></div>
+        <details class="small" style="margin-top:10px;line-height:1.7"><summary><b>ChatGPT</b></summary>من chatgpt.com على الكمبيوتر: الإعدادات ← Apps ← Advanced settings ← فعّل Developer mode، ثم Create app، الصق الرابط واختر بدون مصادقة (No authentication).</details>
         <details class="small" style="margin-top:6px;line-height:1.7"><summary><b>Gemini</b></summary>من gemini.google.com/devmode على الكمبيوتر (Settings ← Gemini Apps Developer Mode): ‏+ Create new، الصق الرابط في MCP Server URL، وافق واضغط Connect.</details>
         <p class="small muted" style="margin-top:10px">جرّب: «سجّل غدائي» مع صورة الوجبة، أو «كم باقي لي اليوم؟». الخيارات تختلف حسب خطتك في كل خدمة. الأرقام تقدير من الذكاء الاصطناعي، وإذا سجّلت نفس الوجبة قبل نستخدم قيمك المحفوظة.</p>
-        <button class="btn text" id="aiRotate" style="margin-top:4px">رابط جديد (يلغي القديم)</button>
+        <button class="btn text" id="aiRotate" style="margin-top:4px">مفتاح جديد (يلغي القديم في كل الخدمات)</button>
       </div>
     </div>
 
@@ -2567,14 +2573,16 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   async function showConnector(rotate) {
     try {
       const r = await api(`connector/token${rotate ? '?rotate=1' : ''}`);
+      $('aiServer').value = `${location.origin}/mcp`;
+      $('aiHeader').value = `Bearer ${r.token}`;
       $('aiUrl').value = `${location.origin}/mcp/${r.token}`;
       $('aiBox').classList.remove('hidden'); $('aiShow').classList.add('hidden');
-      if (rotate) toast(T('تم إنشاء رابط جديد — حدّثه في الخدمات المربوطة'), 3500);
+      if (rotate) toast(T('تم إنشاء مفتاح جديد — حدّثه في الخدمات المربوطة'), 3500);
     } catch (e) { toast(e.message); }
   }
   $('aiShow').onclick = () => showConnector(false);
   $('aiRotate').onclick = () => { if (confirmTap($('aiRotate'))) showConnector(true); };
-  $('aiCopy').onclick = async () => { try { await navigator.clipboard.writeText($('aiUrl').value); toast(T('تم النسخ ✓')); } catch { $('aiUrl').select(); } };
+  document.querySelectorAll('#aiBox [data-copy]').forEach((b) => { b.onclick = async () => { const el = $(b.dataset.copy); try { await navigator.clipboard.writeText(el.value); toast(T('تم النسخ ✓')); } catch { el.select(); } }; });
   $('hotEnv').onchange = async () => {
     try { await api('profile', { method: 'PUT', json: { hotEnvironment: $('hotEnv').checked } }); toast(T('تم الحفظ ✓')); } catch (e) { toast(e.message); }
   };

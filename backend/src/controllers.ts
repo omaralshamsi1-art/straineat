@@ -429,6 +429,13 @@ export class McpController {
     return this.mcp.token(userId, rotate === '1');
   }
 
+  /** Preferred: key in the Authorization header (Claude "Request headers"). */
+  @Public()
+  @Post('mcp')
+  async postHeader(@Req() req: Request, @Res() res: Response) {
+    await this.mcp.handle(req, res);
+  }
+
   @Public()
   @Post('mcp/:token')
   async post(@Param('token') token: string, @Req() req: Request, @Res() res: Response) {
@@ -436,7 +443,7 @@ export class McpController {
   }
 
   @Public()
-  @Get('mcp/:token')
+  @Get(['mcp', 'mcp/:token'])
   get(@Res() res: Response) {
     res.status(405).set('Allow', 'POST').json({ jsonrpc: '2.0', error: { code: -32000, message: 'Use POST (stateless server)' }, id: null });
   }
