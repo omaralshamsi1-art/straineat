@@ -42,6 +42,8 @@ import { StepsService } from './steps/steps.service';
 import { WeekService } from './week/week.service';
 import { McpService } from './mcp/mcp.service';
 import { OAuthError, OAuthService } from './mcp/oauth.service';
+import { AccountService } from './account/account.service';
+import { LegalPage, renderLegal } from './legal/legal';
 import { validateProfilePatch } from './profile/profile.service';
 
 @Controller('health')
@@ -613,4 +615,43 @@ export class OAuthController {
   revokeGrant(@UserId() userId: string, @Param('clientId') clientId: string) {
     return this.oauth.revokeGrant(userId, clientId);
   }
+}
+
+@Controller('account')
+export class AccountController {
+  constructor(private readonly account: AccountService, private readonly auth: AuthService) {}
+
+  /** Permanently deletes the signed-in account and all of its data. Body: { confirm: "DELETE" }. */
+  @Delete()
+  async remove(@UserId() userId: string, @Req() req: Request & { role?: 'owner' | 'user' }, @Body() body: { confirm?: string }) {
+    const r = await this.account.deleteAccount(userId, req.role, body?.confirm);
+    this.auth.forget(userId);
+    return r;
+  }
+}
+
+/** Public privacy policy / terms / support pages (App Store + connector directory listings link here). */
+@Controller()
+export class LegalController {
+  constructor(private readonly config: ConfigService, private readonly oauth: OAuthService) {}
+
+  private render(page: LegalPage, lang: string | undefined, accept: string | undefined, req: Request, res: Response) {
+    const l = lang === 'ar' || lang === 'en' ? lang : /^ar/i.test(accept ?? '') ? 'ar' : 'en';
+    const html = renderLegal(page, l, {
+      name: this.config.get<string>('PUBLISHER_NAME')?.trim() || 'StrainEat',
+      email: this.config.get<string>('CONTACT_EMAIL')?.trim() || 'SheenCafe@icloud.com',
+      geminiTier: this.config.get<string>('GEMINI_TIER') === 'paid' ? 'paid' : 'free',
+      base: this.oauth.base(req),
+    });
+    res.type('html').set('Cache-Control', 'public, max-age=300').send(html);
+  }
+
+  @Public() @Get('privacy')
+  privacy(@Query('lang') lang: string, @Headers('accept-language') al: string, @Req() req: Request, @Res() res: Response) { this.render('privacy', lang, al, req, res); }
+
+  @Public() @Get('terms')
+  terms(@Query('lang') lang: string, @Headers('accept-language') al: string, @Req() req: Request, @Res() res: Response) { this.render('terms', lang, al, req, res); }
+
+  @Public() @Get('support')
+  support(@Query('lang') lang: string, @Headers('accept-language') al: string, @Req() req: Request, @Res() res: Response) { this.render('support', lang, al, req, res); }
 }

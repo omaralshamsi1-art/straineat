@@ -56,8 +56,21 @@ export class AuthService {
   async verifyToken(token: string): Promise<{ userId: string; role: 'owner' | 'user' }> {
     const { payload } = await jwtVerify(token, this.secret(), { issuer: 'straineat' });
     if (!payload.sub) throw new UnauthorizedException();
+    // A deleted account's sessions must stop working immediately (JWTs are otherwise stateless).
+    if (!(await this.userExists(payload.sub))) throw new UnauthorizedException('This account no longer exists');
     return { userId: payload.sub, role: payload.role === 'owner' ? 'owner' : 'user' };
   }
+
+  private readonly seen = new Map<string, number>();
+  /** Account-exists check, cached 60 s per user so it costs ~one query a minute. */
+  private async userExists(id: string): Promise<boolean> {
+    const t = this.seen.get(id);
+    if (t && Date.now() - t < 60_000) return true;
+    const ok = !!(await this.repo.getUserById(id));
+    if (ok) this.seen.set(id, Date.now()); else this.seen.delete(id);
+    return ok;
+  }
+  forget(id: string) { this.seen.delete(id); }
 
   /** Simple brute-force protection: 10 failed attempts per email per 15 minutes. */
   private throttle(key: string, failed: boolean) {

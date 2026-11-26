@@ -137,6 +137,10 @@ export interface Profile {
   reminders: { meals: boolean; weight: boolean; water?: boolean };
   /** works or trains outdoors / in the heat most days — raises the water target */
   hotEnvironment?: boolean;
+  /** when the user agreed to send meal photos/descriptions to the AI provider (null = not yet / withdrawn) */
+  aiConsentAt?: string | null;
+  /** write-only flag accepted by PUT /profile; stored as aiConsentAt */
+  aiConsent?: boolean;
   /** Today screen layout chosen by the user: the big ring and the tiles, in order. */
   todayLayout?: { hero: string; tiles: string[] };
   /** personal medicine / vitamin reminders (push at the set local times) */

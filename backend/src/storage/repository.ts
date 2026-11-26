@@ -55,6 +55,9 @@ export interface Repository {
   getTokens(userId: string, provider: 'whoop'): Promise<OAuthTokens | null>;
   saveTokens(t: OAuthTokens): Promise<void>;
   deleteTokens(userId: string, provider: 'whoop'): Promise<void>;
+
+  /** Permanently removes every row that belongs to the user (incl. lookup entries that point at them and the account). Returns rows removed per table. */
+  deleteUserData(userId: string): Promise<Record<string, number>>;
 }
 
 /** Ranks known meals by token overlap with the requested restaurant + name. */

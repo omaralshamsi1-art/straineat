@@ -75,6 +75,7 @@ struct AssistantView: View {
     @State private var busy = false
     @State private var working: Set<String> = []
     @State private var error: String?
+    @State private var consentModel = AIConsent.shared
     @State private var speech = SpeechInput()
     @FocusState private var focused: Bool
 
@@ -123,6 +124,7 @@ struct AssistantView: View {
                 Button("OK", role: .cancel) {}
             } message: { Text(error ?? "") }
             .task { if let h = try? await APIClient.shared.assistantHistory() { messages = h } }
+            .sheet(isPresented: $consentModel.asking) { AIConsentSheet() }
             .onDisappear { speech.stop() }
         }
     }
@@ -259,6 +261,7 @@ struct AssistantView: View {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !busy else { return }
         speech.stop()
+        guard await AIConsent.shared.ensure() else { return }
         busy = true; input = ""
         let mine = AssistantMessage(role: "user", text: text)
         messages.append(mine)

@@ -117,6 +117,7 @@ struct PhotoLogPanel: View {
 
     private func analyze() async {
         guard let image else { return }
+        guard await AIConsent.shared.ensure() else { return }
         busy = true; error = nil
         defer { busy = false }
         do {
@@ -172,6 +173,7 @@ struct TextLogPanel: View {
 
     private func analyze() async {
         speech.stop()
+        guard await AIConsent.shared.ensure() else { return }
         busy = true; error = nil
         defer { busy = false }
         do {

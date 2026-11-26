@@ -32,10 +32,12 @@ struct RootView: View {
     @Environment(AppStore.self) private var store
     @State private var tab = UserDefaults.standard.integer(forKey: "initialTab")
     @State private var showAssistant = UserDefaults.standard.bool(forKey: "openAssistant")
+    @State private var aiConsentModel = AIConsent.shared
     private var screenName: String { ["today", "progress", "snap", "plan"][min(max(tab, 0), 3)] }
 
     var body: some View {
         @Bindable var store = store
+        @Bindable var aiConsent = aiConsentModel
         Group {
             if !store.signedIn {
                 AuthView()
@@ -66,6 +68,7 @@ struct RootView: View {
                 .onReceive(NotificationCenter.default.publisher(for: .openProgress)) { _ in tab = 1 }
                 .onReceive(NotificationCenter.default.publisher(for: .openPlan)) { _ in tab = 3 }
                 .onOpenURL { url in if url.host == "today" { tab = 0 } } // from the home-screen widget
+                .sheet(isPresented: $aiConsent.asking) { AIConsentSheet() }
                 .sheet(isPresented: $showAssistant) {
                     AssistantView(screen: screenName, onChanged: { Task { await store.refresh() } })
                         .environment(\.layoutDirection, appLayoutDirection)

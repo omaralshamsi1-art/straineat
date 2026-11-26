@@ -104,6 +104,17 @@ export class WhoopService {
     return { connected: false };
   }
 
+  /** Account deletion: ask WHOOP to revoke our access (best effort), then drop the tokens. */
+  async revokeAccess(userId: string) {
+    if (!(await this.repo.getTokens(userId, 'whoop'))) return false;
+    try {
+      const token = await this.validAccessToken(userId);
+      await this.fetchFn(`${API_BASE}/v2/user/access`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    } catch { /* token already dead — deleting it locally is enough */ }
+    await this.repo.deleteTokens(userId, 'whoop');
+    return true;
+  }
+
   async status(userId: string) {
     const t = await this.repo.getTokens(userId, 'whoop');
     const account = t ? (await this.repo.getCache(userId, 'whoop-account'))?.payload ?? null : null;

@@ -389,6 +389,7 @@ struct Profile: Codable {
     struct Ramadan: Codable { var enabled: Bool?; var suhoorTime: String; var iftarTime: String; var fastDays: [Int]?; var whiteDays: Bool? }
     struct Reminders: Codable { var meals: Bool; var weight: Bool; var water: Bool? }
     var hotEnvironment: Bool?
+    var aiConsentAt: String?
     struct TodayLayout: Codable, Equatable { var hero: String; var tiles: [String] }
     var todayLayout: TodayLayout?
     struct Screening: Codable { var pregnant: Bool?; var breastfeeding: Bool?; var medicalSupervision: Bool?; var edHistory: Bool? }

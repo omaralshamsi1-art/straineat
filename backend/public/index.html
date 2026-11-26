@@ -1118,6 +1118,20 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       </details>
     </div>
 
+    <div class="card" id="privCard">
+      <h3>الخصوصية والبيانات</h3>
+      <div class="row" style="align-items:center;padding:4px 0"><span>التحليل بالذكاء الاصطناعي<br><span class="small muted" id="aiConsentState">—</span></span><button class="btn ghost" id="aiConsentBtn" style="width:auto;padding:0 14px;min-height:40px;font-size:14px">—</button></div>
+      <p class="small muted" style="line-height:1.6;margin:8px 0">StrainEat أداة تتبّع وليس بديلاً عن الطبيب. الأرقام تقديرية؛ استشر طبيبك قبل أي تغيير كبير في أكلك أو نشاطك.</p>
+      <p class="small"><a href="/privacy" target="_blank">سياسة الخصوصية</a> · <a href="/terms" target="_blank">شروط الاستخدام</a> · <a href="/support" target="_blank">الدعم</a></p>
+      <button class="btn text" id="delAcc" style="color:var(--bad,#e5484d);margin-top:4px">حذف الحساب</button>
+      <div id="delBox" class="hidden">
+        <p class="small" style="line-height:1.7">يمسح حسابك وكل وجباتك وأوزانك وماءك وخطتك وإعداداتك نهائياً، ويلغي ربط WHOOP وتطبيقات الذكاء الاصطناعي. ما ينقدر التراجع عنه.</p>
+        <label class="small muted">اكتب DELETE للتأكيد</label>
+        <input id="delConfirm" dir="ltr" autocomplete="off" autocapitalize="characters" placeholder="DELETE" style="margin-top:4px">
+        <button class="btn" id="delGo" style="margin-top:8px;background:var(--bad,#e5484d);color:#fff">حذف حسابي نهائياً</button>
+      </div>
+    </div>
+
     <div class="card">
       <h3>التذكيرات <span class="small" id="pushState">—</span></h3>
       <p class="small muted" style="margin-top:-4px">نذكّرك في أوقات وجباتك المعتادة إذا لم تسجّل، وبقياس الوزن صباحاً. على الآيفون: أضف التطبيق للشاشة الرئيسية أولاً.</p>
@@ -1320,7 +1334,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     if (v === 'progress') loadProgress();
     if (v === 'plan') { loadLocation(); loadScheduleSettings(); }
     if (v === 'plan' || v === 'settings') loadPlan();
-    if (v === 'settings') loadAiApps();
+    if (v === 'settings') { loadAiApps(); loadPrivacy(); }
   }
   document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
 
@@ -1701,6 +1715,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
       </div>
       ${renderNotices(p.notices)}
       ${renderAdvice(p)}
+      <p class="small muted" style="margin:12px 4px 0;line-height:1.6">${T('StrainEat أداة تتبّع وليس بديلاً عن الطبيب. الأرقام تقديرية؛ استشر طبيبك قبل أي تغيير كبير في أكلك أو نشاطك.')} <a href="/terms" target="_blank">${T('شروط الاستخدام')}</a> · <a href="/privacy" target="_blank">${T('سياسة الخصوصية')}</a></p>
       <div class="ob-next"><button type="button" class="btn" id="obGo">${T('ابدأ الآن')}</button></div>`;
     $('obGo').onclick = () => { toast(T('خطتك جاهزة ✓')); show('today'); };
     window.scrollTo(0, 0);
@@ -2573,6 +2588,49 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
     setTimeout(() => { if (btn.dataset.armed === '1') { btn.dataset.armed = ''; btn.textContent = btn.dataset.label; } }, 4000);
     return false;
   }
+  /** Apple 5.1.2(i): explicit consent before the first meal photo/description goes to the AI provider. */
+  let aiOk = ls.get('ns_ai_ok') === '1';
+  function ensureAiConsent() {
+    if (aiOk) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const wasOpen = !$('det').classList.contains('hidden');
+      detOpen(T('قبل أول تحليل'));
+      $('detBody').innerHTML = `<div class="card"><h3>${T('نستخدم الذكاء الاصطناعي لتحليل وجباتك')}</h3>
+        <p class="small" style="line-height:1.8">${T('عشان نقدّر السعرات والقيم الغذائية ونرد على أسئلتك، نرسل إلى Google (Gemini API):')}<br>• ${T('صورة الوجبة أو وصفها المكتوب أو الصوتي (بعد تحويله لنص)')}<br>• ${T('السياق اللازم للإجابة، مثل أهدافك ومجموع يومك وحرقك وتمارينك')}</p>
+        <p class="small muted" style="line-height:1.7">${T('ما نحفظ الصورة بعد التحليل، وما نبيع بياناتك ولا نستخدمها للإعلانات. تقدر تسحب الموافقة من الإعدادات أي وقت.')} <a href="/privacy" target="_blank">${T('سياسة الخصوصية')}</a></p>
+        <p class="small muted">${T('النتائج تقديرية وليست استشارة طبية.')}</p>
+        <button class="btn" id="aiYes">${T('موافق، كمّل')}</button>
+        <button class="btn ghost" id="aiNo" style="margin-top:8px">${T('مو الحين')}</button></div>`;
+      const close = () => { if (!wasOpen) { $('det').classList.add('hidden'); document.body.style.overflow = ''; } };
+      $('aiYes').onclick = async () => {
+        $('aiYes').disabled = true;
+        try { await api('profile', { method: 'PUT', json: { aiConsent: true } }); aiOk = true; ls.set('ns_ai_ok', '1'); close(); resolve(true); }
+        catch (e) { $('aiYes').disabled = false; toast(e.message); }
+      };
+      $('aiNo').onclick = () => { close(); toast(T('بدون الموافقة تقدر تسجّل وجباتك يدوياً أو من السجل')); resolve(false); };
+    });
+  }
+  async function loadPrivacy() {
+    let p = null; try { p = await api('profile'); } catch { return; }
+    aiOk = !!p.aiConsentAt; if (aiOk) ls.set('ns_ai_ok', '1'); else ls.del('ns_ai_ok');
+    $('aiConsentState').textContent = aiOk ? L`موافق منذ ${new Date(p.aiConsentAt).toLocaleDateString(LOC, { dateStyle: 'medium' })}` : T('غير مفعّلة');
+    $('aiConsentBtn').textContent = aiOk ? T('سحب الموافقة') : T('السماح بالتحليل الذكي');
+  }
+  $('aiConsentBtn').onclick = async () => {
+    if (!aiOk) { if (await ensureAiConsent()) loadPrivacy(); return; }
+    try { await api('profile', { method: 'PUT', json: { aiConsent: false } }); aiOk = false; ls.del('ns_ai_ok'); toast(T('تم سحب الموافقة')); loadPrivacy(); } catch (e) { toast(e.message); }
+  };
+  $('delAcc').onclick = () => $('delBox').classList.toggle('hidden');
+  $('delGo').onclick = async () => {
+    if ($('delConfirm').value.trim().toUpperCase() !== 'DELETE') return toast(T('اكتب DELETE للتأكيد'));
+    $('delGo').disabled = true;
+    try {
+      await api('account', { method: 'DELETE', json: { confirm: 'DELETE' } });
+      for (const k of ['ns_token', 'ns_key', 'ns_user', 'ns_ai_ok', 'ns_whoop', 'ns_layout', 'ns_oauth_req']) ls.del(k);
+      alertDeleted();
+    } catch (e) { $('delGo').disabled = false; toast(e.message, 5000); }
+  };
+  function alertDeleted() { toast(T('تم حذف حسابك وكل بياناتك'), 5000); setTimeout(() => location.replace(location.pathname), 1500); }
   async function showConnector(rotate) {
     try {
       const r = await api(`connector/token${rotate ? '?rotate=1' : ''}`);
@@ -2703,6 +2761,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   };
   $('txtBtn').onclick = async () => {
     const t = $('txtMeal').value.trim(); if (t.length < 3) return toast(T('اكتب وصفاً للوجبة'));
+    if (!(await ensureAiConsent())) return;
     $('txtBtn').disabled = true; $('txtLoading').classList.remove('hidden');
     try {
       const r = await api('meals/analyze-text', { method: 'POST', json: { text: t, restaurant: $('txtRest').value.trim() || undefined, eatenAt: new Date().toISOString() } });
@@ -2795,6 +2854,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   }
   $('analyzeBtn').onclick = async () => {
     if (!photo) return;
+    if (!(await ensureAiConsent())) return;
     $('analyzeBtn').disabled = true; $('analyzing').classList.remove('hidden');
     const fd = new FormData(); fd.append('photo', photo, 'meal.jpg');
     for (const [k, id] of [['mealName', 'hName'], ['restaurant', 'hRest'], ['portion', 'hPortion'], ['note', 'hNote']]) { const v = $(id).value.trim(); if (v) fd.append(k, v); }
@@ -3292,6 +3352,7 @@ html[data-theme="dark"] .tip { background: #33362a; color: var(--ink); }
   async function sendAsk(text) {
     text = String(text || '').trim();
     if (!text || askBusy) return;
+    if (!(await ensureAiConsent())) return;
     askBusy = true; $('askSend').disabled = true; $('askIn').value = ''; $('askIn').style.height = '';
     askMsgs.push({ role: 'user', text }); renderAsk(true);
     try {

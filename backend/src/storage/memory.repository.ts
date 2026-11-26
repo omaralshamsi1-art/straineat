@@ -162,4 +162,25 @@ export class MemoryRepository implements Repository {
   async deleteTokens(userId: string, provider: 'whoop') {
     this.tokens.delete(`${userId}|${provider}`);
   }
+  async deleteUserData(userId: string) {
+    const out: Record<string, number> = {};
+    const purge = <T>(name: string, m: Map<string, T>, owns: (v: T) => boolean) => {
+      let n = 0;
+      for (const [k, v] of m) if (owns(v)) { m.delete(k); n++; }
+      out[name] = n;
+    };
+    purge('meals', this.meals, (v) => v.userId === userId);
+    purge('known_meals', this.known, (v) => v.userId === userId);
+    purge('energy_days', this.energy, (v) => v.userId === userId);
+    purge('weights', this.weights, (v) => v.userId === userId);
+    purge('workouts', this.workouts, (v) => v.userId === userId);
+    purge('water_logs', this.water, (v) => v.userId === userId);
+    purge('push_subs', this.pushSubs, (v) => v.userId === userId);
+    purge('oauth_tokens', this.tokens, (v) => v.userId === userId);
+    purge('coach_cache', this.cache, (v) => v.userId === userId || (v.userId === '__lookup__' && (v.payload as any)?.userId === userId));
+    purge('profiles', this.profiles, (v) => v.userId === userId);
+    purge('invites', this.invites, (v) => v.createdBy === userId && !v.usedBy);
+    purge('users', this.users, (v) => v.id === userId);
+    return out;
+  }
 }

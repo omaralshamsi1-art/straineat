@@ -269,6 +269,28 @@ export class PostgresRepository implements Repository {
   async deleteTokens(userId: string, provider: 'whoop') {
     await this.pool.query(`delete from oauth_tokens where user_id=$1 and provider=$2`, [userId, provider]);
   }
+  async deleteUserData(userId: string) {
+    const out: Record<string, number> = {};
+    const client = await this.pool.connect();
+    try {
+      await client.query('begin');
+      for (const t of ['meals', 'known_meals', 'energy_days', 'weights', 'workouts', 'water_logs', 'push_subs', 'oauth_tokens', 'coach_cache', 'profiles']) {
+        out[t] = (await client.query(`delete from ${t} where user_id=$1`, [userId])).rowCount ?? 0;
+      }
+      // connector keys / OAuth codes & tokens that resolve to this user
+      out.lookups = (await client.query(`delete from coach_cache where user_id='__lookup__' and payload->>'userId' = $1`, [userId])).rowCount ?? 0;
+      out.invites = (await client.query(`delete from invites where created_by=$1 and used_by is null`, [userId])).rowCount ?? 0;
+      await client.query(`update invites set used_by=null where used_by=$1`, [userId]);
+      out.users = (await client.query(`delete from users where id=$1`, [userId])).rowCount ?? 0;
+      await client.query('commit');
+    } catch (e) {
+      await client.query('rollback').catch(() => undefined);
+      throw e;
+    } finally {
+      client.release();
+    }
+    return out;
+  }
 }
 
 const fmtDate = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : String(d));

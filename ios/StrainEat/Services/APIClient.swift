@@ -229,6 +229,8 @@ final class APIClient {
     func get<T: Decodable>(_ path: String) async throws -> T { try await send(request(path)) }
     func post<T: Decodable>(_ path: String, _ body: [String: Any]) async throws -> T { try await send(jsonRequest(path, method: "POST", body)) }
     func delete<T: Decodable>(_ path: String) async throws -> T { try await send(request(path, method: "DELETE")) }
+    func put<T: Decodable>(_ path: String, _ body: [String: Any]) async throws -> T { try await send(jsonRequest(path, method: "PUT", body)) }
+    func deleteJSON<T: Decodable>(_ path: String, _ body: [String: Any]) async throws -> T { try await send(jsonRequest(path, method: "DELETE", body)) }
 
     // MARK: plumbing
 

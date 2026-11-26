@@ -191,6 +191,9 @@ export function validateProfilePatch(patch: Partial<Profile>): Partial<Profile> 
       out.todayLayout = { hero, tiles: tiles.slice(0, 12) };
     } else if (k === 'hotEnvironment') {
       out.hotEnvironment = !!v;
+    } else if (k === 'aiConsent') {
+      // Third-party AI processing consent (App Store 5.1.2(i)); the server stamps the time.
+      out.aiConsentAt = v ? new Date().toISOString() : null;
     } else if (k === 'onboarded') {
       out.onboarded = !!v;
     } else if (['timezone', 'city', 'area', 'country', 'startDate'].includes(k)) {
