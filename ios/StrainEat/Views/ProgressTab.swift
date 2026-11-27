@@ -92,10 +92,11 @@ struct ProgressTab: View {
                 let target = plan?.targetWeightKg
                 Chart {
                     ForEach(entries) { e in
+                        // The line goes through the actual weigh-ins (dots sit on it).
+                        LineMark(x: .value(t("Day", "اليوم"), e.day), y: .value(t("Weight", "الوزن"), e.kg))
+                            .foregroundStyle(Theme.brand2).lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
                         PointMark(x: .value(t("Day", "اليوم"), e.day), y: .value(t("Weight", "الوزن"), e.kg))
-                            .foregroundStyle(Theme.muted.opacity(0.5)).symbolSize(18)
-                        LineMark(x: .value(t("Day", "اليوم"), e.day), y: .value(t("Trend", "الاتجاه"), e.trend))
-                            .foregroundStyle(Theme.brand2).lineStyle(StrokeStyle(lineWidth: 3)).interpolationMethod(.monotone)
+                            .foregroundStyle(Theme.brand2).symbolSize(e.id == entries.last?.id ? 70 : 40)
                     }
                     if let target, dom.contains(target) {
                         RuleMark(y: .value(t("Goal", "الهدف"), target))
@@ -116,7 +117,7 @@ struct ProgressTab: View {
 
     /// Zoom on the user's own weights; the goal only widens the axis when it's within 1.5 kg.
     private func yDomain(_ e: [WeightEntry]) -> ClosedRange<Double> {
-        let vals = e.flatMap { [$0.kg, $0.trend] }
+        let vals = e.map(\.kg)
         var lo = vals.min() ?? 60, hi = vals.max() ?? 90
         if let g = plan?.targetWeightKg {
             if g < lo, lo - g <= 1.5 { lo = g }

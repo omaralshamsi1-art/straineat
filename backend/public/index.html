@@ -2437,20 +2437,21 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
     if (!entries.length) return T('<div class="empty">سجّلي وزنك اليوم ليبدأ الرسم البياني.</div>');
     const W = 520, H = 190, pl = 34, pr = 10, pt = 12, pb = 24;
     // Zoom on the user's own weights; the target only widens the axis when it's close, otherwise it's a label.
-    const vals = entries.flatMap((e) => [e.kg, e.trend]);
+    const vals = entries.map((e) => e.kg);
     let lo = Math.min(...vals), hi = Math.max(...vals);
     if (target && target < lo && lo - target <= 1.5) lo = target; if (target && target > hi && target - hi <= 1.5) hi = target;
     const pad = Math.max(0.4, (2 - (hi - lo)) / 2); lo -= pad; hi += pad;
-    const t0 = Date.parse(entries[0].date), t1 = Math.max(Date.parse(entries[entries.length - 1].date), t0 + 86400000 * 6);
+    const t0 = Date.parse(entries[0].date), t1 = Math.max(Date.parse(entries[entries.length - 1].date), t0 + 86400000);
     const x = (d) => pl + ((Date.parse(d) - t0) / (t1 - t0)) * (W - pl - pr);
     const y = (v) => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
-    const line = entries.map((e, i) => `${i ? 'L' : 'M'}${x(e.date).toFixed(1)} ${y(e.trend).toFixed(1)}`).join(' ');
-    const dots = entries.map((e) => `<circle cx="${x(e.date).toFixed(1)}" cy="${y(e.kg).toFixed(1)}" r="3.2" fill="var(--muted)" opacity=".45"/>`).join('');
+    // The line goes through the actual weigh-ins (dots sit on it).
+    const line = entries.length > 1 ? entries.map((e, i) => `${i ? 'L' : 'M'}${x(e.date).toFixed(1)} ${y(e.kg).toFixed(1)}`).join(' ') : '';
+    const dots = entries.map((e, i) => `<circle cx="${x(e.date).toFixed(1)}" cy="${y(e.kg).toFixed(1)}" r="${i === entries.length - 1 ? 5.5 : 4}" fill="var(--brand-2)" stroke="var(--card)" stroke-width="2"/>`).join('');
     const ticks = [lo, (lo + hi) / 2, hi].map((v) => `<text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${fmt1(v)}</text><line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>`).join('');
     const tgt = !target ? '' : target >= lo && target <= hi ? `<line x1="${pl}" x2="${W - pr}" y1="${y(target)}" y2="${y(target)}" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 5"/>`
       : `<text x="${W - pr}" y="${target < lo ? H - pb - 6 : pt + 10}" text-anchor="${RTL_SVG ? 'start' : 'end'}" direction="${RTL_SVG ? 'rtl' : 'ltr'}" font-size="12" font-weight="700" fill="var(--accent)">${L`الهدف ${fmt1(target)}`} ${target < lo ? '↓' : '↑'}</text>`;
     const lab = (d) => new Date(`${d}T12:00:00`).toLocaleDateString(LOC, { day: 'numeric', month: 'short' });
-    return L`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="رسم بياني للوزن" style="direction:ltr">${ticks}${tgt}${dots}<path d="${line}" fill="none" stroke="var(--brand-2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    return L`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="رسم بياني للوزن" style="direction:ltr">${ticks}${tgt}<path d="${line}" fill="none" stroke="var(--brand-2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${dots}
       <text x="${pl}" y="${H - 4}" font-size="11" fill="var(--muted)" text-anchor="${RTL_SVG ? 'end' : 'start'}" direction="${RTL_SVG ? 'rtl' : 'ltr'}">${lab(entries[0].date)}</text><text x="${W - pr}" y="${H - 4}" font-size="11" fill="var(--muted)" text-anchor="${RTL_SVG ? 'start' : 'end'}" direction="${RTL_SVG ? 'rtl' : 'ltr'}">${lab(entries[entries.length - 1].date)}</text></svg>`;
   }
   function barChart(days) {
