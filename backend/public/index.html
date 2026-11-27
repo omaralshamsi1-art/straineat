@@ -2139,7 +2139,7 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
     rows.sort((x, y) => x.at - y.at);
     $('mealCount').textContent = b.meals.length ? `${L`${b.meals.length} وجبات`} ·` : '';
     $('schEdit').classList.toggle('hidden', !d);
-    const recent = [...b.meals].sort((x, y) => new Date(y.eatenAt) - new Date(x.eatenAt)).slice(0, 3).reverse();
+    const recent = [...b.meals].sort((x, y) => new Date(y.eatenAt) - new Date(x.eatenAt)).slice(0, 2).reverse();
     const compact = !mealsAll && b.meals.length > 0 && rows.length > recent.length;
     $('mealList').innerHTML = compact ? recent.map((m) => mealRow(m, d)).join('')
       : rows.length ? rows.map((r) => r.html).join('') : T('<div class="empty">لا توجد وجبات بعد.<br>اضغطي زر الكاميرا لتسجيل وجبتك الأولى.</div>');

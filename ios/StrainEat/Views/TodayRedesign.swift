@@ -231,8 +231,8 @@ struct TimelineCard: View {
         var rows: [Row] = meals.map { .meal($0) }
         for s in schedule?.slots ?? [] where s.items.isEmpty && !drafts.contains(where: { abs($0 - hhmm(s.time)) <= 180 }) { rows.append(.slot(s)) }
         rows.sort { $0.at < $1.at }
-        // Default: the last three meals added; "View all meals" shows the full day with planned slots.
-        let recent = Array(meals.sorted { minutesOf($0.eatenAt) > minutesOf($1.eatenAt) }.prefix(3).reversed())
+        // Default: the last two meals added; "View all meals" shows the full day with planned slots.
+        let recent = Array(meals.sorted { minutesOf($0.eatenAt) > minutesOf($1.eatenAt) }.prefix(2).reversed())
         let compact = !showAll && !meals.isEmpty && rows.count > recent.count
         let shown: [Row] = compact ? recent.map { .meal($0) } : rows
         let canToggle = !meals.isEmpty && rows.count > recent.count
