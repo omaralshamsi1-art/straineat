@@ -21,7 +21,7 @@ struct Wellness: Codable {
 }
 
 extension APIClient {
-    func wellness() async throws -> Wellness { try await get("integrations/whoop/wellness") }
+    func wellness(date: String? = nil) async throws -> Wellness { try await get("integrations/whoop/wellness" + (date.map { "?date=\($0)" } ?? "")) }
 }
 
 func recoveryColor(_ r: Double?) -> Color {

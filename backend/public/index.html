@@ -2473,8 +2473,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     $('focus').querySelectorAll('[data-ft]').forEach((el) => (el.onclick = () => { const d = focusData(el.dataset.ft) || emptyTile(el.dataset.ft); if (!d) return; if (d.go) d.go(); else if (d.det) openDetail(d.det); }));
   }
   async function loadWeek() {
-    if (isoDay(day) !== isoDay(new Date())) { weekSum = null; renderFocus(); return; }
-    try { weekSum = await api('week'); } catch { weekSum = null; }
+    try { weekSum = await api('week'); } catch { weekSum = null; } // the current week, also when looking at an earlier day
     renderFocus();
   }
   async function loadLayout() {
@@ -3737,8 +3736,12 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
   const recCls = (r) => (r == null ? '' : r >= 67 ? 'rec-hi' : r >= 34 ? 'rec-mid' : 'rec-lo');
   const recColor = (r) => (r >= 67 ? '#16a34a' : r >= 34 ? '#eab308' : '#dc2626');
   async function loadWellness() {
-    if (isoDay(day) !== isoDay(new Date())) { wellCache = null; renderMonitors(); return; }
-    try { wellCache = await api(`integrations/whoop/wellness?date=${isoDay(day)}`); } catch { wellCache = null; }
+    // any day, not just today: WHOOP sleep/recovery/strain are stored per day
+    const want = isoDay(day);
+    let w = null;
+    try { w = await api(`integrations/whoop/wellness?date=${want}`); } catch { w = null; }
+    if (isoDay(day) !== want) return; // the user moved to another day meanwhile
+    wellCache = w;
     renderMonitors(); renderStack();
   }
 

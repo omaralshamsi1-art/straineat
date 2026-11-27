@@ -130,8 +130,8 @@ struct FocusSection: View {
         let key = store.selectedDateKey
         async let s = try? APIClient.shared.steps(date: key)
         async let w = try? APIClient.shared.water(date: key)
-        async let wl: Wellness? = isToday ? (try? APIClient.shared.wellness()) : nil
-        async let wk: WeekSummary? = isToday ? (try? APIClient.shared.week()) : nil
+        async let wl: Wellness? = try? APIClient.shared.wellness(date: key) // any day, not just today
+        async let wk: WeekSummary? = try? APIClient.shared.week()
         (steps, water, well, week) = await (s, w, wl, wk)
         if layoutJSON.isEmpty, let p = try? await APIClient.shared.profile(), let l = p.todayLayout,
            let d = try? JSONEncoder().encode(l), let str = String(data: d, encoding: .utf8) { layoutJSON = str }
