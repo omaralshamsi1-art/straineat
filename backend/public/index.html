@@ -939,6 +939,22 @@ button.stRow { cursor: pointer; }
 /* hide scroll bars (the page still scrolls normally) */
 html { scrollbar-width: none; } html::-webkit-scrollbar, body::-webkit-scrollbar, #det::-webkit-scrollbar, #askLog::-webkit-scrollbar, .itBox::-webkit-scrollbar { display: none; width: 0; height: 0; }
 #det, #askLog, #itSheet .itBox { scrollbar-width: none; }
+/* ---- My Plan v3 ---- */
+.plHero { display: block; }
+.plTop { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.plLbl { color: var(--muted); font-size: 13px; font-weight: 700; }
+.plBig b { font-size: 46px; font-weight: 800; letter-spacing: -1px; line-height: 1.05; } .plBig small { color: var(--muted); font-size: 16px; font-weight: 600; }
+.plEdit { flex: none; border: 0; background: var(--card-2); color: var(--ink); border-radius: 999px; padding: 8px 13px; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.plHero .plMac { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; text-align: start; }
+.plHero .plMac > div { background: var(--card-2); border-radius: 14px; padding: 10px; }
+.plHero .plMac span { color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 5px; } .plHero .plMac i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin: 0; }
+.plHero .plMac b { display: block; font-size: 19px; margin-top: 3px; color: var(--ink); }
+.plKv > div:not(#plNotices) + div:not(#plNotices) { border-top: 1px solid var(--line); }
+.plAuto { color: var(--good); font-size: 12px; font-weight: 700; }
+#plNotices .notice.info { background: none; border: 0; padding: 2px 0 4px; margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; display: flex; gap: 6px; }
+#plNotices .notice.info::before { content: "ⓘ"; color: var(--p); }
+#v-plan { padding-bottom: 40px; }
+body { min-height: 100vh; }
 </style>
 </head>
 <body>
@@ -1278,33 +1294,38 @@ html { scrollbar-width: none; } html::-webkit-scrollbar, body::-webkit-scrollbar
     <div class="greet"><em class="acc">خطتي</em></div>
     <div class="sub" id="planSub"></div>
     <div class="card plHero">
-      <div class="plRing"><div><b class="num" id="plKcal">—</b><span>سعرة يومياً</span></div></div>
+      <div class="plTop"><div><div class="plLbl">هدفك اليومي</div><div class="plBig"><b class="num" id="plKcal">—</b> <small>سعرة</small></div></div><button class="plEdit" id="editPlan">✎ تعديل</button></div>
       <div class="plMac">
-        <div><i style="background:var(--p)"></i><b class="num" id="plP">—</b>بروتين</div>
-        <div><i style="background:var(--c)"></i><b class="num" id="plC">—</b>كارب</div>
-        <div><i style="background:var(--f)"></i><b class="num" id="plF">—</b>دهون</div>
+        <div><span><i style="background:var(--p)"></i>بروتين</span><b class="num" id="plP">—</b></div>
+        <div><span><i style="background:var(--c)"></i>كارب</span><b class="num" id="plC">—</b></div>
+        <div><span><i style="background:var(--f)"></i>دهون</span><b class="num" id="plF">—</b></div>
       </div>
     </div>
     <div class="card plKv">
       <div><span class="muted">حرقك اليومي</span><b class="num" id="plMaint">—</b></div>
       <div><span class="muted">التغيّر المتوقع</span><b class="num" id="plWeekly">—</b></div>
       <div><span class="muted">مستوى النشاط</span><b id="plAct">—</b></div>
-      <details class="plCalc"><summary class="small muted">كيف حسبناها؟</summary>
-        <div class="kv" style="margin-top:8px">
-          <div><span class="muted">طريقة الحساب</span><b id="plSrc">—</b></div>
-          <div id="plBurnRow"><span class="muted">قياس الحرق من ساعتك</span><b class="num" id="plBurn">—</b></div>
-          <div><span class="muted">الفرق عن حرقك</span><b class="num" id="plDelta">—</b></div>
-          <div><span class="muted">مؤشر كتلة الجسم</span><b class="num" id="plBmi">—</b></div>
-          <div><span class="muted">الألياف</span><b class="num" id="plFiber">—</b></div>
-        </div>
-      </details>
       <div id="plNotices"></div>
     </div>
+    <button class="plLink" data-go="pcalc"><span class="ic">🧮</span><span class="t"><b>كيف حسبناها؟</b><small>طريقة الحساب · مؤشر كتلة الجسم · الألياف</small></span><span class="ch">‹</span></button>
     <button class="plLink" data-go="psched"><span class="ic">🍽️</span><span class="t"><b>جدول الوجبات والتذكيرات</b><small id="plLkSched">—</small></span><span class="ch">‹</span></button>
     <button class="plLink" data-go="pram"><span class="ic">🌙</span><span class="t"><b>رمضان والصيام</b><small id="plLkRam">—</small></span><span class="pill good hidden" id="plLkRamOn">مفعّل</span><span class="ch">‹</span></button>
     <button class="plLink" data-go="ploc"><span class="ic">📍</span><span class="t"><b>الموقع والاقتراحات</b><small id="plLkLoc">—</small></span><span class="ch">‹</span></button>
-    <button class="btn ghost" id="editPlan" style="margin-top:6px">✎ تعديل الهدف والخطة</button>
 
+  </section>
+
+  <section id="v-pcalc" class="hidden fade">
+    <div class="rvTop"><button class="snapX plBack" aria-label="رجوع">›</button><b>كيف حسبناها؟</b><span></span></div>
+    <div class="card">
+      <div class="kv">
+        <div><span class="muted">طريقة الحساب</span><b id="plSrc">—</b></div>
+        <div id="plBurnRow"><span class="muted">قياس الحرق من ساعتك</span><b class="num" id="plBurn">—</b></div>
+        <div><span class="muted">الفرق عن حرقك</span><b class="num" id="plDelta">—</b></div>
+        <div><span class="muted">مؤشر كتلة الجسم</span><b class="num" id="plBmi">—</b></div>
+        <div><span class="muted">الألياف</span><b class="num" id="plFiber">—</b></div>
+      </div>
+      <div id="plCalcNote"></div>
+    </div>
   </section>
 
   <section id="v-psched" class="hidden fade">
@@ -1630,7 +1651,7 @@ html { scrollbar-width: none; } html::-webkit-scrollbar, body::-webkit-scrollbar
   }
 
   // ---------------- navigation ----------------
-  const VIEWS = ['setup', 'onb', 'today', 'progress', 'snap', 'review', 'plan', 'settings', 'psched', 'pram', 'ploc', 'sacc', 'sdev', 'sai', 'snotif', 'smed', 'spriv', 'susage'];
+  const VIEWS = ['setup', 'onb', 'today', 'progress', 'snap', 'review', 'plan', 'settings', 'psched', 'pram', 'ploc', 'pcalc', 'sacc', 'sdev', 'sai', 'snotif', 'smed', 'spriv', 'susage'];
   const SET_SUBS = ['sacc', 'sdev', 'sai', 'snotif', 'smed', 'spriv', 'susage'];
   let reviewPrev = 'today';
   function show(v) {
@@ -1645,7 +1666,7 @@ html { scrollbar-width: none; } html::-webkit-scrollbar, body::-webkit-scrollbar
     $('askFab').classList.toggle('hidden', v === 'setup' || v === 'onb' || v === 'snap' || v === 'review');
     curView = v;
     $('dayNav').style.visibility = v === 'today' ? 'visible' : 'hidden';
-    const navV = v === 'psched' || v === 'pram' || v === 'ploc' ? 'plan' : SET_SUBS.includes(v) ? 'settings' : v;
+    const navV = v === 'psched' || v === 'pram' || v === 'ploc' || v === 'pcalc' ? 'plan' : SET_SUBS.includes(v) ? 'settings' : v;
     document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === navV));
     window.scrollTo(0, 0);
     if (v === 'today') loadToday();
@@ -1653,7 +1674,7 @@ html { scrollbar-width: none; } html::-webkit-scrollbar, body::-webkit-scrollbar
     if (v === 'psched') loadScheduleSettings();
     if (v === 'ploc') loadLocation();
     const setV = v === 'settings' || SET_SUBS.includes(v);
-    if (v === 'plan' || setV || v === 'pram') loadPlan();
+    if (v === 'plan' || setV || v === 'pram' || v === 'pcalc') loadPlan();
     if (setV) { loadAiApps(); loadPrivacy(); loadUsage(); setTimeout(paintSettingsSummary, 900); }
     if (v === 'snap') { resetCapture(); snapMode('photo'); openCam(); } // one tap → camera
   }
@@ -1670,7 +1691,7 @@ html { scrollbar-width: none; } html::-webkit-scrollbar, body::-webkit-scrollbar
     if (vis('det')) { $('detBack').click(); return true; }
     if (vis('ask')) { closeAsk(); return true; }
     if (vis('cam')) return false; // the camera has its own ✕
-    if (['psched', 'pram', 'ploc'].includes(curView)) { show('plan'); return true; }
+    if (['psched', 'pram', 'ploc', 'pcalc'].includes(curView)) { show('plan'); return true; }
     if (SET_SUBS.includes(curView)) { show('settings'); return true; }
     if (curView === 'review') { show(reviewPrev || 'today'); return true; }
     if (curView === 'snap') { closeSnap(); return true; }
@@ -2950,7 +2971,7 @@ html { scrollbar-width: none; } html::-webkit-scrollbar, body::-webkit-scrollbar
       $('plMaint').textContent = L`${fmt(p.maintenanceKcal)} سعرة`;
       const bd = p.burnData || { days: 0, needed: 7, window: 14, avgKcal: null };
       $('plSrc').textContent = { adaptive: T('يتعلّم من وزنك وأكلك ✓'), device: L`حرقك الحقيقي (متوسط ${Math.min(bd.days, bd.window)} يوماً) ✓`, formula: T('معادلة مؤقتة') }[p.maintenanceSource];
-      $('plAct').textContent = ({ sedentary: T('قليل الحركة'), light: T('نشاط خفيف'), moderate: T('متوسط'), active: T('نشيط'), very_active: T('نشيط جداً') }[p.activityLevel] || '—') + (p.activityCalibration ? T(' (معدّل تلقائياً)') : '');
+      $('plAct').innerHTML = esc({ sedentary: T('قليل الحركة'), light: T('خفيف'), moderate: T('متوسط'), active: T('نشيط'), very_active: T('نشيط جداً') }[p.activityLevel] || '—') + (p.activityCalibration ? ` <span class="plAuto">✓ ${T('معدّل تلقائياً')}</span>` : '');
       $('plBurn').textContent = bd.days >= bd.needed ? L`مكتمل — متوسط ${fmt(bd.avgKcal)} سعرة` : L`${bd.days} من ${bd.needed} أيام${bd.avgKcal ? L` (متوسط حتى الآن ${fmt(bd.avgKcal)})` : ''}`;
       $('plBurn').style.color = bd.days >= bd.needed ? 'var(--good)' : 'var(--warn)';
       $('plDelta').textContent = p.dailyDeltaKcal < 0 ? L`عجز ${fmt(-p.dailyDeltaKcal)} سعرة` : p.dailyDeltaKcal > 0 ? L`فائض ${fmt(p.dailyDeltaKcal)} سعرة` : T('لا يوجد (محافظة)');
@@ -2958,7 +2979,7 @@ html { scrollbar-width: none; } html::-webkit-scrollbar, body::-webkit-scrollbar
       $('plBmi').textContent = p.bmi ?? '—'; $('plFiber').textContent = L`${fmt(p.fiberG)} غ`;
       const dc = p.deviceCalibration;
       const calNote = dc ? `<div class="notice info">${L`دقة ساعتك عندك: ${dc.accuracyPct}% (${dc.factor < 1 ? L`تبالغ ${Math.round((1 / dc.factor - 1) * 100)}%` : dc.factor > 1 ? L`تقلّل ${Math.round((1 - 1 / dc.factor) * 100)}%` : T('مطابقة')}). نصحّح قراءتها ونرجّع لك 75% من الحرق الزايد بدل 50%.`}</div>` : '';
-      $('plNotices').innerHTML = renderNotices(p.notices) + renderAdvice(p) + calNote;
+      $('plNotices').innerHTML = renderNotices(p.notices) + renderAdvice(p); $('plCalcNote').innerHTML = calNote;
       $('pSrc').value = prof.preferredEnergySource || ''; paintSources(); checkApple(); scStatus();
       const rm = prof.ramadan || { enabled: null, suhoorTime: '04:45', iftarTime: '18:00' };
       $('rmMode').value = rm.enabled === null ? 'auto' : rm.enabled ? 'on' : 'off';

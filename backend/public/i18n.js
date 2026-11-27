@@ -9,6 +9,10 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "✎ تعديل": "✎ Edit",
+    "طريقة الحساب · مؤشر كتلة الجسم · الألياف": "Method · BMI · fibre",
+    "خفيف": "Light",
+    "معدّل تلقائياً": "auto-adjusted",
     "الأجهزة والربط": "Devices & connections",
     "مصدر الحرق والأجهزة": "Burn source & devices",
     "ChatGPT و Claude و Gemini": "ChatGPT, Claude & Gemini",

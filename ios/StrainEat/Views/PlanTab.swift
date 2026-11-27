@@ -13,11 +13,10 @@ struct PlanTab: View {
             ScrollView {
                 VStack(spacing: 12) {
                     if let plan {
-                        PlanHero(plan: plan)
+                        PlanHero(plan: plan, onEdit: { editing = true })
                         NavigationLink { subPage(t("How we calculated it", "كيف حسبناها؟")) { PlanSummaryCard(plan: plan, onEdit: { editing = true }) } } label: {
-                            Text(t("How we calculated it ›", "كيف حسبناها؟ ‹")).font(.footnote.weight(.semibold)).foregroundStyle(Theme.muted).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 4)
+                            PlanLink(icon: "function", title: t("How we calculated it", "كيف حسبناها؟"), subtitle: t("Method · BMI · fibre", "طريقة الحساب · مؤشر كتلة الجسم · الألياف"))
                         }
-                        .buttonStyle(.plain)
                     }
                     if let profile {
                         NavigationLink { subPage(t("Meal schedule", "جدول الوجبات")) { MealRemindersCard(); ScheduleSettingsCard(profile: profile) } } label: {
@@ -38,8 +37,6 @@ struct PlanTab: View {
                     NavigationLink { settingsPage } label: {
                         PlanLink(icon: "gearshape.fill", title: t("Settings", "الإعدادات"), subtitle: t("Account, privacy, devices, water, appearance", "الحساب، الخصوصية، الأجهزة، الماء، المظهر"))
                     }
-                    Button { editing = true } label: { Label(t("Edit goal and plan", "تعديل الهدف والخطة"), systemImage: "pencil") }
-                        .buttonStyle(SoftButtonStyle()).padding(.top, 4)
                     if let message { Text(message).font(.footnote).foregroundStyle(Theme.muted) }
                 }
                 .padding(16)
@@ -130,19 +127,26 @@ private extension String { var nonEmpty: String? { isEmpty ? nil : self } }
 /// Top of My Plan: daily target ring, macros, burn, expected change, activity.
 struct PlanHero: View {
     let plan: Plan
+    var onEdit: () -> Void = {}
     var body: some View {
         VStack(spacing: 12) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle().stroke(Theme.line, lineWidth: 10)
-                    Circle().trim(from: 0, to: 0.78).stroke(Theme.good, style: StrokeStyle(lineWidth: 10, lineCap: .round)).rotationEffect(.degrees(-90))
-                    VStack(spacing: 0) {
-                        Text(fmt(plan.targetKcal)).font(.title2.weight(.heavy)).monospacedDigit()
-                        Text(t("kcal a day", "سعرة يومياً")).font(.caption2).foregroundStyle(Theme.muted)
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(t("Your daily target", "هدفك اليومي")).font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text(fmt(plan.targetKcal)).font(.system(size: 44, weight: .heavy)).monospacedDigit()
+                            Text(t("kcal", "سعرة")).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.muted)
+                        }
                     }
+                    Spacer()
+                    Button(action: onEdit) {
+                        Label(t("Edit", "تعديل"), systemImage: "pencil").font(.footnote.weight(.bold)).foregroundStyle(Theme.ink)
+                            .padding(.horizontal, 12).padding(.vertical, 8).background(Theme.card2, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
-                .frame(width: 120, height: 120)
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     macro(t("Protein", "بروتين"), plan.proteinG, Theme.protein)
                     macro(t("Carbs", "كارب"), plan.carbsG, Theme.carbs)
                     macro(t("Fat", "دهون"), plan.fatG, Theme.fat)
@@ -153,21 +157,25 @@ struct PlanHero: View {
 
             VStack(spacing: 10) {
                 row(t("Your daily burn", "حرقك اليومي"), t("\(fmt(plan.maintenanceKcal)) kcal", "\(fmt(plan.maintenanceKcal)) سعرة"))
-                if let w = plan.weeklyChangeKg, w != 0 { row(t("Expected change", "التغيّر المتوقع"), signedKg(w) + t("/week", "/أسبوع")) }
-                if let a = plan.activityLevel { row(t("Activity level", "مستوى النشاط"), activityName(a)) }
-                ForEach(plan.notices, id: \.self) { Notice(text: $0.text, level: $0.level) }
+                if let w = plan.weeklyChangeKg, w != 0 { Divider(); row(t("Expected change", "التغيّر المتوقع"), signedKg(w) + t("/week", "/أسبوع")) }
+                if let a = plan.activityLevel { Divider(); row(t("Activity level", "مستوى النشاط"), activityName(a)) }
+                ForEach(plan.notices, id: \.self) { n in
+                    if n.level == "info" {
+                        Label(n.text, systemImage: "info.circle").font(.caption).foregroundStyle(Theme.muted).frame(maxWidth: .infinity, alignment: .leading)
+                    } else { Notice(text: n.text, level: n.level) }
+                }
             }
             .padding(16)
             .background(Theme.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
     private func macro(_ label: String, _ g: Double, _ c: Color) -> some View {
-        VStack(spacing: 4) {
-            Circle().fill(c).frame(width: 9, height: 9)
-            Text(t("\(fmt(g)) g", "\(fmt(g)) غ")).font(.headline.weight(.heavy)).monospacedDigit()
-            Text(label).font(.caption2).foregroundStyle(Theme.muted)
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 5) { Circle().fill(c).frame(width: 8, height: 8); Text(label).font(.caption).foregroundStyle(Theme.muted) }
+            Text(t("\(fmt(g)) g", "\(fmt(g)) غ")).font(.title3.weight(.heavy)).monospacedDigit()
         }
-        .frame(maxWidth: .infinity)
+        .padding(10).frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.card2, in: RoundedRectangle(cornerRadius: 14))
     }
     private func row(_ k: String, _ v: String) -> some View {
         HStack { Text(k).foregroundStyle(Theme.muted); Spacer(); Text(v).fontWeight(.heavy).monospacedDigit() }.font(.subheadline)
