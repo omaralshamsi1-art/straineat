@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct StrainEatApp: App {
+    @AppStorage("displaySize") private var displaySize = "md"
     @State private var store = AppStore()
     @Environment(\.scenePhase) private var phase
     @AppStorage(appLanguageKey) private var lang = "en"
@@ -17,6 +18,7 @@ struct StrainEatApp: App {
                 .environment(\.locale, appLocale)
                 .id(lang) // rebuild every screen when the language changes
                 .tint(Theme.brand2)
+                .dynamicTypeSize(displaySizeType(displaySize))
                 .onAppear { applyAppTheme(theme) }
                 .onChange(of: phase) { _, p in
                     if p == .active, store.signedIn { Task { await store.refresh() } }

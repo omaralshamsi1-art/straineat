@@ -9,6 +9,9 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "حجم العرض": "Display size",
+    "صغير": "Small",
+    "كبير": "Large",
     "✎ تعديل": "✎ Edit",
     "طريقة الحساب · مؤشر كتلة الجسم · الألياف": "Method · BMI · fibre",
     "خفيف": "Light",

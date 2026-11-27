@@ -62,3 +62,20 @@ struct ThemePicker: View {
         .onChange(of: theme) { _, v in applyAppTheme(v) }
     }
 }
+
+/// Small / normal / large text across the app (replaces the iPhone text size inside StrainEat).
+func displaySizeType(_ v: String) -> DynamicTypeSize {
+    switch v { case "sm": return .medium; case "lg": return .xLarge; default: return .large }
+}
+
+struct DisplaySizePicker: View {
+    @AppStorage("displaySize") private var size = "md"
+    var body: some View {
+        Picker(t("Display size", "حجم العرض"), selection: $size) {
+            Text(t("Small", "صغير")).tag("sm")
+            Text(t("Normal", "عادي")).tag("md")
+            Text(t("Large", "كبير")).tag("lg")
+        }
+        .pickerStyle(.segmented)
+    }
+}

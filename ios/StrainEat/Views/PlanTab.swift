@@ -80,6 +80,7 @@ struct PlanTab: View {
                 groupHeader(t("App", "التطبيق"))
                 Card(title: t("Appearance", "المظهر"), icon: "circle.lefthalf.filled") { ThemePicker() }
                 Card(title: "Language · اللغة", icon: "globe") { LanguagePicker() }
+                Card(title: t("Display size", "حجم العرض"), icon: "textformat.size") { DisplaySizePicker() }
                 ExtraAnalysesRow()
                 groupHeader(t("Privacy", "الخصوصية"))
                 NavigationLink { subPage(t("Privacy & data", "الخصوصية والبيانات")) { PrivacyCard(aiConsentAt: profile?.aiConsentAt) } } label: {

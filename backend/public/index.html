@@ -15,6 +15,8 @@
     var m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = dark ? '#0d1411' : '#f4f2ec';
   }
   window.applyTheme = apply; apply();
+  window.applySize = function () { var z = 'md'; try { z = localStorage.getItem('ns_size') || 'md'; } catch (e) {} document.documentElement.dataset.size = z; };
+  window.applySize();
   if (mq && mq.addEventListener) mq.addEventListener('change', apply);
 })();
 </script>
@@ -955,6 +957,11 @@ html { scrollbar-width: none; } html::-webkit-scrollbar, body::-webkit-scrollbar
 #plNotices .notice.info::before { content: "ⓘ"; color: var(--p); }
 #v-plan { padding-bottom: 40px; }
 body { min-height: 100vh; }
+/* display size: whole UI scales together */
+html[data-size="sm"] { zoom: .9; }
+html[data-size="lg"] { zoom: 1.1; }
+/* large: keep the header on one line by dropping the wordmark (the logo stays) */
+html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
 </style>
 </head>
 <body>
@@ -1392,6 +1399,7 @@ body { min-height: 100vh; }
     <div class="stGrp">
       <div class="stRow "><span class="ic" style="background:var(--card-2)">🌓</span><span class="t"><b>المظهر</b></span><div class="langsw" role="group" aria-label="المظهر" id="themeSw"><button type="button" data-theme-opt="system">تلقائي</button><button type="button" data-theme-opt="light">فاتح</button><button type="button" data-theme-opt="dark">داكن</button></div></div>
       <div class="stRow "><span class="ic" style="background:var(--card-2)">🌐</span><span class="t"><b>اللغة</b></span><div class="langsw" role="group" aria-label="Language"><button type="button" data-lang="en">English</button><button type="button" data-lang="ar">العربية</button></div></div>
+      <div class="stRow"><span class="ic" style="background:var(--card-2)">🔠</span><span class="t"><b>حجم العرض</b></span><div class="langsw" role="group" aria-label="حجم العرض" id="sizeSw"><button type="button" data-size="sm">صغير</button><button type="button" data-size="md">عادي</button><button type="button" data-size="lg">كبير</button></div></div>
     </div>
     <div class="stGh">الخصوصية</div>
     <div class="stGrp">
@@ -3697,6 +3705,16 @@ body { min-height: 100vh; }
     window.applyTheme(); paintThemeSw();
   }));
   paintThemeSw();
+  // ---------------- display size (small / normal / large) ----------------
+  function paintSizeSw() {
+    let cur = 'md'; try { cur = localStorage.getItem('ns_size') || 'md'; } catch {}
+    document.querySelectorAll('#sizeSw button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.size === cur)));
+  }
+  document.querySelectorAll('#sizeSw button').forEach((b) => (b.onclick = () => {
+    try { localStorage.setItem('ns_size', b.dataset.size); } catch {}
+    window.applySize(); paintSizeSw();
+  }));
+  paintSizeSw();
 
   // ---------------- WHOOP recovery & sleep ----------------
   let wellCache = null;
