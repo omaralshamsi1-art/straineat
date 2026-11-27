@@ -31,6 +31,7 @@ struct StrainEatApp: App {
 struct RootView: View {
     @Environment(AppStore.self) private var store
     @State private var tab = UserDefaults.standard.integer(forKey: "initialTab")
+    @State private var tabBeforeSnap = 0
     @State private var showAssistant = UserDefaults.standard.bool(forKey: "openAssistant")
     @State private var aiConsentModel = AIConsent.shared
     private var screenName: String { ["today", "progress", "snap", "plan"][min(max(tab, 0), 3)] }
@@ -47,7 +48,7 @@ struct RootView: View {
                         .tag(0).tabItem { Label(t("Today", "اليوم"), systemImage: "sun.max.fill") }
                     ProgressTab()
                         .tag(1).tabItem { Label(t("Progress", "التقدم"), systemImage: "chart.line.uptrend.xyaxis") }
-                    LogView(onLogged: { tab = 0 })
+                    LogView(active: tab == 2, onLogged: { tab = 0 }, onClose: { tab = tabBeforeSnap })
                         .tag(2).tabItem { Label(t("Log meal", "سجّل وجبة"), systemImage: "plus.circle.fill") }
                     PlanTab()
                         .tag(3).tabItem { Label(t("Plan", "الخطة"), systemImage: "target") }
@@ -65,6 +66,7 @@ struct RootView: View {
                         .padding(.bottom, 64)
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .openAssistant)) { _ in showAssistant = true }
+                .onChange(of: tab) { old, _ in if old != 2 { tabBeforeSnap = old } }
                 .onReceive(NotificationCenter.default.publisher(for: .openProgress)) { _ in tab = 1 }
                 .onReceive(NotificationCenter.default.publisher(for: .openPlan)) { _ in tab = 3 }
                 .onOpenURL { url in if url.host == "today" { tab = 0 } } // from the home-screen widget

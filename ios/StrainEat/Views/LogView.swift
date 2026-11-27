@@ -4,127 +4,200 @@ import VisionKit
 
 struct LogView: View {
     @Environment(AppStore.self) private var store
+    var active: Bool = true
     var onLogged: () -> Void = {}
+    var onClose: () -> Void = {}
 
-    enum Mode: String, CaseIterable, Identifiable {
-        case photo, text, barcode, favorites
-        var id: String { rawValue }
-        var title: String { ["photo": t("Photo", "صورة"), "text": t("Text/voice", "نص/صوت"), "barcode": t("Barcode", "باركود"), "favorites": t("Favourites", "المفضلة")][rawValue]! }
-        var icon: String { ["photo": "camera.fill", "text": "text.bubble.fill", "barcode": "barcode.viewfinder", "favorites": "star.fill"][rawValue]! }
-    }
+    /// Snap opens straight into the camera; everything else is one tap from there.
+    enum Stage: Equatable { case photo, text, voice, barcode }
 
-    @State private var mode: Mode = .photo
+    @State private var stage: Stage = .photo
+    @State private var image: UIImage?
+    @State private var showCamera = false
     @State private var result: Meal?
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
-                    HStack(spacing: 8) {
-                        ForEach(Mode.allCases) { m in
-                            Button { withAnimation(.snappy) { mode = m } } label: {
-                                VStack(spacing: 5) {
-                                    Image(systemName: m.icon).font(.title3)
-                                    Text(m.title).font(.caption.weight(.semibold))
-                                }
-                                .frame(maxWidth: .infinity).padding(.vertical, 11)
-                                .foregroundStyle(mode == m ? Theme.onPastel : Theme.ink)
-                                .background(mode == m ? Theme.yellow : Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                            }
-                            .buttonStyle(.plain)
+                    switch stage {
+                    case .photo:
+                        if let image {
+                            PhotoLogPanel(image: image, result: $result, onRetake: { self.image = nil; showCamera = true })
+                        } else {
+                            Button { showCamera = true } label: { Label(t("Open camera", "افتح الكاميرا"), systemImage: "camera.fill") }
+                                .buttonStyle(PrimaryButtonStyle()).padding(.top, 40)
                         }
-                    }
-                    switch mode {
-                    case .photo: PhotoLogPanel(result: $result)
-                    case .text: TextLogPanel(result: $result)
-                    case .barcode: BarcodeLogPanel(result: $result)
-                    case .favorites: FavoritesPanel(onLogged: onLogged)
+                    case .text, .voice:
+                        TextLogPanel(result: $result, startVoice: stage == .voice)
+                        FavoritesPanel(onLogged: onLogged)
+                    case .barcode:
+                        BarcodeLogPanel(result: $result, autoScan: true)
                     }
                 }
                 .padding(16)
             }
             .scrollDismissesKeyboard(.interactively)
             .screenBackground()
-            .navigationTitle(t("Log meal", "سجّل وجبة"))
-            .onAppear {
-                if let m = UserDefaults.standard.string(forKey: "logMode"), let v = Mode(rawValue: m) { mode = v; UserDefaults.standard.removeObject(forKey: "logMode") }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { close() } label: { Image(systemName: "xmark") }.accessibilityLabel(t("Close", "إغلاق"))
+                }
             }
-            .navigationDestination(item: $result) { MealReviewView(meal: $0, onDone: { result = nil; onLogged() }) }
+            .navigationDestination(item: $result) { MealReviewView(meal: $0, onDone: { result = nil; image = nil; onLogged() }) }
+        }
+        .onChange(of: active, initial: true) { _, isOn in if isOn { begin() } }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraScreen(
+                onPhoto: { img in image = img; stage = .photo; showCamera = false },
+                onText: { stage = .text; showCamera = false },
+                onVoice: { stage = .voice; showCamera = false },
+                onBarcode: { stage = .barcode; showCamera = false },
+                onClose: { showCamera = false; if image == nil { close() } }
+            )
+            .environment(\.layoutDirection, appLayoutDirection)
         }
     }
+
+    private var title: String {
+        switch stage {
+        case .photo: t("Your meal", "وجبتك")
+        case .text, .voice: t("Type your meal", "اكتب وجبتك")
+        case .barcode: t("Barcode", "باركود")
+        }
+    }
+
+    private func begin() {
+        result = nil
+        if UserDefaults.standard.string(forKey: "logMode") == "favorites" {
+            UserDefaults.standard.removeObject(forKey: "logMode")
+            image = nil; stage = .text
+            return
+        }
+        image = nil; stage = .photo; showCamera = true
+    }
+
+    private func close() { image = nil; stage = .photo; onClose() }
 }
 
-// MARK: Photo
+// MARK: Photo — analyse first, details optional
 
 struct PhotoLogPanel: View {
+    let image: UIImage
     @Binding var result: Meal?
-    @State private var image: UIImage?
-    @State private var showCamera = false
-    @State private var pickerItem: PhotosPickerItem?
-    @State private var mealName = ""
+    var onRetake: () -> Void
+    @State private var portion: String?
+    @State private var noSauce = false
+    @State private var fromRestaurant = false
     @State private var restaurant = ""
-    @State private var portion = ""
     @State private var note = ""
     @State private var busy = false
     @State private var error: String?
+    @State private var speech = SpeechInput()
 
     var body: some View {
-        Card {
-            if let image {
-                Image(uiImage: image).resizable().scaledToFill()
-                    .frame(maxWidth: .infinity).frame(height: 230)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(alignment: .topLeading) {
-                        Button { self.image = nil; pickerItem = nil } label: {
-                            Image(systemName: "xmark.circle.fill").font(.title2).symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .black.opacity(0.5))
-                        }.padding(8)
-                    }
-            } else {
-                VStack(spacing: 8) {
-                    Image(systemName: "camera.viewfinder").font(.system(size: 44)).foregroundStyle(Theme.brand2)
-                    Text(t("Photograph the whole meal from above", "صوّر الوجبة كاملة من الأعلى")).font(.subheadline).foregroundStyle(Theme.muted)
+        Image(uiImage: image).resizable().scaledToFill()
+            .frame(maxWidth: .infinity).frame(height: 300)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(alignment: .topLeading) {
+                Button(action: onRetake) {
+                    Label(t("Retake", "صوّر من جديد"), systemImage: "arrow.counterclockwise")
+                        .font(.subheadline.weight(.bold)).foregroundStyle(.white)
+                        .padding(.horizontal, 14).padding(.vertical, 9)
+                        .background(.black.opacity(0.55), in: Capsule())
                 }
-                .frame(maxWidth: .infinity).frame(height: 150)
-                .background(Theme.brandSoft.opacity(0.5), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(12)
             }
-            HStack(spacing: 10) {
-                Button { showCamera = true } label: { Label(t("Camera", "الكاميرا"), systemImage: "camera.fill") }
-                    .buttonStyle(PrimaryButtonStyle())
-                    .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
-                PhotosPicker(selection: $pickerItem, matching: .images) { Label(t("Photos", "من الصور"), systemImage: "photo.on.rectangle") }
-                    .buttonStyle(SoftButtonStyle())
-            }
-        }
-        Card(title: t("Info that helps the analyser", "معلومات تساعد المحلّل"), icon: "info.circle") {
-            InputField(title: t("Meal name (optional)", "اسم الوجبة (اختياري)"), text: $mealName)
-            InputField(title: t("Restaurant (optional)", "المطعم (اختياري)"), text: $restaurant)
-            InputField(title: t("Portion — e.g. half, large", "الكمية — مثلاً: نصف، حجم كبير"), text: $portion)
-            InputField(title: t("Note — e.g. no sauce", "ملاحظة — مثلاً: بدون صوص"), text: $note)
-            Text(t("Naming the restaurant and meal lets us look up published values instead of estimating.", "ذكر المطعم واسم الوجبة يتيح البحث عن القيم المعلنة بدل التقدير.")).font(.caption).foregroundStyle(Theme.muted)
-        }
         if let error { Notice(text: error, level: "danger") }
         Button { Task { await analyze() } } label: {
-            if busy { HStack { ProgressView().tint(.white); Text(t("Analysing and searching…", "يحلل ويبحث…")) } } else { Text(t("Calculate nutrition", "احسب القيمة الغذائية")) }
+            if busy { HStack { ProgressView().tint(Theme.bg); Text(t("Analysing…", "يحلل…")) } } else { Text(t("Analyse meal", "حلّل الوجبة")).font(.title3.weight(.bold)) }
         }
-        .buttonStyle(PrimaryButtonStyle(color: image == nil ? Theme.muted : Theme.brand))
-        .disabled(image == nil || busy)
-        .sheet(isPresented: $showCamera) { CameraPicker(image: $image).ignoresSafeArea() }
-        .onChange(of: pickerItem) { _, item in
-            Task { if let data = try? await item?.loadTransferable(type: Data.self) { image = UIImage(data: data) } }
+        .buttonStyle(PrimaryButtonStyle())
+        .disabled(busy)
+
+        VStack(alignment: .leading, spacing: 10) {
+            Text(t("Want more accuracy? Add details (optional)", "تبي الدقة أعلى؟ أضف تفاصيل (اختياري)"))
+                .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.muted)
+            FlowChips {
+                Chip(title: t("Half plate", "نص صحن"), on: portion == "half plate") { portion = portion == "half plate" ? nil : "half plate" }
+                Chip(title: t("Full plate", "صحن كامل"), on: portion == "full plate") { portion = portion == "full plate" ? nil : "full plate" }
+                Chip(title: t("No sauce", "بدون صوص"), on: noSauce) { noSauce.toggle() }
+                Chip(title: t("📍 From a restaurant", "📍 من مطعم"), on: fromRestaurant) { fromRestaurant.toggle(); if !fromRestaurant { restaurant = "" } }
+            }
+            if fromRestaurant { InputField(title: t("Restaurant name", "اسم المطعم"), text: $restaurant) }
+            HStack(spacing: 8) {
+                InputField(title: t("Add a note…", "اكتب ملاحظة…"), text: $note)
+                Button {
+                    if speech.isRecording { speech.stop() } else { let base = note.isEmpty ? "" : note + " "; Task { await speech.start { note = base + $0 } } }
+                } label: {
+                    Image(systemName: speech.isRecording ? "stop.fill" : "mic.fill").font(.title3)
+                        .frame(width: 50, height: 44)
+                        .foregroundStyle(speech.isRecording ? .white : Theme.ink)
+                        .background(speech.isRecording ? Theme.bad : Theme.card2, in: RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain).accessibilityLabel(t("Speak", "تحدّث"))
+            }
+            if let e = speech.error { Text(e).font(.caption).foregroundStyle(Theme.bad) }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 8)
+        .onDisappear { speech.stop() }
     }
 
     private func analyze() async {
-        guard let image else { return }
+        speech.stop()
         guard await AIConsent.shared.ensure() else { return }
         busy = true; error = nil
         defer { busy = false }
+        let n = [note.trimmingCharacters(in: .whitespaces), noSauce ? "no sauce" : ""].filter { !$0.isEmpty }.joined(separator: ", ")
         do {
-            let r = try await APIClient.shared.analyze(image: image, mealName: mealName, restaurant: restaurant, portion: portion, note: note)
-            self.image = nil; pickerItem = nil; mealName = ""; restaurant = ""; portion = ""; note = ""
+            let r = try await APIClient.shared.analyze(image: image, mealName: nil, restaurant: restaurant.trimmingCharacters(in: .whitespaces), portion: portion, note: n)
             result = r.meal
         } catch { self.error = error.localizedDescription }
+    }
+}
+
+struct Chip: View {
+    let title: String
+    let on: Bool
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            Text(title).font(.subheadline.weight(.semibold))
+                .padding(.horizontal, 14).padding(.vertical, 9)
+                .foregroundStyle(on ? Theme.onPastel : Theme.ink)
+                .background(on ? Theme.yellow : Theme.card2, in: Capsule())
+                .overlay(Capsule().stroke(on ? .clear : Theme.line))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Simple wrapping row for chips.
+struct FlowChips: Layout {
+    var spacing: CGFloat = 8
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let w = proposal.width ?? .infinity
+        var x: CGFloat = 0, y: CGFloat = 0, row: CGFloat = 0, maxX: CGFloat = 0
+        for v in subviews {
+            let s = v.sizeThatFits(.unspecified)
+            if x > 0 && x + s.width > w { x = 0; y += row + spacing; row = 0 }
+            x += s.width + spacing; row = max(row, s.height); maxX = max(maxX, x - spacing)
+        }
+        return CGSize(width: min(maxX, w), height: y + row)
+    }
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let rtl = appLayoutDirection == .rightToLeft
+        var x: CGFloat = 0, y: CGFloat = 0, row: CGFloat = 0
+        for v in subviews {
+            let s = v.sizeThatFits(.unspecified)
+            if x > 0 && x + s.width > bounds.width { x = 0; y += row + spacing; row = 0 }
+            let px = rtl ? bounds.maxX - x - s.width : bounds.minX + x
+            v.place(at: CGPoint(x: px, y: bounds.minY + y), proposal: ProposedViewSize(s))
+            x += s.width + spacing; row = max(row, s.height)
+        }
     }
 }
 
@@ -132,6 +205,8 @@ struct PhotoLogPanel: View {
 
 struct TextLogPanel: View {
     @Binding var result: Meal?
+    var startVoice = false
+    @FocusState private var focused: Bool
     @State private var text = ""
     @State private var restaurant = ""
     @State private var busy = false
@@ -140,8 +215,10 @@ struct TextLogPanel: View {
 
     var body: some View {
         Card(title: t("Type or say what you ate", "اكتب أو قل ما أكلت"), icon: "text.bubble") {
+            Text(t("Write it your way; add the portion and restaurant if you know", "اكتب بأسلوبك، واذكر الكمية والمطعم إذا تعرف")).font(.caption).foregroundStyle(Theme.muted)
             ZStack(alignment: .topLeading) {
                 TextEditor(text: $text)
+                    .focused($focused)
                     .frame(minHeight: 110)
                     .scrollContentBackground(.hidden)
                     .padding(8)
@@ -164,11 +241,14 @@ struct TextLogPanel: View {
         }
         if let error { Notice(text: error, level: "danger") }
         Button { Task { await analyze() } } label: {
-            if busy { HStack { ProgressView().tint(.white); Text(t("Analysing…", "يحلل…")) } } else { Text(t("Calculate nutrition", "احسب القيمة الغذائية")) }
+            if busy { HStack { ProgressView().tint(.white); Text(t("Analysing…", "يحلل…")) } } else { Text(t("Analyse meal", "حلّل الوجبة")) }
         }
         .buttonStyle(PrimaryButtonStyle(color: text.trimmingCharacters(in: .whitespacesAndNewlines).count < 3 ? Theme.muted : Theme.brand))
         .disabled(busy || text.trimmingCharacters(in: .whitespacesAndNewlines).count < 3)
         .onDisappear { speech.stop() }
+        .task {
+            if startVoice { await speech.start { text = $0 } } else { focused = true }
+        }
     }
 
     private func analyze() async {
@@ -188,6 +268,7 @@ struct TextLogPanel: View {
 
 struct BarcodeLogPanel: View {
     @Binding var result: Meal?
+    var autoScan = false
     @State private var scanning = false
     @State private var code = ""
     @State private var product: BarcodeProduct?
@@ -236,6 +317,7 @@ struct BarcodeLogPanel: View {
             }
         }
         EmptyView()
+            .onAppear { if autoScan && scannerAvailable && product == nil { scanning = true } }
             .sheet(isPresented: $scanning) {
                 BarcodeScanner { found in
                     scanning = false

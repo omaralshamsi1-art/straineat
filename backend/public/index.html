@@ -792,6 +792,45 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
 .chDot { width: 34px; height: 34px; border-radius: 50%; display: inline-grid; place-items: center; flex: none; font-weight: 800; font-size: 14px; color: #111; }
 .chFeed { font-size: 14.5px; line-height: 1.6; padding: 9px 0; border-top: 1px solid var(--line); }
 .chFeed:first-of-type { border-top: 0; }
+/* ---- Snap v2: camera first ---- */
+#cam { position: fixed; inset: 0; z-index: 90; background: #000; color: #fff; }
+#cam video { position: absolute; left: 0; right: 0; top: 0; bottom: 230px; width: 100%; height: calc(100% - 230px); object-fit: cover; }
+#cam .camOff { position: absolute; left: 0; right: 0; top: 0; bottom: 230px; display: grid; place-content: center; justify-items: center; gap: 12px; color: #ddd; text-align: center; padding: 20px; }
+#cam .camOff .ci { width: 64px; height: 64px; border-radius: 20px; background: #ffffff1f; display: grid; place-items: center; }
+#cam .camTop { position: absolute; top: calc(env(safe-area-inset-top) + 14px); left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; z-index: 2; }
+#cam .camB { width: 44px; height: 44px; border-radius: 50%; border: 0; background: #0007; color: #fff; font-size: 18px; cursor: pointer; }
+#cam .camP { border: 0; background: #0007; color: #fff; border-radius: 999px; padding: 10px 16px; font: inherit; font-weight: 700; font-size: 15px; display: flex; gap: 8px; align-items: center; cursor: pointer; }
+#cam .camFrame { position: absolute; left: 10%; right: 10%; top: 18%; bottom: 300px; pointer-events: none; }
+#cam .camFrame i { position: absolute; width: 34px; height: 34px; border: 4px solid #fff; border-radius: 6px; }
+#cam .camFrame i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; } #cam .camFrame i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+#cam .camFrame i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; } #cam .camFrame i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+#cam .camHint { position: absolute; left: 0; right: 0; bottom: 246px; text-align: center; font-weight: 700; font-size: 16px; text-shadow: 0 1px 6px #000; }
+#cam .camBar { position: absolute; left: 0; right: 0; bottom: 0; height: 230px; background: #15171a; display: flex; flex-direction: column; align-items: center; padding: 18px 16px calc(env(safe-area-inset-bottom) + 10px); }
+#cam .camShut { width: 84px; height: 84px; border-radius: 50%; border: 5px solid #fff; background: none; display: grid; place-items: center; cursor: pointer; padding: 0; }
+#cam .camShut i { width: 66px; height: 66px; border-radius: 50%; background: #fff; transition: transform .1s; } #cam .camShut:active i { transform: scale(.9); }
+#cam .camOpts { display: flex; gap: 10px; width: 100%; max-width: 460px; margin-top: 18px; }
+#cam .camOpts button { flex: 1; border: 1px solid #2e3238; background: #202327; color: #f2f2f0; border-radius: 18px; padding: 10px 4px; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; }
+#cam .camOpts b { display: block; font-size: 22px; margin-bottom: 2px; }
+.snapShot { position: relative; margin: -4px -4px 14px; }
+.snapShot .photo { max-height: 44vh; border-radius: 24px; }
+.snapX { width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--card); color: var(--ink); font-size: 17px; cursor: pointer; }
+.snapShot .snapX { position: absolute; top: 12px; inset-inline-end: 12px; background: #0008; color: #fff; }
+.snapPill { position: absolute; top: 12px; inset-inline-start: 12px; border: 0; background: #0008; color: #fff; border-radius: 999px; padding: 10px 14px; font: inherit; font-weight: 700; cursor: pointer; }
+.btn.snapGo { font-size: 18px; padding: 17px; border-radius: 999px; }
+.snapMore { margin-top: 22px; } .snapMore .b { font-weight: 700; margin-bottom: 10px; }
+.snapChips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.snapChips button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 9px 14px; font: inherit; font-weight: 600; cursor: pointer; }
+.snapChips button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411; }
+#hRest { margin-bottom: 10px; }
+.snapNote, .snapRow { display: flex; gap: 8px; align-items: stretch; }
+.snapNote input { flex: 1; }
+.snapMic { width: 52px; flex: none; border-radius: 16px; border: 1px solid var(--line); background: var(--card); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.snapMic.big { width: 58px; height: 58px; border-radius: 50%; }
+.snapMic.on { background: var(--bad); border-color: var(--bad); color: #fff; animation: pulse 1.2s infinite; }
+.snapRow { margin-top: 16px; } .snapRow .btn { flex: 1; }
+.snapHead { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 16px; } .snapHead b { font-size: 19px; } .snapHead span { width: 42px; }
+.snapTxt { min-height: 140px; font-size: 17px; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -991,50 +1030,48 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
 
   <!-- ============ SNAP ============ -->
   <section id="v-snap" class="hidden fade">
-    <div class="greet"><em class="acc">سجّل</em> وجبتك</div>
-    <div class="modes" id="snapModes">
-      <button data-m="photo" aria-pressed="true"><svg width="22" height="22"><use href="#i-camera"/></svg>صورة</button>
-      <button data-m="text"><svg width="22" height="22"><use href="#i-bulb"/></svg>كتابة/صوت</button>
-      <button data-m="barcode"><svg width="22" height="22"><use href="#i-chart"/></svg>باركود</button>
-      <button data-m="fav"><svg width="22" height="22"><use href="#i-heart"/></svg>المفضلة</button>
-    </div>
+    <input id="file" type="file" accept="image/*" capture="environment" class="hidden">
+    <input id="fileLib" type="file" accept="image/*" class="hidden">
 
+    <!-- after a photo: analyse first, details optional -->
     <div data-mode="photo">
-      <input id="file" type="file" accept="image/*" capture="environment" class="hidden">
-      <input id="fileLib" type="file" accept="image/*" class="hidden">
-      <div class="card" style="padding:12px">
-        <button id="drop" class="drop"><span class="ci"><svg width="30" height="30"><use href="#i-camera"/></svg></span><b>اضغط للتصوير</b><div class="small muted" style="margin-top:6px">أو <a href="#" id="pickLib">اختر من الصور</a></div></button>
-        <img id="preview" class="photo hidden" alt="صورة الوجبة">
+      <div class="snapShot">
+        <img id="preview" class="photo" alt="صورة الوجبة">
+        <button class="snapX" id="snapClose1" aria-label="إغلاق">✕</button>
+        <button class="snapPill" id="retake">↺ صوّر من جديد</button>
       </div>
-      <div class="card">
-        <div class="grid2">
-          <div><label for="hName" style="margin-top:0">اسم الوجبة</label><input id="hName" placeholder="شاورما دجاج"></div>
-          <div><label for="hRest" style="margin-top:0">المطعم</label><input id="hRest" placeholder="اختياري"></div>
+      <button class="btn snapGo" id="analyzeBtn" disabled>حلّل الوجبة</button>
+      <div id="analyzing" class="loading hidden"><div class="spinner"></div>يحلل الصورة… قد يستغرق حتى دقيقة</div>
+      <div class="snapMore">
+        <div class="small muted b">تبي الدقة أعلى؟ أضف تفاصيل (اختياري)</div>
+        <div class="snapChips" id="snapChips">
+          <button type="button" data-portion="half">نص صحن</button>
+          <button type="button" data-portion="full">صحن كامل</button>
+          <button type="button" data-note="nosauce">بدون صوص</button>
+          <button type="button" data-rest="1">📍 من مطعم</button>
         </div>
-        <div class="grid2">
-          <div><label for="hPortion">الكمية</label><input id="hPortion" placeholder="نصف، كبير…"></div>
-          <div><label for="hNote">ملاحظة</label><input id="hNote" placeholder="بدون صوص…"></div>
-        </div>
-        <div style="height:14px"></div>
-        <button class="btn" id="analyzeBtn" disabled>احسب القيمة الغذائية</button>
-        <div id="analyzing" class="loading hidden"><div class="spinner"></div>يحلل الصورة… قد يستغرق حتى دقيقة</div>
+        <input id="hRest" class="hidden" placeholder="اسم المطعم" aria-label="المطعم">
+        <div class="snapNote"><input id="hNote" placeholder="اكتب ملاحظة…" aria-label="ملاحظة"><button class="snapMic" id="noteMic" aria-label="تحدث"><svg width="22" height="22" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
       </div>
     </div>
 
+    <!-- type it / say it -->
     <div data-mode="text" class="hidden">
-      <div class="card">
-        <label for="txtMeal" style="margin-top:0">صف ما أكلت</label>
-        <textarea id="txtMeal" placeholder="مثال: أكلت ساندويتش شاورما دجاج من الملاح وعصير برتقال صغير"></textarea>
-        <button class="mic" id="micBtn" aria-label="تحدث"><svg width="28" height="28" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-        <p class="small muted" style="text-align:center;margin:0" id="micHint">اضغط على الميكروفون وتحدث بالعربي</p>
-        <label for="txtRest">المطعم (اختياري)</label><input id="txtRest">
-        <div style="height:14px"></div>
-        <button class="btn" id="txtBtn">احسب القيمة الغذائية</button>
-        <div id="txtLoading" class="loading hidden"><div class="spinner"></div>يحلل الوصف…</div>
+      <div class="snapHead"><button class="snapX" id="snapClose2" aria-label="إغلاق">✕</button><b>اكتب وجبتك</b><span></span></div>
+      <textarea id="txtMeal" class="snapTxt" placeholder="مثال: صحن مجبوس دجاج وسلطة ولبن"></textarea>
+      <p class="small muted" id="micHint" style="margin:8px 2px 0">اكتب بأسلوبك، واذكر الكمية والمطعم إذا تعرف</p>
+      <input id="txtRest" placeholder="المطعم (اختياري)" aria-label="المطعم" style="margin-top:10px">
+      <div class="snapRow"><button class="snapMic big" id="micBtn" aria-label="تحدث"><svg width="26" height="26" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button class="btn snapGo" id="txtBtn">حلّل الوجبة</button></div>
+      <div id="txtLoading" class="loading hidden"><div class="spinner"></div>يحلل الوصف…</div>
+      <div class="card" style="margin-top:18px">
+        <h3>أو اختر من المفضلة <span class="small">بضغطة واحدة — بدون انتظار</span></h3>
+        <div id="favList"></div>
       </div>
     </div>
 
+    <!-- barcode -->
     <div data-mode="barcode" class="hidden">
+      <div class="snapHead"><button class="snapX" id="snapClose3" aria-label="إغلاق">✕</button><b>باركود</b><span></span></div>
       <div class="card">
         <video id="scanVideo" class="scan hidden" playsinline muted></video>
         <button class="btn" id="scanBtn"><svg width="20" height="20"><use href="#i-camera"/></svg>امسح الباركود بالكاميرا</button>
@@ -1046,14 +1083,24 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
         <p class="small muted" style="margin:10px 0 0">المصدر: قاعدة Open Food Facts المفتوحة.</p>
       </div>
     </div>
+  </section>
 
-    <div data-mode="fav" class="hidden">
-      <div class="card">
-        <h3>وجباتك المفضلة <span class="small">بضغطة واحدة — بدون انتظار</span></h3>
-        <div id="favList"></div>
+  <!-- ============ CAMERA (one tap from the Snap button) ============ -->
+  <div id="cam" class="hidden" role="dialog" aria-label="الكاميرا">
+    <video id="camVideo" playsinline muted autoplay></video>
+    <div class="camOff hidden" id="camOff"><span class="ci"><svg width="30" height="30"><use href="#i-camera"/></svg></span><b>اضغط زر التصوير لفتح الكاميرا</b></div>
+    <div class="camTop"><button class="camB" id="camClose" aria-label="إغلاق">✕</button><button class="camP" id="camBarcode"><svg width="22" height="16" viewBox="0 0 22 16" fill="currentColor"><rect x="0" width="2" height="16"/><rect x="4" width="1" height="16"/><rect x="7" width="3" height="16"/><rect x="12" width="1" height="16"/><rect x="15" width="2" height="16"/><rect x="19" width="3" height="16"/></svg>باركود</button></div>
+    <div class="camFrame"><i></i><i></i><i></i><i></i></div>
+    <div class="camHint">صوّر وجبتك</div>
+    <div class="camBar">
+      <button class="camShut" id="camShut" aria-label="التقاط صورة"><i></i></button>
+      <div class="camOpts">
+        <button id="camLib"><b>🖼️</b>من الصور</button>
+        <button id="camText"><b>✍️</b>اكتبها</button>
+        <button id="camVoice"><b>🎤</b>قلها</button>
       </div>
     </div>
-  </section>
+  </div>
 
   <!-- ============ REVIEW ============ -->
   <section id="v-review" class="hidden fade">
@@ -1395,10 +1442,11 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
   function show(v) {
     let scrollTo = 0;
     if (v === 'plan-settings') v = 'settings';
-    if (v !== 'snap' && typeof stopScan === 'function') { try { stopScan(); } catch {} }
+    if (v === 'snap' && curView !== 'snap') snapPrev = curView;
+    if (v !== 'snap') { try { stopScan(); closeCam(); stopMic(); } catch {} }
     for (const s of VIEWS) $(`v-${s}`).classList.toggle('hidden', s !== v);
     $('nav').classList.toggle('hidden', v === 'setup' || v === 'onb');
-    $('askFab').classList.toggle('hidden', v === 'setup' || v === 'onb');
+    $('askFab').classList.toggle('hidden', v === 'setup' || v === 'onb' || v === 'snap');
     curView = v;
     $('dayNav').style.visibility = v === 'today' ? 'visible' : 'hidden';
     document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
@@ -1408,6 +1456,7 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
     if (v === 'plan') { loadLocation(); loadScheduleSettings(); }
     if (v === 'plan' || v === 'settings') loadPlan();
     if (v === 'settings') { loadAiApps(); loadPrivacy(); }
+    if (v === 'snap') { resetCapture(); snapMode('photo'); openCam(); } // one tap → camera
   }
   document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
 
@@ -2951,29 +3000,72 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
     } catch (e) { toast(e.message); }
   };
 
-  // ---------------- snap modes ----------------
-  let scanControls = null;
+  // ---------------- snap: camera first ----------------
+  let scanControls = null, camStream = null, snapPrev = 'today';
   function snapMode(m) {
-    $('snapModes').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.m === m)));
     document.querySelectorAll('#v-snap [data-mode]').forEach((d) => d.classList.toggle('hidden', d.dataset.mode !== m));
     if (m !== 'barcode') stopScan();
-    if (m === 'fav') loadFavorites();
+    if (m === 'text') loadFavorites();
   }
-  $('snapModes').querySelectorAll('button').forEach((b) => (b.onclick = () => snapMode(b.dataset.m)));
+  function stopCamStream() { if (camStream) camStream.getTracks().forEach((t) => t.stop()); camStream = null; $('camVideo').srcObject = null; }
+  function closeCam() { stopCamStream(); $('cam').classList.add('hidden'); document.body.style.overflow = ''; }
+  async function openCam() {
+    $('cam').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+    $('camOff').classList.add('hidden');
+    if (camStream) return;
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no camera');
+      const st = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false });
+      if ($('cam').classList.contains('hidden')) { st.getTracks().forEach((t) => t.stop()); return; }
+      camStream = st; $('camVideo').srcObject = st; await $('camVideo').play().catch(() => {});
+    } catch { camStream = null; $('camOff').classList.remove('hidden'); }
+  }
+  function closeSnap() { stopMic(); closeCam(); resetCapture(); show(['snap', 'review', 'setup', 'onb'].includes(snapPrev) ? 'today' : snapPrev); }
+  function setPhoto(blob) {
+    photo = blob; $('preview').src = URL.createObjectURL(blob); $('analyzeBtn').disabled = false;
+    closeCam(); snapMode('photo');
+  }
+  $('camClose').onclick = closeSnap;
+  ['snapClose1', 'snapClose2', 'snapClose3'].forEach((id) => ($(id).onclick = closeSnap));
+  $('camShut').onclick = async () => {
+    const v = $('camVideo');
+    if (!camStream || !v.videoWidth) return $('file').click(); // no live camera → the phone's own camera
+    const k = Math.min(1, 1568 / Math.max(v.videoWidth, v.videoHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k);
+    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+    const blob = await new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.82));
+    if (blob) setPhoto(blob); else toast(T('تعذّر قراءة الصورة'));
+  };
+  $('camLib').onclick = () => $('fileLib').click();
+  $('camText').onclick = () => { closeCam(); snapMode('text'); $('txtMeal').focus(); };
+  $('camVoice').onclick = () => { closeCam(); snapMode('text'); toggleMic($('micBtn'), 'txtMeal'); };
+  $('camBarcode').onclick = () => { closeCam(); snapMode('barcode'); $('scanBtn').click(); };
+  $('retake').onclick = () => { resetCapture(); openCam(); };
 
-  // text + voice
+  // optional details after a photo
+  $('snapChips').querySelectorAll('button').forEach((b) => (b.onclick = () => {
+    const on = b.getAttribute('aria-pressed') !== 'true';
+    if (b.dataset.portion) $('snapChips').querySelectorAll('[data-portion]').forEach((x) => x.setAttribute('aria-pressed', 'false'));
+    b.setAttribute('aria-pressed', String(on));
+    if (b.dataset.rest) { $('hRest').classList.toggle('hidden', !on); if (on) $('hRest').focus(); else $('hRest').value = ''; }
+  }));
+
+  // voice (Web Speech) — used by "Say it" and the note mic
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let rec = null;
-  if (!SR) { $('micBtn').classList.add('hidden'); $('micHint').textContent = T('الإملاء الصوتي غير مدعوم هنا — استخدم ميكروفون لوحة المفاتيح.'); }
-  $('micBtn').onclick = () => {
+  function stopMic() { try { rec && rec.stop(); } catch {} }
+  function toggleMic(btn, inputId) {
     if (rec) { rec.stop(); return; }
+    if (!SR) { toast(T('الإملاء الصوتي غير مدعوم هنا — استخدم ميكروفون لوحة المفاتيح.'), 4000); $(inputId).focus(); return; }
     rec = new SR(); rec.lang = LANG === 'ar' ? 'ar-AE' : 'en-US'; rec.interimResults = true; rec.continuous = false;
-    const base = $('txtMeal').value ? $('txtMeal').value + ' ' : '';
-    rec.onresult = (e) => { $('txtMeal').value = base + Array.from(e.results).map((r) => r[0].transcript).join(' '); };
-    rec.onend = () => { rec = null; $('micBtn').classList.remove('on'); $('micHint').textContent = T('اضغط على الميكروفون وتحدث بالعربي'); };
+    const base = $(inputId).value ? $(inputId).value + ' ' : '';
+    rec.onresult = (e) => { $(inputId).value = base + Array.from(e.results).map((r) => r[0].transcript).join(' '); };
+    rec.onend = () => { rec = null; btn.classList.remove('on'); };
     rec.onerror = (e) => toast(e.error === 'not-allowed' ? T('اسمح بالوصول للميكروفون') : T('تعذّر التعرف على الصوت'));
-    rec.start(); $('micBtn').classList.add('on'); $('micHint').textContent = T('أستمع… اضغط مرة أخرى للإيقاف');
-  };
+    try { rec.start(); btn.classList.add('on'); } catch { rec = null; }
+  }
+  $('micBtn').onclick = () => toggleMic($('micBtn'), 'txtMeal');
+  $('noteMic').onclick = () => toggleMic($('noteMic'), 'hNote');
   $('txtBtn').onclick = async () => {
     const t = $('txtMeal').value.trim(); if (t.length < 3) return toast(T('اكتب وصفاً للوجبة'));
     if (!(await ensureAiConsent())) return;
@@ -3051,13 +3143,10 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
   }
 
   // ---------------- capture ----------------
-  $('drop').onclick = (e) => { if (e.target.id !== 'pickLib') $('file').click(); };
-  $('pickLib').onclick = (e) => { e.preventDefault(); e.stopPropagation(); $('fileLib').click(); };
-  $('preview').onclick = () => $('file').click();
   for (const id of ['file', 'fileLib']) $(id).onchange = async (e) => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
-    try { photo = await resize(f); $('preview').src = URL.createObjectURL(photo); $('preview').classList.remove('hidden'); $('drop').classList.add('hidden'); $('analyzeBtn').disabled = false; }
-    catch { toast(T('تعذّر قراءة الصورة')); }
+    try { setPhoto(await resize(f)); } catch { toast(T('تعذّر قراءة الصورة')); }
+    e.target.value = '';
   };
   async function resize(file, max = 1568) {
     const bmp = await createImageBitmap(file).catch(() => null);
@@ -3072,15 +3161,22 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
     if (!(await ensureAiConsent())) return;
     $('analyzeBtn').disabled = true; $('analyzing').classList.remove('hidden');
     const fd = new FormData(); fd.append('photo', photo, 'meal.jpg');
-    for (const [k, id] of [['mealName', 'hName'], ['restaurant', 'hRest'], ['portion', 'hPortion'], ['note', 'hNote']]) { const v = $(id).value.trim(); if (v) fd.append(k, v); }
+    const chip = (sel) => $('snapChips').querySelector(`${sel}[aria-pressed="true"]`);
+    const portion = chip('[data-portion]'), rest = $('hRest').value.trim();
+    const note = [$('hNote').value.trim(), chip('[data-note]') ? 'no sauce' : ''].filter(Boolean).join(', ');
+    if (portion) fd.append('portion', portion.dataset.portion === 'half' ? 'half plate' : 'full plate');
+    if (rest) fd.append('restaurant', rest);
+    if (note) fd.append('note', note);
     fd.append('eatenAt', new Date().toISOString());
     try { const r = await api('meals/analyze', { method: 'POST', body: fd }); resetCapture(); openReview(r.meal); }
     catch (e) { toast(e.message, 4000); }
     finally { $('analyzeBtn').disabled = !photo; $('analyzing').classList.add('hidden'); }
   };
   function resetCapture() {
-    photo = null; $('preview').classList.add('hidden'); $('drop').classList.remove('hidden'); $('analyzeBtn').disabled = true;
-    for (const id of ['hName', 'hRest', 'hPortion', 'hNote', 'file', 'fileLib']) $(id).value = '';
+    photo = null; $('preview').removeAttribute('src'); $('analyzeBtn').disabled = true;
+    for (const id of ['hRest', 'hNote', 'file', 'fileLib']) $(id).value = '';
+    $('hRest').classList.add('hidden');
+    $('snapChips').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', 'false'));
   }
 
   // ---------------- review ----------------
