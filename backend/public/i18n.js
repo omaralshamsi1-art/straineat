@@ -9,6 +9,21 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "سعرة يومياً": "kcal a day",
+    "حرقك اليومي": "Your daily burn",
+    "كيف حسبناها؟": "How we calculated it",
+    "جدول الوجبات والتذكيرات": "Meal schedule & reminders",
+    "رمضان والصيام": "Ramadan & fasting",
+    "مفعّل": "Active",
+    "الموقع والاقتراحات": "Location & suggestions",
+    "✎ تعديل الهدف والخطة": "✎ Edit goal and plan",
+    "اقتراحات الأكل": "Food suggestions",
+    "نقترح مطاعم موجودة في منطقتك تناسب المتبقي من سعراتك — تلقاها في صفحة اليوم.": "We suggest restaurants in your area that fit your remaining calories — you'll find them on the Today page.",
+    "أوقاتي · {} وجبات وسناك": "My times · {} meals & snacks",
+    "تلقائي من عاداتك": "Automatic from your habits",
+    "صائم كل يوم": "Fasting every day",
+    "صيام تطوع": "voluntary fasts",
+    "غير محدد": "Not set",
     "كم أكلت منها؟": "How much did you eat?",
     "عرض وتعديل": "View & edit",
     "بدائل وتفاصيل التحليل": "Swaps & analysis details",

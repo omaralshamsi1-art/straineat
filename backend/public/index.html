@@ -879,6 +879,19 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
 .rvName textarea { font-size: 21px; font-weight: 800; border: 0; padding: 0; background: none; color: var(--ink); min-width: 0; flex: 1; resize: none; overflow: hidden; line-height: 1.3; font-family: inherit; min-height: 0; }
 .rvDel { display: block; margin: 14px auto 0; border: 0; background: none; color: var(--bad); font: inherit; font-weight: 700; font-size: 15px; padding: 10px 16px; cursor: pointer; }
 .rvKind { margin-top: 14px; }
+/* ---- My Plan v2: summary + sub-screens ---- */
+.plHero { display: flex; align-items: center; gap: 16px; }
+.plRing { width: 128px; height: 128px; border-radius: 50%; background: conic-gradient(var(--good) 0 78%, var(--line) 0); display: grid; place-items: center; flex: none; }
+.plRing > div { width: 108px; height: 108px; border-radius: 50%; background: var(--card); display: grid; place-content: center; text-align: center; }
+.plRing b { font-size: 24px; font-weight: 800; } .plRing span { color: var(--muted); font-size: 12px; }
+.plMac { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; color: var(--muted); font-size: 12px; }
+.plMac b { display: block; font-size: 18px; color: var(--ink); } .plMac i { display: block; width: 9px; height: 9px; border-radius: 50%; margin: 0 auto 6px; }
+.plKv > div:not(#plNotices) { display: flex; justify-content: space-between; padding: 7px 0; font-size: 15px; } .plKv > div b { font-weight: 800; }
+.plCalc { margin-top: 4px; } .plCalc summary { cursor: pointer; }
+.plLink { display: flex; align-items: center; gap: 12px; width: 100%; background: var(--card); border: 0; border-radius: 18px; padding: 14px; margin-bottom: 8px; color: var(--ink); font: inherit; text-align: start; cursor: pointer; }
+.plLink .ic { width: 40px; height: 40px; border-radius: 12px; background: var(--card-2); display: grid; place-items: center; font-size: 19px; flex: none; }
+.plLink .t { flex: 1; min-width: 0; } .plLink b { display: block; font-size: 15px; } .plLink small { color: var(--muted); font-size: 13px; }
+.plLink .ch { color: var(--muted); font-size: 20px; } html[dir="ltr"] .plLink .ch, html[dir="ltr"] .plBack { transform: scaleX(-1); }
 </style>
 </head>
 <body>
@@ -1213,33 +1226,39 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
   <section id="v-plan" class="hidden fade">
     <div class="greet"><em class="acc">خطتي</em></div>
     <div class="sub" id="planSub"></div>
-    <div class="card">
-      <div class="preview" style="margin-top:0">
-        <div class="small" style="opacity:.85">هدفك اليومي</div>
-        <div class="bigk num" id="plKcal">—</div>
-        <div class="pg">
-          <div><b class="num" id="plP">—</b>بروتين</div>
-          <div><b class="num" id="plC">—</b>كربوهيدرات</div>
-          <div><b class="num" id="plF">—</b>دهون</div>
-        </div>
+    <div class="card plHero">
+      <div class="plRing"><div><b class="num" id="plKcal">—</b><span>سعرة يومياً</span></div></div>
+      <div class="plMac">
+        <div><i style="background:var(--p)"></i><b class="num" id="plP">—</b>بروتين</div>
+        <div><i style="background:var(--c)"></i><b class="num" id="plC">—</b>كارب</div>
+        <div><i style="background:var(--f)"></i><b class="num" id="plF">—</b>دهون</div>
       </div>
-      <div class="kv" style="margin-top:14px">
-        <div><span class="muted">حرقك اليومي المقدّر</span><b class="num" id="plMaint">—</b></div>
-        <div><span class="muted">طريقة الحساب</span><b id="plSrc">—</b></div>
-        <div><span class="muted">مستوى النشاط</span><b id="plAct">—</b></div>
-        <div id="plBurnRow"><span class="muted">قياس الحرق من ساعتك</span><b class="num" id="plBurn">—</b></div>
-        <div><span class="muted">الفرق عن حرقك</span><b class="num" id="plDelta">—</b></div>
-        <div><span class="muted">التغيّر المتوقع</span><b class="num" id="plWeekly">—</b></div>
-        <div><span class="muted">مؤشر كتلة الجسم</span><b class="num" id="plBmi">—</b></div>
-        <div><span class="muted">الألياف</span><b class="num" id="plFiber">—</b></div>
-      </div>
-      <div id="plNotices"></div>
-      <div style="height:12px"></div>
-      <button class="btn ghost" id="editPlan">تعديل الهدف والخطة</button>
     </div>
+    <div class="card plKv">
+      <div><span class="muted">حرقك اليومي</span><b class="num" id="plMaint">—</b></div>
+      <div><span class="muted">التغيّر المتوقع</span><b class="num" id="plWeekly">—</b></div>
+      <div><span class="muted">مستوى النشاط</span><b id="plAct">—</b></div>
+      <details class="plCalc"><summary class="small muted">كيف حسبناها؟</summary>
+        <div class="kv" style="margin-top:8px">
+          <div><span class="muted">طريقة الحساب</span><b id="plSrc">—</b></div>
+          <div id="plBurnRow"><span class="muted">قياس الحرق من ساعتك</span><b class="num" id="plBurn">—</b></div>
+          <div><span class="muted">الفرق عن حرقك</span><b class="num" id="plDelta">—</b></div>
+          <div><span class="muted">مؤشر كتلة الجسم</span><b class="num" id="plBmi">—</b></div>
+          <div><span class="muted">الألياف</span><b class="num" id="plFiber">—</b></div>
+        </div>
+      </details>
+      <div id="plNotices"></div>
+    </div>
+    <button class="plLink" data-go="psched"><span class="ic">🍽️</span><span class="t"><b>جدول الوجبات والتذكيرات</b><small id="plLkSched">—</small></span><span class="ch">‹</span></button>
+    <button class="plLink" data-go="pram"><span class="ic">🌙</span><span class="t"><b>رمضان والصيام</b><small id="plLkRam">—</small></span><span class="pill good hidden" id="plLkRamOn">مفعّل</span><span class="ch">‹</span></button>
+    <button class="plLink" data-go="ploc"><span class="ic">📍</span><span class="t"><b>الموقع والاقتراحات</b><small id="plLkLoc">—</small></span><span class="ch">‹</span></button>
+    <button class="btn ghost" id="editPlan" style="margin-top:6px">✎ تعديل الهدف والخطة</button>
 
+  </section>
+
+  <section id="v-psched" class="hidden fade">
+    <div class="rvTop"><button class="snapX plBack" aria-label="رجوع">›</button><b>جدول الوجبات</b><span></span></div>
     <div class="card" id="schSettings">
-      <h3>جدول الوجبات</h3>
       <p class="small muted" style="margin-top:-4px">نذكّرك قبل كل وجبة بـ10 دقائق، وإذا لم تسجّل الوجبة بعد ساعة. القهوة والمشروبات لا تُحسب كوجبة.</p>
       <div class="langsw" role="group" aria-label="جدول الوجبات" id="schMode" style="justify-content:flex-start"><button type="button" data-mode="auto">تلقائي</button><button type="button" data-mode="custom">أوقاتي</button></div>
       <p class="small muted" id="schAutoNote" style="margin:8px 0 0">تلقائي = من عدد وجباتك وأوقات أكلك المعتادة.</p>
@@ -1248,8 +1267,11 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
       <button class="btn ghost" id="schSave">حفظ الجدول</button>
     </div>
 
+  </section>
+
+  <section id="v-pram" class="hidden fade">
+    <div class="rvTop"><button class="snapX plBack" aria-label="رجوع">›</button><b>رمضان والصيام</b><span></span></div>
     <div class="card">
-      <h3>وضع رمضان والصيام</h3>
       <p class="small muted" style="margin-top:-4px">يتفعّل تلقائياً في رمضان (حسب تقويم أم القرى)، وفي أيام الصيام اللي تختارها.</p>
       <label for="rmMode">رمضان</label>
       <select id="rmMode"><option value="auto">تلقائي في رمضان</option><option value="on">صائم كل يوم (مفعّل دائماً)</option><option value="off">متوقف</option></select>
@@ -1265,8 +1287,11 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
       <button class="btn ghost" id="rmSave">حفظ</button>
     </div>
 
+  </section>
+
+  <section id="v-ploc" class="hidden fade">
+    <div class="rvTop"><button class="snapX plBack" aria-label="رجوع">›</button><b>الموقع والاقتراحات</b><span></span></div>
     <div class="card">
-      <h3>موقعك للاقتراحات</h3>
       <p class="small muted" style="margin-top:-4px">نقترح مطاعم موجودة في إمارتك ومنطقتك.</p>
       <div class="grid2">
         <div><label for="locCity" style="margin-top:0">الإمارة</label><select id="locCity"><option value="">—</option><option>Abu Dhabi</option><option>Dubai</option><option>Sharjah</option><option>Ajman</option><option>Umm Al Quwain</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Al Ain</option></select></div>
@@ -1275,7 +1300,7 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
       <div style="height:12px"></div>
       <button class="btn ghost" id="locSave">حفظ الموقع</button>
     </div>
-
+    <div class="card"><div class="row" style="gap:12px;align-items:flex-start;justify-content:flex-start"><span style="font-size:26px">🏪</span><span><b>اقتراحات الأكل</b><div class="small muted">نقترح مطاعم موجودة في منطقتك تناسب المتبقي من سعراتك — تلقاها في صفحة اليوم.</div></span></div></div>
   </section>
 
   <section id="v-settings" class="hidden fade">
@@ -1523,7 +1548,7 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
   }
 
   // ---------------- navigation ----------------
-  const VIEWS = ['setup', 'onb', 'today', 'progress', 'snap', 'review', 'plan', 'settings'];
+  const VIEWS = ['setup', 'onb', 'today', 'progress', 'snap', 'review', 'plan', 'settings', 'psched', 'pram', 'ploc'];
   function show(v) {
     let scrollTo = 0;
     if (v === 'plan-settings') v = 'settings';
@@ -1535,16 +1560,20 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
     $('askFab').classList.toggle('hidden', v === 'setup' || v === 'onb' || v === 'snap' || v === 'review');
     curView = v;
     $('dayNav').style.visibility = v === 'today' ? 'visible' : 'hidden';
-    document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
+    const navV = v === 'psched' || v === 'pram' || v === 'ploc' ? 'plan' : v;
+    document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === navV));
     window.scrollTo(0, 0);
     if (v === 'today') loadToday();
     if (v === 'progress') { loadProgress(); loadChallenge(); }
-    if (v === 'plan') { loadLocation(); loadScheduleSettings(); }
-    if (v === 'plan' || v === 'settings') loadPlan();
+    if (v === 'psched') loadScheduleSettings();
+    if (v === 'ploc') loadLocation();
+    if (v === 'plan' || v === 'settings' || v === 'pram') loadPlan();
     if (v === 'settings') { loadAiApps(); loadPrivacy(); loadUsage(); }
     if (v === 'snap') { resetCapture(); snapMode('photo'); openCam(); } // one tap → camera
   }
   document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
+  document.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => show(b.dataset.go)));
+  document.querySelectorAll('.plBack').forEach((b) => (b.onclick = () => show('plan')));
 
   // ---------------- setup ----------------
   function authTab(t) {
@@ -2774,7 +2803,7 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
       $('planSub').textContent = p.deadline && p.effectiveGoal !== 'maintain'
         ? L`${GOAL_AR[p.effectiveGoal]} · بتاريخ ${p.deadline.date}`
         : L`${GOAL_AR[p.effectiveGoal]} · سرعة ${{ relaxed: T('مريحة'), moderate: T('متوسطة'), fast: T('أسرع'), intense: T('مكثّفة') }[p.pace] || ''}`;
-      $('plKcal').textContent = L`${fmt(p.targetKcal)} سعرة`;
+      $('plKcal').textContent = fmt(p.targetKcal);
       $('plP').textContent = L`${fmt(p.proteinG)} غ`; $('plC').textContent = L`${fmt(p.carbsG)} غ`; $('plF').textContent = L`${fmt(p.fatG)} غ`;
       $('plMaint').textContent = L`${fmt(p.maintenanceKcal)} سعرة`;
       const bd = p.burnData || { days: 0, needed: 7, window: 14, avgKcal: null };
@@ -2794,6 +2823,11 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
       $('rmSuhoor').value = rm.suhoorTime; $('rmIftar').value = rm.iftarTime;
       fastDays = rm.fastDays || []; paintFastDays(); $('rmWhite').checked = !!rm.whiteDays;
       planGoal = p.effectiveGoal;
+      const ms = prof.mealSchedule && prof.mealSchedule.slots;
+      $('plLkSched').textContent = ms && ms.length ? L`أوقاتي · ${ms.length} وجبات وسناك` : T('تلقائي من عاداتك');
+      $('plLkRam').textContent = rm.enabled === null ? T('تلقائي في رمضان') : rm.enabled ? T('صائم كل يوم') : T('متوقف') + ((rm.fastDays || []).length || rm.whiteDays ? ' · ' + T('صيام تطوع') : '');
+      $('plLkRamOn').classList.toggle('hidden', rm.enabled !== true);
+      $('plLkLoc').textContent = [prof.city, prof.area].filter(Boolean).join(' · ') || T('غير محدد');
     } catch (e) { toast(e.message); }
     loadAccount(); loadPushState();
     try {

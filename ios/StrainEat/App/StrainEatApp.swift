@@ -53,7 +53,7 @@ struct RootView: View {
                     LogView(active: tab == 2, onLogged: { tab = 0 }, onClose: { tab = tabBeforeSnap })
                         .tag(2).tabItem { Label(t("Log meal", "سجّل وجبة"), systemImage: "plus.circle.fill") }
                     PlanTab()
-                        .tag(3).tabItem { Label(t("Plan", "الخطة"), systemImage: "target") }
+                        .tag(3).tabItem { Label(t("My plan", "خطتي"), systemImage: "target") }
                 }
                 .task {
                     ExtraAnalyses.shared.start()

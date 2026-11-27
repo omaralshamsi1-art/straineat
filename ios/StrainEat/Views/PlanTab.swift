@@ -11,34 +11,76 @@ struct PlanTab: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 14) {
-                    if let plan { PlanSummaryCard(plan: plan, onEdit: { editing = true }) }
-                    AccountCard()
-                    ExtraAnalysesRow()
-                    PrivacyCard(aiConsentAt: profile?.aiConsentAt)
-                    DevicesCard(profile: profile, onChange: { Task { await load() } })
-                    if let profile { RamadanSettingsCard(profile: profile, onSaved: { Task { await load() } }) }
-                    MealRemindersCard()
-                    if let profile { WaterSettingsCard(profile: profile) }
-                    if let profile { MedRemindersCard(profile: profile) }
-                    if let profile { ScheduleSettingsCard(profile: profile) }
-                    if let profile { LocationCard(profile: profile) }
-                    Card(title: t("Appearance", "المظهر"), icon: "circle.lefthalf.filled") { ThemePicker() }
-                    Card(title: "Language · اللغة", icon: "globe") { LanguagePicker() }
+                VStack(spacing: 12) {
+                    if let plan { PlanHero(plan: plan) }
+                    if let profile {
+                        NavigationLink { subPage(t("Meal schedule", "جدول الوجبات")) { MealRemindersCard(); ScheduleSettingsCard(profile: profile) } } label: {
+                            PlanLink(icon: "fork.knife", title: t("Meal schedule & reminders", "جدول الوجبات والتذكيرات"), subtitle: schedSummary(profile))
+                        }
+                        NavigationLink { subPage(t("Ramadan & fasting", "رمضان والصيام")) { RamadanSettingsCard(profile: profile, onSaved: { Task { await load() } }) } } label: {
+                            PlanLink(icon: "moon.stars.fill", title: t("Ramadan & fasting", "رمضان والصيام"), subtitle: ramadanSummary(profile), badge: profile.ramadan?.enabled == true ? t("Active", "مفعّل") : nil)
+                        }
+                        NavigationLink { subPage(t("Location & suggestions", "الموقع والاقتراحات")) {
+                            LocationCard(profile: profile)
+                            Card(title: t("Food suggestions", "اقتراحات الأكل"), icon: "storefront") {
+                                Text(t("We suggest restaurants in your area that fit your remaining calories — you'll find them on Today.", "نقترح مطاعم موجودة في منطقتك تناسب المتبقي من سعراتك — تلقاها في صفحة اليوم.")).font(.footnote).foregroundStyle(Theme.muted)
+                            }
+                        } } label: {
+                            PlanLink(icon: "mappin.and.ellipse", title: t("Location & suggestions", "الموقع والاقتراحات"), subtitle: [profile.city, profile.area].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ").nonEmpty ?? t("Not set", "غير محدد"))
+                        }
+                    }
+                    NavigationLink { settingsPage } label: {
+                        PlanLink(icon: "gearshape.fill", title: t("Settings", "الإعدادات"), subtitle: t("Account, privacy, devices, water, appearance", "الحساب، الخصوصية، الأجهزة، الماء، المظهر"))
+                    }
+                    Button { editing = true } label: { Label(t("Edit goal and plan", "تعديل الهدف والخطة"), systemImage: "pencil") }
+                        .buttonStyle(SoftButtonStyle()).padding(.top, 4)
                     if let message { Text(message).font(.footnote).foregroundStyle(Theme.muted) }
-                    Text("StrainEat \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
-                        .font(.caption2).foregroundStyle(Theme.muted)
                 }
                 .padding(16)
             }
             .screenBackground()
-            .navigationTitle(t("Plan", "الخطة"))
+            .navigationTitle(t("My plan", "خطتي"))
             .refreshable { await store.refresh(force: true); await load() }
             .task { await load() }
             .sheet(isPresented: $editing, onDismiss: { Task { await load(); await store.refresh() } }) {
                 OnboardingView(existing: profile).environment(store).environment(\.layoutDirection, appLayoutDirection)
             }
         }
+    }
+
+    private func subPage<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
+        ScrollView { VStack(spacing: 14) { content() }.padding(16) }
+            .screenBackground()
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var settingsPage: some View {
+        subPage(t("Settings", "الإعدادات")) {
+            AccountCard()
+            ExtraAnalysesRow()
+            PrivacyCard(aiConsentAt: profile?.aiConsentAt)
+            DevicesCard(profile: profile, onChange: { Task { await load() } })
+            if let profile { WaterSettingsCard(profile: profile) }
+            if let profile { MedRemindersCard(profile: profile) }
+            Card(title: t("Appearance", "المظهر"), icon: "circle.lefthalf.filled") { ThemePicker() }
+            Card(title: "Language · اللغة", icon: "globe") { LanguagePicker() }
+            if let plan { PlanSummaryCard(plan: plan, onEdit: { editing = true }) }
+            Text("StrainEat \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
+                .font(.caption2).foregroundStyle(Theme.muted)
+        }
+    }
+
+    private func schedSummary(_ p: Profile) -> String {
+        if let s = p.mealSchedule?.slots, !s.isEmpty { return t("My times · \(s.count) meals & snacks", "أوقاتي · \(s.count) وجبات وسناك") }
+        return t("Automatic from your habits", "تلقائي من عاداتك")
+    }
+
+    private func ramadanSummary(_ p: Profile) -> String {
+        let r = p.ramadan
+        let base = r?.enabled == nil ? t("Automatic in Ramadan", "تلقائي في رمضان") : r?.enabled == true ? t("Fasting every day", "صائم كل يوم") : t("Off", "متوقف")
+        let extra = (r?.fastDays?.isEmpty == false || r?.whiteDays == true) ? t(" · voluntary fasts", " · صيام تطوع") : ""
+        return base + extra
     }
 
     private func load() async {
@@ -50,6 +92,84 @@ struct PlanTab: View {
 }
 
 // MARK: Plan summary
+
+private extension String { var nonEmpty: String? { isEmpty ? nil : self } }
+
+/// Top of My Plan: daily target ring, macros, burn, expected change, activity.
+struct PlanHero: View {
+    let plan: Plan
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle().stroke(Theme.line, lineWidth: 10)
+                    Circle().trim(from: 0, to: 0.78).stroke(Theme.good, style: StrokeStyle(lineWidth: 10, lineCap: .round)).rotationEffect(.degrees(-90))
+                    VStack(spacing: 0) {
+                        Text(fmt(plan.targetKcal)).font(.title2.weight(.heavy)).monospacedDigit()
+                        Text(t("kcal a day", "سعرة يومياً")).font(.caption2).foregroundStyle(Theme.muted)
+                    }
+                }
+                .frame(width: 120, height: 120)
+                HStack(spacing: 6) {
+                    macro(t("Protein", "بروتين"), plan.proteinG, Theme.protein)
+                    macro(t("Carbs", "كارب"), plan.carbsG, Theme.carbs)
+                    macro(t("Fat", "دهون"), plan.fatG, Theme.fat)
+                }
+            }
+            .padding(16)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+
+            VStack(spacing: 10) {
+                row(t("Your daily burn", "حرقك اليومي"), t("\(fmt(plan.maintenanceKcal)) kcal", "\(fmt(plan.maintenanceKcal)) سعرة"))
+                if let w = plan.weeklyChangeKg, w != 0 { row(t("Expected change", "التغيّر المتوقع"), signedKg(w) + t("/week", "/أسبوع")) }
+                if let a = plan.activityLevel { row(t("Activity level", "مستوى النشاط"), activityName(a)) }
+                ForEach(plan.notices, id: \.self) { Notice(text: $0.text, level: $0.level) }
+            }
+            .padding(16)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
+    }
+    private func macro(_ label: String, _ g: Double, _ c: Color) -> some View {
+        VStack(spacing: 4) {
+            Circle().fill(c).frame(width: 9, height: 9)
+            Text(t("\(fmt(g)) g", "\(fmt(g)) غ")).font(.headline.weight(.heavy)).monospacedDigit()
+            Text(label).font(.caption2).foregroundStyle(Theme.muted)
+        }
+        .frame(maxWidth: .infinity)
+    }
+    private func row(_ k: String, _ v: String) -> some View {
+        HStack { Text(k).foregroundStyle(Theme.muted); Spacer(); Text(v).fontWeight(.heavy).monospacedDigit() }.font(.subheadline)
+    }
+    private func activityName(_ a: String) -> String {
+        ["sedentary": t("Sedentary", "قليل الحركة"), "light": t("Lightly active", "نشاط خفيف"), "moderate": t("Moderate", "متوسط"), "active": t("Active", "نشيط"), "very_active": t("Very active", "نشيط جداً")][a] ?? a
+    }
+}
+
+/// A row in My Plan that opens a sub-screen.
+struct PlanLink: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    var badge: String? = nil
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon).font(.body.weight(.semibold)).foregroundStyle(Theme.ink)
+                .frame(width: 40, height: 40).background(Theme.card2, in: RoundedRectangle(cornerRadius: 12))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink)
+                Text(subtitle).font(.caption).foregroundStyle(Theme.muted).lineLimit(1)
+            }
+            Spacer()
+            if let badge {
+                Text(badge).font(.caption.weight(.bold)).foregroundStyle(Theme.good)
+                    .padding(.horizontal, 9).padding(.vertical, 4).background(Theme.goodSoft, in: Capsule())
+            }
+            Image(systemName: "chevron.forward").font(.caption.weight(.semibold)).foregroundStyle(Theme.muted)
+        }
+        .padding(14)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
 
 struct PlanSummaryCard: View {
     let plan: Plan
