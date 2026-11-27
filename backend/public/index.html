@@ -482,7 +482,7 @@ html[data-theme="dark"] .preview { background: #2b2540; }
 .ram { background: var(--plum); }
 /* floating tab bar */
 nav { left: 14px; right: 14px; bottom: calc(10px + env(safe-area-inset-bottom)); padding: 8px 6px; border: 0; border-radius: 34px;
-  background: rgba(58,58,60,.92); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+  background: rgba(50,50,52,.97); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: 0 10px 26px rgba(0,0,0,.28); } /* no live blur: re-blurring every frame made scrolling stutter on iPhone */
 nav button { color: rgba(255,255,255,.55); font-weight: 600; font-size: 11px; }
 nav button.on { color: var(--y); }
 nav .snap .ci { width: auto; height: auto; background: none; box-shadow: none; margin: 0; color: inherit; border-radius: 0; }
@@ -661,7 +661,8 @@ html[dir="ltr"] .water .wtop .t { text-transform: uppercase; letter-spacing: .1e
 .water .wbtns button { flex: 1; min-height: 40px; border-radius: 999px; border: 1px solid var(--line); background: var(--card-2); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
 .water .wbtns button.undo { flex: 0 0 auto; padding: 0 14px; color: var(--muted); }
 /* stop iOS rubber-band: it drags the fixed nav and button with the page */
-html, body { overscroll-behavior-y: none; }
+/* native iOS feel: keep the rubber-band bounce on the page; overlays contain their own scroll */
+#det, #ask, #askLog, #itSheet .itBox { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 .dayhead h2 { margin: 0; font-size: 19px; font-weight: 800; }
 .dayhead .plus { width: 34px; height: 34px; border-radius: 11px; border: 0; background: var(--ink); color: var(--bg); font-size: 21px; font-weight: 600; cursor: pointer; line-height: 1; }
 /* meal list v2: calm icons, full names, numbers once */
@@ -935,6 +936,9 @@ button.stRow { cursor: pointer; }
 .stRow .ic { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-size: 16px; flex: none; }
 .stRow b { display: block; font-size: 15px; font-weight: 700; }
 .stRow .langsw { margin: 0; flex: none; } .stRow .langsw button { padding: 6px 10px; font-size: 12.5px; min-height: 0; }
+/* hide scroll bars (the page still scrolls normally) */
+html { scrollbar-width: none; } html::-webkit-scrollbar, body::-webkit-scrollbar, #det::-webkit-scrollbar, #askLog::-webkit-scrollbar, .itBox::-webkit-scrollbar { display: none; width: 0; height: 0; }
+#det, #askLog, #itSheet .itBox { scrollbar-width: none; }
 </style>
 </head>
 <body>
