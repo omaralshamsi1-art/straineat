@@ -9,6 +9,23 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "عن الوزن": "About weight",
+    "+ وزن": "+ Weight",
+    "الخط": "The line",
+    "هو اتجاه وزنك: يتحرك تدريجياً ويتجاهل تذبذب الماء والملح اليومي.": "is your weight trend: it moves gradually and ignores daily water and salt swings.",
+    "النقاط": "The dots",
+    "قياساتك.": "are your weigh-ins.",
+    "أفضل وقت للقياس صباحاً بعد الاستيقاظ وقبل الأكل. ركّز على الخط مب على رقم يوم واحد.": "Weigh in the morning after waking, before eating. Follow the line, not one day's number.",
+    "آخر قياس · {}": "Last weigh-in · {}",
+    "سجّل وزنك ليبدأ المتابعة": "Log your weight to start tracking",
+    "اتجاهك الحالي": "Your current trend",
+    "كغ.": "kg.",
+    "{}{} كغ منذ البداية": "{}{} kg since start",
+    "وصلت هدفك 🎉": "You reached your goal 🎉",
+    "باقي {} كغ": "{} kg to go",
+    "الهدف {} كغ": "Goal {} kg",
+    "بالمعدل الحالي تقريباً {}": "At your current pace: around {}",
+    "نحتاج أسبوعين من القياسات لنقرأ اتجاهك.": "We need two weeks of weigh-ins to read your trend.",
     "افتح claude.ai في المتصفح (سفاري أو كروم، حتى من الجوال — مب من داخل تطبيق Claude): الإعدادات ← Connectors ← Add custom connector ← الصق الرابط ← اختر Sign in ← Add، وبعدين Connect ووافق في StrainEat.": "Open claude.ai in a browser (Safari or Chrome, phone is fine — not inside the Claude app): Settings → Connectors → Add custom connector → paste the URL → choose Sign in → Add, then Connect and approve in StrainEat.",
     "افتح chatgpt.com في المتصفح (سفاري أو كروم، حتى من الجوال): الإعدادات ← Apps ← Advanced settings ← فعّل Developer mode، ثم Create app، الصق الرابط واختر OAuth، وبعدين وافق في StrainEat.": "Open chatgpt.com in a browser (Safari or Chrome, phone is fine): Settings → Apps → Advanced settings → turn on Developer mode, then Create app, paste the URL, choose OAuth, then approve in StrainEat.",
     "افتح gemini.google.com/devmode في المتصفح (Settings ← Gemini Apps Developer Mode): ‏+ Create new، الصق الرابط في MCP Server URL، اضغط Connect ووافق في StrainEat.": "Open gemini.google.com/devmode in a browser (Settings → Gemini Apps Developer Mode): + Create new, paste the URL as the MCP Server URL, click Connect and approve in StrainEat.",

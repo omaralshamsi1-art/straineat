@@ -753,6 +753,18 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
 .mon .mh, .wcard .mh { font-size: 14px; }
 .mon .mb b { font-size: 14.5px; }
 .mon2b small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* weight card v2 */
+#wCard .wHead { display: flex; align-items: center; gap: 8px; }
+#wCard .wHead h3 { margin: 0; }
+#wCard .wAdd { border: 0; border-radius: 999px; padding: 7px 14px; background: color-mix(in srgb, var(--brand-2) 22%, var(--card)); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+#wCard .wHero { display: flex; align-items: baseline; gap: 6px; margin-top: 10px; }
+#wCard .wHero b { font-size: 52px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
+#wCard .wHero > span:not(.wDelta) { font-size: 17px; color: var(--muted); font-weight: 600; }
+#wCard .wDelta { margin-inline-start: auto; font-size: 14px; font-weight: 700; color: var(--muted); background: var(--bg2, color-mix(in srgb, var(--ink) 6%, transparent)); border-radius: 999px; padding: 5px 11px; }
+#wCard .wDelta.good { color: var(--ok); }
+#wCard .wGoal { margin-top: 16px; }
+#wCard .wGoal .row b { font-size: 17px; }
+#wCard .wGoal .bar { margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -910,24 +922,19 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
     <div class="greet"><em class="acc">تقدّمك</em></div>
     <div class="sub" id="pSub"></div>
 
-    <div class="card">
-      <h3>الوزن <span class="small" id="pWeightSrc"></span></h3>
-      <div class="row" style="align-items:flex-end">
-        <div><div style="font-size:40px;font-weight:700" class="num" id="pCurrent">—</div><div class="small muted" id="pCurL">آخر قياس (كغ)</div><div class="small" id="pTrend" style="margin-top:2px"></div></div>
-        <div style="text-align:end"><div style="font-size:20px;font-weight:700" class="num" id="pChange">—</div><div class="small muted">منذ البداية</div></div>
+    <div class="card" id="wCard">
+      <div class="wHead"><h3>الوزن</h3><span class="chip src" id="pWeightSrc" hidden></span><span style="flex:1"></span><button class="wAdd" id="wAddBtn">+ وزن</button></div>
+      <div class="wHero"><b class="num" id="pCurrent">—</b><span>كغ</span><span class="wDelta num" id="pChange"></span></div>
+      <div class="small muted" id="pCurL"></div>
+      <div id="wAddBox" class="hidden" style="margin-top:12px">
+        <div class="grid2" style="align-items:end"><input id="wIn" type="number" inputmode="decimal" step="0.1" placeholder="وزن اليوم (كغ)" aria-label="وزن اليوم (كغ)"><button class="btn" id="wSave">تسجيل</button></div>
       </div>
-      <div id="pGoalWrap" style="margin-top:14px">
-        <div class="row small" style="margin-bottom:6px"><span id="pStart" class="muted"></span><b id="pPct"></b><span id="pTarget" class="muted"></span></div>
+      <div id="pGoalWrap" class="wGoal">
+        <div class="row"><b id="pLeft"></b><span class="small muted" id="pTarget"></span></div>
         <div class="bar"><i id="pBar" style="width:0;background:var(--brand-2)"></i></div>
         <p class="small muted" id="pEta" style="margin:8px 0 0"></p>
       </div>
-      <div id="wChart" style="margin-top:14px"></div>
-      <div class="legend"><span><i style="background:var(--brand-2)"></i>الاتجاه</span><span><i style="background:var(--muted);opacity:.5;border-radius:50%"></i>القياسات</span><span><i style="background:var(--accent)"></i>الهدف</span></div>
-      <div class="grid2" style="margin-top:14px;align-items:end">
-        <div><label for="wIn" style="margin-top:0">وزن اليوم (كغ)</label><input id="wIn" type="number" inputmode="decimal" step="0.1"></div>
-        <button class="btn" id="wSave">تسجيل</button>
-      </div>
-      <p class="small muted" style="margin:8px 0 0">نصيحة: الوزن يتذبذب يومياً بسبب الماء والملح — تابعي خط الاتجاه، لا الرقم اليومي. أفضل وقت للقياس صباحاً بعد الاستيقاظ.</p>
+      <div id="wChart" style="margin-top:10px"></div>
     </div>
 
     <div class="card">
@@ -2391,21 +2398,30 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
       planCache = plan;
       $('pSub').textContent = L`هدفك: ${GOAL_AR[plan.effectiveGoal]}`;
       const lastW = w.entries[w.entries.length - 1];
-      // Big number = the weight you actually logged last; the smoothed trend sits under it.
-      $('pCurrent').textContent = lastW ? fmt1(lastW.kg) : plan.currentWeightKg ? fmt1(plan.currentWeightKg) : '—';
-      $('pCurL').textContent = lastW ? L`آخر قياس (كغ) · ${arDate(lastW.date)}` : T('آخر قياس (كغ)');
-      $('pTrend').innerHTML = lastW && Math.abs(lastW.trend - lastW.kg) >= 0.05 ? L`الاتجاه <b class="num">${fmt1(lastW.trend)}</b> كغ <span class="muted">— يتحرك تدريجياً ليتجاهل تذبذب الماء</span>` : '';
-      const ch = plan.changeSinceStartKg;
-      $('pChange').textContent = ch == null ? '—' : L`${ch > 0 ? '+' : ''}${fmt1(ch)} كغ`;
-      $('pChange').style.color = ch == null || ch === 0 ? '' : (plan.goal === 'lose') === ch < 0 ? 'var(--ok)' : 'var(--warn)';
+      const nowKg = lastW ? lastW.kg : plan.currentWeightKg ?? null;
+      // One number: what the scale said last. The smoothed trend is the chart line.
+      $('pCurrent').textContent = nowKg ? fmt1(nowKg) : '—';
+      $('pCurL').textContent = lastW ? L`آخر قياس · ${arDate(lastW.date)}` : T('سجّل وزنك ليبدأ المتابعة');
+      const start = plan.startWeightKg, lose = plan.effectiveGoal === 'lose';
+      const ch = start && nowKg ? Math.round((nowKg - start) * 10) / 10 : null;
+      const chEl = $('pChange');
+      chEl.textContent = ch == null || Math.abs(ch) < 0.1 ? '' : L`${ch > 0 ? '+' : '−'}${fmt1(Math.abs(ch))} كغ منذ البداية`;
+      chEl.className = 'wDelta num' + (ch != null && (lose ? ch <= -0.1 : plan.effectiveGoal === 'gain' && ch >= 0.1) ? ' good' : '');
+      chEl.hidden = !chEl.textContent;
       const last = w.entries[w.entries.length - 1];
-      $('pWeightSrc').textContent = last ? ({ manual: T('يدوي'), whoop: 'WHOOP', apple_health: 'Apple Health' }[last.source] || '') : '';
-      const hasGoal = plan.targetWeightKg && plan.startWeightKg && plan.effectiveGoal !== 'maintain';
+      const src = last ? ({ manual: '', whoop: 'WHOOP', apple_health: 'Apple Health' }[last.source] || '') : '';
+      $('pWeightSrc').textContent = src; $('pWeightSrc').style.display = src ? '' : 'none';
+      const hasGoal = plan.targetWeightKg && start && plan.effectiveGoal !== 'maintain';
       $('pGoalWrap').classList.toggle('hidden', !hasGoal);
       if (hasGoal) {
-        $('pStart').textContent = L`البداية ${fmt1(plan.startWeightKg)}`; $('pTarget').textContent = L`الهدف ${fmt1(plan.targetWeightKg)}`;
-        $('pPct').textContent = `${plan.progressPct ?? 0}%`; $('pBar').style.width = `${plan.progressPct ?? 0}%`;
-        $('pEta').textContent = plan.etaDate ? L`بهذا المعدل تصلين تقريباً في ${arDate(plan.etaDate)} (${plan.weeksToGoal} أسبوعاً)` : '';
+        const tgt = plan.targetWeightKg, left = nowKg ? Math.abs(nowKg - tgt) : null;
+        const reached = nowKg && (lose ? nowKg <= tgt : nowKg >= tgt);
+        $('pLeft').textContent = reached ? T('وصلت هدفك 🎉') : left != null ? L`باقي ${fmt1(left)} كغ` : '—';
+        $('pTarget').textContent = L`الهدف ${fmt1(tgt)} كغ`;
+        const pct = nowKg ? Math.max(0, Math.min(100, ((start - nowKg) / (start - tgt)) * 100)) : 0;
+        $('pBar').style.width = `${Math.max(pct, 2)}%`;
+        const spanDays = w.entries.length ? (Date.parse(last.date) - Date.parse(w.entries[0].date)) / 86400000 : 0;
+        $('pEta').textContent = reached ? '' : spanDays >= 14 && plan.etaDate ? L`بالمعدل الحالي تقريباً ${arDate(plan.etaDate)}` : T('نحتاج أسبوعين من القياسات لنقرأ اتجاهك.');
       }
       $('wChart').innerHTML = weightChart(w.entries, plan.targetWeightKg);
       planGoal = plan.effectiveGoal;
@@ -2419,20 +2435,25 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
     } catch (e) { toast(e.message); }
   }
   function weightChart(entries, target) {
+    const RTL_SVG = LANG !== 'en'; // Arabic labels inside the LTR chart need RTL text runs to anchor correctly
     if (!entries.length) return T('<div class="empty">سجّلي وزنك اليوم ليبدأ الرسم البياني.</div>');
     const W = 520, H = 190, pl = 34, pr = 10, pt = 12, pb = 24;
-    const vals = entries.flatMap((e) => [e.kg, e.trend]).concat(target ? [target] : []);
-    let lo = Math.min(...vals), hi = Math.max(...vals); if (hi - lo < 2) { lo -= 1; hi += 1; }
+    // Zoom on the user's own weights; the target only widens the axis when it's close, otherwise it's a label.
+    const vals = entries.flatMap((e) => [e.kg, e.trend]);
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (target && target < lo && lo - target <= 1.5) lo = target; if (target && target > hi && target - hi <= 1.5) hi = target;
+    const pad = Math.max(0.4, (2 - (hi - lo)) / 2); lo -= pad; hi += pad;
     const t0 = Date.parse(entries[0].date), t1 = Math.max(Date.parse(entries[entries.length - 1].date), t0 + 86400000 * 6);
     const x = (d) => pl + ((Date.parse(d) - t0) / (t1 - t0)) * (W - pl - pr);
     const y = (v) => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
     const line = entries.map((e, i) => `${i ? 'L' : 'M'}${x(e.date).toFixed(1)} ${y(e.trend).toFixed(1)}`).join(' ');
     const dots = entries.map((e) => `<circle cx="${x(e.date).toFixed(1)}" cy="${y(e.kg).toFixed(1)}" r="3.2" fill="var(--muted)" opacity=".45"/>`).join('');
     const ticks = [lo, (lo + hi) / 2, hi].map((v) => `<text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${fmt1(v)}</text><line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>`).join('');
-    const tgt = target && target >= lo && target <= hi ? `<line x1="${pl}" x2="${W - pr}" y1="${y(target)}" y2="${y(target)}" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 5"/>` : '';
+    const tgt = !target ? '' : target >= lo && target <= hi ? `<line x1="${pl}" x2="${W - pr}" y1="${y(target)}" y2="${y(target)}" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 5"/>`
+      : `<text x="${W - pr}" y="${target < lo ? H - pb - 6 : pt + 10}" text-anchor="${RTL_SVG ? 'start' : 'end'}" direction="${RTL_SVG ? 'rtl' : 'ltr'}" font-size="12" font-weight="700" fill="var(--accent)">${L`الهدف ${fmt1(target)}`} ${target < lo ? '↓' : '↑'}</text>`;
     const lab = (d) => new Date(`${d}T12:00:00`).toLocaleDateString(LOC, { day: 'numeric', month: 'short' });
     return L`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="رسم بياني للوزن" style="direction:ltr">${ticks}${tgt}${dots}<path d="${line}" fill="none" stroke="var(--brand-2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      <text x="${pl}" y="${H - 4}" font-size="11" fill="var(--muted)">${lab(entries[0].date)}</text><text x="${W - pr}" y="${H - 4}" font-size="11" fill="var(--muted)" text-anchor="end">${lab(entries[entries.length - 1].date)}</text></svg>`;
+      <text x="${pl}" y="${H - 4}" font-size="11" fill="var(--muted)" text-anchor="${RTL_SVG ? 'end' : 'start'}" direction="${RTL_SVG ? 'rtl' : 'ltr'}">${lab(entries[0].date)}</text><text x="${W - pr}" y="${H - 4}" font-size="11" fill="var(--muted)" text-anchor="${RTL_SVG ? 'start' : 'end'}" direction="${RTL_SVG ? 'rtl' : 'ltr'}">${lab(entries[entries.length - 1].date)}</text></svg>`;
   }
   function barChart(days) {
     const W = 520, H = 170, pb = 24, pt = 10, n = days.length, gap = 14;
@@ -2448,6 +2469,7 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
         <text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">${lbl}</text>`;
     }).join('')}</svg>`;
   }
+  $('wAddBtn').onclick = () => { $('wAddBox').classList.toggle('hidden'); if (!$('wAddBox').classList.contains('hidden')) $('wIn').focus(); };
   $('wSave').onclick = async () => {
     const kg = Number($('wIn').value); if (!kg) return toast(T('أدخلي وزنك'));
     try { await api('weights', { method: 'POST', json: { kg } }); $('wIn').value = ''; toast(T('تم تسجيل الوزن ✓')); loadProgress(); } catch (e) { toast(e.message); }

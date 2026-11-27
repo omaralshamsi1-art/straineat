@@ -56,7 +56,7 @@ ios/       SwiftUI (iOS 17+) — الكاميرا، المراجعة والتع�
 cd backend
 cp .env.example .env        # ضع ANTHROPIC_API_KEY
 npm install
-npm test                    # 139 اختبار (Claude و WHOOP محاكيان)
+npm test                    # 140 اختبار (Claude و WHOOP محاكيان)
 npm run dev                 # http://localhost:3000
 ```
 

@@ -180,7 +180,17 @@ export class WhoopService {
       const body = await this.api(userId, '/v2/user/measurement/body');
       if (body?.weight_kilogram > 20) {
         weightKg = Math.round(body.weight_kilogram * 10) / 10;
-        await this.repo.upsertWeight({
+        // WHOOP doesn't weigh anyone — it returns the weight saved in the user's WHOOP profile. Only record it when that
+        // number changes, otherwise every sync adds a fake daily "weigh-in" to the chart.
+        const today = localDate(new Date(), profile.timezone);
+        const from = new Date(Date.parse(`${today}T00:00:00Z`) - 400 * 86400000).toISOString().slice(0, 10);
+        const whoop = (await this.repo.listWeights(userId, from, today)).filter((w) => w.source === 'whoop').sort((x, y) => x.date.localeCompare(y.date));
+        // Clean up the repeats earlier syncs left behind: keep only the days the WHOOP number actually changed.
+        for (let i = 1; i < whoop.length; i++) {
+          if (Math.abs(whoop[i].kg - whoop[i - 1].kg) < 0.05) await this.repo.deleteWeight(userId, whoop[i].date, 'whoop');
+        }
+        const lastWhoop = whoop.length ? whoop.reduce((keep, w) => (Math.abs(w.kg - keep.kg) < 0.05 ? keep : w)) : null;
+        if (!lastWhoop || Math.abs(lastWhoop.kg - weightKg) >= 0.05) await this.repo.upsertWeight({
           userId,
           date: localDate(new Date(), profile.timezone),
           kg: weightKg,

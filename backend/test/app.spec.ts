@@ -368,6 +368,32 @@ describe('WHOOP', () => {
     await whoop.sync('u2', '2026-11-15', '2026-11-15');
     expect((await whoop.wellness('u2', '2026-11-15')).needsReconnect).toBe(true);
   });
+
+  it('stores the WHOOP profile weight only when it changes, and clears old daily repeats', async () => {
+    const s = setup();
+    const cfg = config({ WHOOP_CLIENT_ID: 'cid', WHOOP_CLIENT_SECRET: 'sec', WHOOP_REDIRECT_URI: 'https://api.test/cb' });
+    let kg = 88.4;
+    const fetchFn: any = vi.fn(async (u: string): Promise<any> => {
+      if (u.includes('/oauth2/token')) return json({ access_token: 'A', refresh_token: 'R', expires_in: 3600 });
+      if (u.includes('/measurement/body')) return json({ weight_kilogram: kg, height_meter: 1.65 });
+      return json({ records: [] });
+    });
+    const whoop = new WhoopService(cfg, s.repo, s.energy, s.profiles, fetchFn);
+    const url = new URL(whoop.authorizeUrl('u3'));
+    await whoop.handleCallback('c', url.searchParams.get('state')!);
+    // repeats an older build left behind
+    const today = new Date().toISOString().slice(0, 10);
+    const d = (n: number) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+    for (const [n, w] of [[4, 89.3], [3, 89.3], [2, 89.3], [1, 88.4]] as const) {
+      await s.repo.upsertWeight({ userId: 'u3', date: d(n), kg: w, source: 'whoop', updatedAt: new Date().toISOString() } as any);
+    }
+    await whoop.sync('u3', today, today);
+    const whoopDays = (await s.repo.listWeights('u3', d(10), today)).filter((w) => w.source === 'whoop');
+    expect(whoopDays.map((w) => w.kg)).toEqual([89.3, 88.4]); // no repeats, nothing new for an unchanged number
+    kg = 88.0;
+    await whoop.sync('u3', today, today);
+    expect((await s.repo.listWeights('u3', d(10), today)).filter((w) => w.source === 'whoop').map((w) => w.kg)).toEqual([89.3, 88.4, 88.0]);
+  });
 });
 
 function json(o: any): any {

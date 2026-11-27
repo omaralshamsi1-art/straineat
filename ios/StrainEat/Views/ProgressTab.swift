@@ -9,13 +9,13 @@ struct ProgressTab: View {
     @State private var motivation: Motivation?
     @State private var newWeight = ""
     @State private var message: String?
+    @State private var showAdd = false
     @FocusState private var weightFocused: Bool
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
-                    if let plan { GoalProgressCard(plan: plan) }
                     weightCard
                     if let history { WeekBarsCard(history: history) }
                     WeeklyReportCard()
@@ -30,50 +30,100 @@ struct ProgressTab: View {
         }
     }
 
+    /// One simple card: the last weigh-in, change since start, what's left to the goal, and a zoomed chart.
     private var weightCard: some View {
-        Card(title: t("Weight", "الوزن"), icon: "scalemass.fill",
-             trailing: (weights?.entries.last?.kg ?? weights?.current).map { AnyView(Text(t("Last \(fmt1($0)) kg", "آخر قياس \(fmt1($0)) كغ")).font(.headline).monospacedDigit()) }) {
-            if let last = weights?.entries.last, abs(last.trend - last.kg) >= 0.05 {
-                Text(t("Trend \(fmt1(last.trend)) kg — moves gradually to ignore water swings", "الاتجاه \(fmt1(last.trend)) كغ — يتحرك تدريجياً ليتجاهل تذبذب الماء"))
-                    .font(.caption).foregroundStyle(Theme.muted)
+        let entries = weights?.entries ?? []
+        let now = entries.last?.kg ?? plan?.currentWeightKg
+        let goal = plan?.effectiveGoal ?? "maintain"
+        let start = plan?.startWeightKg
+        let change: Double? = (start != nil && now != nil) ? ((now! - start!) * 10).rounded() / 10 : nil
+        let addButton = Button { showAdd.toggle(); weightFocused = showAdd } label: {
+            Text(t("+ Weight", "+ وزن")).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink)
+                .padding(.horizontal, 12).padding(.vertical, 6).background(Theme.brand2.opacity(0.22), in: Capsule())
+        }.buttonStyle(.plain)
+        return Card(title: t("Weight", "الوزن"), icon: "scalemass.fill", trailing: AnyView(addButton)) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(now.map { fmt1($0) } ?? "—").font(.system(size: 52, weight: .heavy)).monospacedDigit()
+                Text(t("kg", "كغ")).font(.headline).foregroundStyle(Theme.muted)
+                Spacer(minLength: 4)
+                if let ch = change, abs(ch) >= 0.1 {
+                    let good = goal == "gain" ? ch > 0 : goal == "lose" ? ch < 0 : false
+                    Text(t("\(signedKg(ch)) since start", "\(signedKg(ch)) منذ البداية"))
+                        .font(.footnote.weight(.bold)).foregroundStyle(good ? Theme.good : Theme.muted)
+                        .padding(.horizontal, 10).padding(.vertical, 5).background(Theme.card2, in: Capsule())
+                }
             }
-            if let entries = weights?.entries, entries.count >= 2 {
-                Chart {
-                    ForEach(entries) { e in
-                        PointMark(x: .value(t("Today", "اليوم"), e.day), y: .value(t("Weight", "الوزن"), e.kg))
-                            .foregroundStyle(Theme.muted.opacity(0.5)).symbolSize(18)
-                        LineMark(x: .value(t("Today", "اليوم"), e.day), y: .value(t("Trend", "الاتجاه"), e.trend))
-                            .foregroundStyle(Theme.brand2).lineStyle(StrokeStyle(lineWidth: 3)).interpolationMethod(.monotone)
-                    }
-                    if let goalKg = plan?.targetWeightKg {
-                        RuleMark(y: .value(t("Target", "الهدف"), goalKg))
-                            .foregroundStyle(Theme.accent).lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                            .annotation(position: .top, alignment: .leading) { Text(t("Target \(fmt1(goalKg))", "الهدف \(fmt1(goalKg))")).font(.caption2).foregroundStyle(Theme.accent) }
+            if let last = entries.last {
+                Text(t("Last weigh-in · \(last.day.formatted(.dateTime.day().month(.wide).locale(appLocale)))",
+                       "آخر قياس · \(last.day.formatted(.dateTime.day().month(.wide).locale(appLocale)))"))
+                    .font(.footnote).foregroundStyle(Theme.muted)
+            }
+            if showAdd {
+                HStack {
+                    TextField(t("Today's weight (kg)", "وزن اليوم (كغ)"), text: $newWeight)
+                        .keyboardType(.decimalPad).focused($weightFocused)
+                        .padding(11).background(Theme.card2, in: RoundedRectangle(cornerRadius: 12))
+                    Button(t("Log", "سجّل")) { Task { await addWeight() } }
+                        .buttonStyle(PrimaryButtonStyle()).frame(width: 90)
+                }
+            }
+            if let start, let target = plan?.targetWeightKg, let now, goal != "maintain" {
+                let reached = goal == "lose" ? now <= target : now >= target
+                let pct = max(0, min(100, (start - now) / (start - target) * 100))
+                HStack {
+                    Text(reached ? t("You reached your goal 🎉", "وصلت هدفك 🎉") : t("\(fmt1(abs(now - target))) kg to go", "باقي \(fmt1(abs(now - target))) كغ"))
+                        .font(.headline)
+                    Spacer()
+                    Text(t("Goal \(fmt1(target)) kg", "الهدف \(fmt1(target)) كغ")).font(.footnote).foregroundStyle(Theme.muted)
+                }
+                .padding(.top, 6)
+                ProgressView(value: max(pct, 2), total: 100).tint(Theme.brand2)
+                if !reached {
+                    let span = entries.count > 1 ? entries.last!.day.timeIntervalSince(entries.first!.day) / 86400 : 0
+                    if span >= 14, let eta = plan?.etaDate, let d = DateFormatter.isoDay.date(from: eta) {
+                        Text(t("At your current pace: around \(d.arMonthYear)", "بالمعدل الحالي تقريباً \(d.arMonthYear)")).font(.footnote).foregroundStyle(Theme.muted)
+                    } else {
+                        Text(t("We need two weeks of weigh-ins to read your trend.", "نحتاج أسبوعين من القياسات لنقرأ اتجاهك.")).font(.footnote).foregroundStyle(Theme.muted)
                     }
                 }
-                .chartYScale(domain: yDomain(entries))
-                .frame(height: 190)
-                .environment(\.layoutDirection, .leftToRight)
-                Text(t("Line = your real trend (smooths daily water swings)", "الخط = الاتجاه الحقيقي (يخفف تقلبات الماء اليومية)")).font(.caption2).foregroundStyle(Theme.muted)
-            } else {
-                Text(t("Weigh in each morning for a few days to see the chart and trend.", "سجّل وزنك صباحاً عدة أيام ليظهر الرسم والاتجاه.")).font(.footnote).foregroundStyle(Theme.muted)
             }
-            HStack {
-                TextField(t("Today's weight (kg)", "وزن اليوم (كغ)"), text: $newWeight)
-                    .keyboardType(.decimalPad).focused($weightFocused)
-                    .padding(11).background(Theme.card2, in: RoundedRectangle(cornerRadius: 12))
-                Button(t("Log", "سجّل")) { Task { await addWeight() } }
-                    .buttonStyle(PrimaryButtonStyle()).frame(width: 90)
+            if entries.count >= 2 {
+                let dom = yDomain(entries)
+                let target = plan?.targetWeightKg
+                Chart {
+                    ForEach(entries) { e in
+                        PointMark(x: .value(t("Day", "اليوم"), e.day), y: .value(t("Weight", "الوزن"), e.kg))
+                            .foregroundStyle(Theme.muted.opacity(0.5)).symbolSize(18)
+                        LineMark(x: .value(t("Day", "اليوم"), e.day), y: .value(t("Trend", "الاتجاه"), e.trend))
+                            .foregroundStyle(Theme.brand2).lineStyle(StrokeStyle(lineWidth: 3)).interpolationMethod(.monotone)
+                    }
+                    if let target, dom.contains(target) {
+                        RuleMark(y: .value(t("Goal", "الهدف"), target))
+                            .foregroundStyle(Theme.accent).lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                    }
+                }
+                .chartYScale(domain: dom)
+                .frame(height: 170)
+                .environment(\.layoutDirection, .leftToRight)
+                if let target, !dom.contains(target) {
+                    Text(t("Goal \(fmt1(target)) \(target < dom.lowerBound ? "↓" : "↑")", "الهدف \(fmt1(target)) \(target < dom.lowerBound ? "↓" : "↑")"))
+                        .font(.caption.weight(.bold)).foregroundStyle(Theme.accent).frame(maxWidth: .infinity, alignment: .trailing)
+                }
             }
             if let message { Text(message).font(.caption).foregroundStyle(Theme.muted) }
         }
     }
 
+    /// Zoom on the user's own weights; the goal only widens the axis when it's within 1.5 kg.
     private func yDomain(_ e: [WeightEntry]) -> ClosedRange<Double> {
-        var vals = e.flatMap { [$0.kg, $0.trend] }
-        if let goalKg = plan?.targetWeightKg { vals.append(goalKg) }
-        let lo = (vals.min() ?? 60) - 1, hi = (vals.max() ?? 90) + 1
-        return lo...hi
+        let vals = e.flatMap { [$0.kg, $0.trend] }
+        var lo = vals.min() ?? 60, hi = vals.max() ?? 90
+        if let g = plan?.targetWeightKg {
+            if g < lo, lo - g <= 1.5 { lo = g }
+            if g > hi, g - hi <= 1.5 { hi = g }
+        }
+        let pad = max(0.4, (2 - (hi - lo)) / 2)
+        return (lo - pad)...(hi + pad)
     }
 
     private func addWeight() async {
@@ -81,7 +131,7 @@ struct ProgressTab: View {
         guard kg >= 25, kg <= 350 else { message = t("Enter a valid weight", "أدخل وزناً صحيحاً"); return }
         do {
             try await APIClient.shared.addWeight(kg)
-            newWeight = ""; weightFocused = false; message = t("Weight logged ✓", "تم تسجيل الوزن ✓")
+            newWeight = ""; weightFocused = false; showAdd = false; message = t("Weight logged ✓", "تم تسجيل الوزن ✓")
             await load()
             await store.refresh()
         } catch { message = error.localizedDescription }
