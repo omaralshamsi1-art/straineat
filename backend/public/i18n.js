@@ -9,6 +9,7 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "إظهار المخفية ({})": "Show hidden ({})",
     "عرض كل الوجبات": "View all meals",
     "عرض أقل": "Show less",
     "سعرة يومياً": "kcal a day",
