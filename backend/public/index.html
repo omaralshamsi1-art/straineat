@@ -2439,17 +2439,21 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     return null;
   }
   function emptyTile(id) {
+    // no data yet → same colours as usual, value 0, and where the number will come from
+    const wk = L`${0} من 7`;
     const E = {
-      left: ['fi-flame', T('متبقي'), T('بعد إعداد خطتك')], protein: ['fi-protein', T('البروتين'), T('بعد أول وجبة')], carbs: ['fi-grain', T('الكربوهيدرات'), T('بعد أول وجبة')],
-      fat: ['fi-avocado', T('الدهون'), T('بعد أول وجبة')], fiber: ['fi-leaf', T('الألياف'), T('بعد أول وجبة')], burn: ['fi-bolt', T('الحرق'), T('من ساعتك')],
-      water: ['fi-drop', T('الماء'), T('سجّل أول كوب')], steps: ['fi-steps', T('الخطوات'), T('من Apple Health')], sleep: ['fi-moon', T('النوم'), T('من WHOOP')],
-      recovery: ['fi-heartpulse', T('الاستشفاء'), T('من WHOOP')], strain: ['fi-pulse', T('الجهد'), T('من WHOOP')],
-      week_budget: ['fi-calendar', T('ميزانية الأسبوع'), T('هذا الأسبوع')], week_protein: ['fi-medal', T('أيام البروتين'), T('هذا الأسبوع')],
-      week_water: ['fi-drop', T('أيام الماء'), T('هذا الأسبوع')], week_steps: ['fi-steps', T('أيام الخطوات'), T('هذا الأسبوع')],
+      left: ['fi-flame', '#2ba84a', T('متبقي'), '0', T('بعد إعداد خطتك')], protein: ['fi-protein', '#8a7df0', T('البروتين'), '0', T('بعد أول وجبة')],
+      carbs: ['fi-grain', '#e0a43b', T('الكربوهيدرات'), '0', T('بعد أول وجبة')], fat: ['fi-avocado', '#d9b44a', T('الدهون'), '0', T('بعد أول وجبة')],
+      fiber: ['fi-leaf', '#3fb27f', T('الألياف'), '0', T('بعد أول وجبة')], burn: ['fi-bolt', '#1e90e8', T('الحرق'), '0', T('من ساعتك')],
+      water: ['fi-drop', '#4aa8ff', T('الماء'), '0', T('سجّل أول كوب')], steps: ['fi-steps', '#ff9e4d', T('الخطوات'), '0', T('من Apple Health')],
+      sleep: ['fi-moon', '#8b6cf6', T('النوم'), '0:00', T('من WHOOP')], recovery: ['fi-heartpulse', '#2ba84a', T('الاستشفاء'), '0%', T('من WHOOP')],
+      strain: ['fi-pulse', '#1e90e8', T('الجهد'), '0', T('من WHOOP')], week_budget: ['fi-calendar', '#f2b94b', T('ميزانية الأسبوع'), '0', T('هذا الأسبوع')],
+      week_protein: ['fi-medal', '#8a7df0', T('أيام البروتين'), wk, T('هذا الأسبوع')], week_water: ['fi-drop', '#4aa8ff', T('أيام الماء'), wk, T('هذا الأسبوع')],
+      week_steps: ['fi-steps', '#ff9e4d', T('أيام الخطوات'), wk, T('هذا الأسبوع')],
     }[id];
     if (!E) return null;
     const devices = ['burn', 'steps', 'sleep', 'recovery', 'strain'].includes(id);
-    return { ic: E[0], c: 'var(--muted)', l: E[1], v: '—', s: E[2], f: 0, go: id === 'water' ? () => openWater() : devices ? () => show('sdev') : null, det: null, empty: true };
+    return { ic: E[0], c: E[1], l: E[2], v: E[3], s: E[4], f: 0, go: id === 'water' ? () => openWater() : devices ? () => show('sdev') : null, det: null, empty: true };
   }
   const tileBtn = (id, d) => `<button class="ftile" data-ft="${id}" style="--tc:${d.c}"><span class="ic"><svg width="22" height="22"><use href="#${d.ic}"/></svg></span><span class="tx"><small>${esc(d.l)}</small><b class="num" dir="auto">${esc(d.v)}</b>${d.s ? `<span>${esc(d.s)}</span>` : ''}</span><i class="pg" style="width:${Math.round(d.f * 100)}%"></i></button>`;
   function renderFocus() {
