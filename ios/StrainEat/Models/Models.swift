@@ -228,8 +228,15 @@ struct MealScore: Codable, Hashable {
     let labelAr: String
     let labelEn: String?
     let reasons: [Reason]
+    let goal: String?
+    let remainingBeforeKcal: Double?
+    let dailyTargetKcal: Double?
     var label: String { pick(labelEn, labelAr) }
-    enum CodingKeys: String, CodingKey { case score, grade, reasons; case labelAr = "label_ar", labelEn = "label_en" }
+    enum CodingKeys: String, CodingKey {
+        case score, grade, reasons, goal
+        case labelAr = "label_ar", labelEn = "label_en"
+        case remainingBeforeKcal = "remaining_before_kcal", dailyTargetKcal = "daily_target_kcal"
+    }
 }
 
 struct Swap: Codable, Hashable {

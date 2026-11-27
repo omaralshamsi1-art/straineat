@@ -46,7 +46,7 @@ struct LogView: View {
                     Button { close() } label: { Image(systemName: "xmark") }.accessibilityLabel(t("Close", "إغلاق"))
                 }
             }
-            .navigationDestination(item: $result) { MealReviewView(meal: $0, onDone: { result = nil; image = nil; onLogged() }) }
+            .navigationDestination(item: $result) { MealReviewView(meal: $0, onDone: { result = nil; image = nil; onLogged() }, photo: image) }
         }
         .onChange(of: active, initial: true) { _, isOn in if isOn { begin() } }
         .fullScreenCover(isPresented: $showCamera) {

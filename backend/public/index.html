@@ -831,6 +831,54 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
 .snapRow { margin-top: 16px; } .snapRow .btn { flex: 1; }
 .snapHead { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 16px; } .snapHead b { font-size: 19px; } .snapHead span { width: 42px; }
 .snapTxt { min-height: 140px; font-size: 17px; line-height: 1.6; }
+/* ---- Meal review v2: result first, details on demand ---- */
+.rvTop { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 12px; } .rvTop b { font-size: 17px; } .rvTop > span { width: 42px; }
+.rvHero { display: flex; gap: 14px; align-items: center; }
+.rvPh { width: 92px; height: 92px; border-radius: 20px; overflow: hidden; flex: none; background: var(--card-2); display: grid; place-items: center; font-size: 38px; }
+.rvPh img { width: 100%; height: 100%; object-fit: cover; }
+.rvHd { flex: 1; min-width: 0; }
+.rvName { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.rvName input { font-size: 21px; font-weight: 800; border: 0; padding: 0; background: none; color: var(--ink); min-width: 0; flex: 1; }
+.rvSub { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+.rvKind { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.rvKind button { white-space: nowrap; border: 0; background: var(--card-2); color: var(--muted); border-radius: 999px; padding: 7px 11px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.rvKind button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.rvKcal { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.rvKcal b { font-size: 64px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+.rvKcal span { color: var(--muted); font-size: 16px; font-weight: 600; }
+.rvFit { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: 700; font-size: 15px; }
+.rvFit .dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; flex: none; }
+.rvFit .good { background: var(--good-soft); color: var(--good); } .rvFit .warn { background: var(--warn-soft, #3a3522); color: var(--warn); } .rvFit .bad { background: var(--bad-soft, #3a2222); color: var(--bad); }
+.rvFit .sc { margin-inline-start: auto; font-size: 13px; font-weight: 800; padding: 5px 10px; border-radius: 999px; background: var(--card-2); flex: none; }
+.rvNote { color: var(--muted); font-size: 14px; margin: 8px 0 0; line-height: 1.6; }
+.rvNote:empty { display: none; }
+.rvMac { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+.rvMac .m { background: var(--card-2); border-radius: 16px; padding: 11px 10px; }
+.rvMac .l { font-size: 13px; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 5px; } .rvMac .l i { width: 8px; height: 8px; border-radius: 50%; }
+.rvMac .v { font-size: 22px; font-weight: 800; } .rvMac .v small { font-size: 13px; color: var(--muted); font-weight: 600; }
+.rvMac .bar { height: 5px; margin-top: 8px; } .rvMac .r { font-size: 11px; color: var(--muted); margin-top: 5px; }
+.rvQ { font-size: 15px; font-weight: 800; margin-top: 18px; }
+.rvSeg { display: flex; background: var(--card-2); border-radius: 999px; padding: 4px; margin-top: 10px; }
+.rvSeg button { flex: 1; border: 0; background: none; color: var(--muted); border-radius: 999px; padding: 9px 0; font: inherit; font-weight: 800; font-size: 15px; cursor: pointer; }
+.rvSeg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.rvMore > summary { list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+.rvMore > summary::-webkit-details-marker { display: none; }
+.rvMore > summary > span:first-child { min-width: 0; } .rvList { display: block; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rvMore[open] .rvList { display: none; } .rvOpen { flex: none; } .rvMore[open] .rvOpen { display: none; }
+.rvRow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.rvRow:first-child { margin-top: 10px; } .rvRow .q { color: var(--muted); font-size: 13px; }
+.rvUl { margin: 0; padding-inline-start: 18px; line-height: 1.8; }
+#itSheet { position: fixed; inset: 0; z-index: 80; }
+#itSheet .itDim { position: absolute; inset: 0; background: #0009; }
+#itSheet .itBox { position: absolute; left: 0; right: 0; bottom: 0; max-width: 560px; margin: 0 auto; background: var(--card); border-radius: 26px 26px 0 0; padding: 12px 18px calc(env(safe-area-inset-bottom) + 18px); max-height: 88vh; overflow: auto; }
+.itGrab { width: 40px; height: 5px; border-radius: 9px; background: var(--line); margin: 0 auto 12px; }
+.itStep { display: flex; align-items: center; justify-content: space-between; background: var(--card-2); border-radius: 14px; padding: 6px; }
+.itStep button { width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--card); color: var(--ink); font-size: 22px; font-weight: 700; cursor: pointer; }
+.itStep b { font-size: 17px; }
+.itGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .itGrid label { margin-top: 4px; }
+.rvName textarea { font-size: 21px; font-weight: 800; border: 0; padding: 0; background: none; color: var(--ink); min-width: 0; flex: 1; resize: none; overflow: hidden; line-height: 1.3; font-family: inherit; min-height: 0; }
+.rvDel { display: block; margin: 14px auto 0; border: 0; background: none; color: var(--bad); font: inherit; font-weight: 700; font-size: 15px; padding: 10px 16px; cursor: pointer; }
+.rvKind { margin-top: 14px; }
 </style>
 </head>
 <body>
@@ -1104,35 +1152,62 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
 
   <!-- ============ REVIEW ============ -->
   <section id="v-review" class="hidden fade">
+    <div class="rvTop"><button class="snapX" id="rBack" aria-label="إغلاق">✕</button><b>وجبتك</b><span></span></div>
+
     <div class="card">
-      <input id="rName" aria-label="اسم الوجبة" style="font-size:22px;font-weight:700;border:0;padding:2px 0;background:none">
-      <input id="rRest" aria-label="المطعم" placeholder="المطعم" style="border:0;padding:2px 0;color:var(--muted);background:none">
-      <div class="row" style="margin-top:8px"><span id="rBadge" class="pill"></span><span class="small muted" id="rServing"></span></div>
-      <div class="langsw" role="group" aria-label="النوع" id="rKind" style="margin:12px 0 0;justify-content:flex-start"><button type="button" data-kind="meal">🍽️ وجبة</button><button type="button" data-kind="snack">🍎 سناك</button><button type="button" data-kind="drink">☕ مشروب</button></div>
+    <div class="rvHero">
+      <div class="rvPh" id="rPhoto"><span>🍽️</span></div>
+      <div class="rvHd">
+        <div class="rvName"><textarea id="rName" rows="1" aria-label="اسم الوجبة"></textarea><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg></div>
+        <div class="rvSub"><span id="rBadge" class="pill"></span><span class="small muted" id="rServing"></span></div>
+      </div>
     </div>
-    <div class="card" id="rScoreCard">
-      <div class="score"><div class="big num" id="rScore">–</div><div><b id="rScoreLbl" style="font-size:17px"></b><div class="chips" id="rReasons"></div></div></div>
-      <p id="rNote" class="small" style="margin:12px 0 0;line-height:1.7"></p>
-      <div id="rSwaps"></div>
+    <div class="rvKind" role="group" aria-label="النوع" id="rKind"><button type="button" data-kind="meal">🍽️ وجبة</button><button type="button" data-kind="snack">🍎 سناك</button><button type="button" data-kind="drink">☕ مشروب</button></div>
     </div>
+
     <div class="card">
-      <div class="row"><div><span style="font-size:42px;font-weight:700" class="num" id="rTotal">0</span> <span class="muted">سعرة</span></div><span class="small muted" id="rShare"></span></div>
-      <div class="macro" id="rMacros"></div>
-      <label>الكمية التي أكلتِها: <b id="rPortionLbl">100%</b></label>
-      <input type="range" id="rPortion" min="0.25" max="2" step="0.25" value="1" aria-label="الكمية">
+      <div class="rvKcal"><b class="num" id="rTotal">0</b><span id="rShare">سعرة</span></div>
+      <div class="rvFit" id="rFit"></div>
+      <p class="rvNote" id="rNote"></p>
+      <div class="rvMac" id="rMacros"></div>
+      <div class="rvQ">كم أكلت منها؟</div>
+      <div class="rvSeg" role="group" aria-label="الكمية" id="rPortionSeg"></div>
     </div>
-    <div class="card">
-      <h3>المكونات <span class="small">اضغطي للتعديل</span></h3>
+
+    <details class="card rvMore" id="rItemsBox">
+      <summary><span><b id="rItemsH">المكونات</b><span class="small muted rvList" id="rItemsList"></span></span><span class="small muted rvOpen">عرض وتعديل</span></summary>
       <div id="rItems"></div>
       <button class="btn ghost" id="rAdd">+ إضافة صنف</button>
-    </div>
-    <div class="card hidden" id="rAssumeCard"><h3>افتراضات الوكيل — عدّليها إن لم تكن صحيحة</h3><ul id="rAssume" style="margin:0;padding-inline-start:18px;line-height:1.8"></ul></div>
-    <div class="card hidden" id="rWarnCard"><h3>تنبيهات</h3><ul id="rWarn" style="margin:0;padding-inline-start:18px;line-height:1.8;color:var(--warn)"></ul></div>
-    <div class="card hidden" id="rSrcCard"><h3>المصادر</h3><ul id="rSrc" style="margin:0;padding-inline-start:18px;line-height:1.8"></ul></div>
-    <button class="btn" id="rConfirm">تأكيد وإضافة لليوم</button>
-    <button class="btn ghost" id="rBack">رجوع</button>
-    <button class="btn text" id="rDelete">حذف الوجبة</button>
+    </details>
+
+    <details class="card rvMore hidden" id="rMoreBox">
+      <summary><b>بدائل وتفاصيل التحليل</b><span class="small muted rvOpen">عرض</span></summary>
+      <div id="rSwaps"></div>
+      <div id="rReasons" class="chips" style="margin-top:12px"></div>
+      <div class="hidden" id="rAssumeCard"><h3 style="margin-top:14px">افتراضات التحليل</h3><ul id="rAssume" class="rvUl"></ul></div>
+      <div class="hidden" id="rWarnCard"><h3 style="margin-top:14px">تنبيهات</h3><ul id="rWarn" class="rvUl" style="color:var(--warn)"></ul></div>
+      <div class="hidden" id="rSrcCard"><h3 style="margin-top:14px">المصادر</h3><ul id="rSrc" class="rvUl"></ul></div>
+      <input id="rRest" aria-label="المطعم" placeholder="المطعم (اختياري)" style="margin-top:14px">
+    </details>
+
+    <button class="btn snapGo" id="rConfirm">أضف لليوم ✓</button>
+    <button class="rvDel" id="rDelete">حذف الوجبة</button>
   </section>
+
+  <!-- edit one ingredient (separate from the result) -->
+  <div id="itSheet" class="hidden" role="dialog" aria-label="تعديل الصنف">
+    <div class="itDim" id="itDim"></div>
+    <div class="itBox">
+      <div class="itGrab"></div>
+      <div class="rvTop" style="margin:0 0 6px"><b id="itTitle"></b><button class="rvDel" id="itDel" style="margin:0;padding:8px 4px">حذف</button></div>
+      <label for="itName">الاسم</label><input id="itName">
+      <label>الكمية</label>
+      <div class="itStep"><button type="button" id="itMinus" aria-label="أقل">−</button><b id="itQty"></b><button type="button" id="itPlus" aria-label="أكثر">+</button></div>
+      <label>القيم — تتغير تلقائياً مع الكمية</label>
+      <div class="itGrid" id="itFields"></div>
+      <button class="btn snapGo" id="itDone" style="margin-top:16px">تم</button>
+    </div>
+  </div>
 
   <!-- ============ PLAN & SETTINGS ============ -->
   <section id="v-plan" class="hidden fade">
@@ -1454,9 +1529,10 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
     if (v === 'plan-settings') v = 'settings';
     if (v === 'snap' && curView !== 'snap') snapPrev = curView;
     if (v !== 'snap') { try { stopScan(); closeCam(); stopMic(); } catch {} }
+    if (v !== 'review') { const sh = document.getElementById('itSheet'); if (sh) sh.classList.add('hidden'); }
     for (const s of VIEWS) $(`v-${s}`).classList.toggle('hidden', s !== v);
     $('nav').classList.toggle('hidden', v === 'setup' || v === 'onb');
-    $('askFab').classList.toggle('hidden', v === 'setup' || v === 'onb' || v === 'snap');
+    $('askFab').classList.toggle('hidden', v === 'setup' || v === 'onb' || v === 'snap' || v === 'review');
     curView = v;
     $('dayNav').style.visibility = v === 'today' ? 'visible' : 'hidden';
     document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
@@ -3204,7 +3280,7 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
     if (rest) fd.append('restaurant', rest);
     if (note) fd.append('note', note);
     fd.append('eatenAt', new Date().toISOString());
-    try { const r = await api('meals/analyze', { method: 'POST', body: fd }); resetCapture(); openReview(r.meal); }
+    try { const r = await api('meals/analyze', { method: 'POST', body: fd }); const url = photo ? URL.createObjectURL(photo) : null; resetCapture(); openReview(r.meal, url); }
     catch (e) { toast(e.message, 4000); }
     finally { $('analyzeBtn').disabled = !photo; $('analyzing').classList.add('hidden'); }
   };
@@ -3216,77 +3292,135 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
   }
 
   // ---------------- review ----------------
-  const NUM_FIELDS = [['calories', T('السعرات')], ['protein_g', T('بروتين (غ)')], ['carbs_g', T('كربوهيدرات (غ)')], ['fat_g', T('دهون (غ)')], ['fiber_g', T('ألياف (غ)')], ['sugar_g', T('سكر (غ)')], ['sodium_mg', T('صوديوم (ملغ)')], ['grams', T('الوزن (غ)')]];
-  async function openReview(meal) {
+  const PORTIONS = [[0.25, '¼'], [0.5, '½'], [0.75, '¾'], [1, null], [1.5, '1½'], [2, '2×']];
+  let rPortion = 1, rPhotoUrl = null;
+  async function openReview(meal, photoUrl) {
     current = meal; const f = meal.final;
     items = f.items.map((i) => ({ ...i }));
-    $('rName').value = nameOf(f, 'meal_name'); $('rRest').value = f.restaurant || '';
+    if (rPhotoUrl && rPhotoUrl !== photoUrl) { try { URL.revokeObjectURL(rPhotoUrl); } catch {} }
+    rPhotoUrl = photoUrl || null;
+    const kind = meal.kind || f.kind || 'meal';
+    $('rPhoto').innerHTML = rPhotoUrl ? `<img src="${rPhotoUrl}" alt="">` : `<span>${kind === 'drink' ? '☕' : kind === 'snack' ? '🍎' : '🍽️'}</span>`;
+    $('rName').value = nameOf(f, 'meal_name'); $('rRest').value = f.restaurant || ''; requestAnimationFrame(sizeName);
     const [cls, lbl] = BADGE[f.source] || ['est', f.source];
     $('rBadge').className = `pill ${cls}`; $('rBadge').textContent = L`${lbl} · ثقة ${fmt(f.confidence * 100)}%`;
     $('rServing').textContent = f.serving_description || '';
-    rKindSel = meal.kind || f.kind || 'meal'; paintKind();
-    $('rPortion').value = 1; $('rPortionLbl').textContent = '100%';
+    rKindSel = kind; paintKind();
+    rPortion = 1; paintPortion();
     list($('rAssume'), $('rAssumeCard'), f.assumptions.map(esc));
     list($('rWarn'), $('rWarnCard'), f.warnings.map((w) => esc(w.replace(/^\[check\]\s*/, ''))));
     list($('rSrc'), $('rSrcCard'), f.sources.map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a>`));
-    $('rConfirm').textContent = meal.status === 'confirmed' ? T('حفظ التعديلات') : T('تأكيد وإضافة لليوم');
-    renderScore(meal);
+    $('rConfirm').textContent = meal.status === 'confirmed' ? T('حفظ التعديلات') : T('أضف لليوم ✓');
+    $('rItemsBox').open = false; $('rMoreBox').open = false;
+    renderMore(meal);
     if (!planCache) { try { planCache = await api('plan'); } catch {} }
-    renderItems(); show('review');
+    renderItems(); show('review'); window.scrollTo(0, 0);
   }
-  function renderScore(meal) {
-    const sc = meal.score, f = meal.final;
-    $('rScoreCard').classList.toggle('hidden', !sc);
-    if (!sc) return;
-    $('rScore').className = `big num g-${sc.grade}`;
-    $('rScore').innerHTML = `${sc.score}<small>/10</small>`;
-    $('rScoreLbl').textContent = tx(sc, 'label');
-    $('rReasons').innerHTML = sc.reasons.map((r) => `<span class="chip ${r.good ? 'good' : 'bad'}">${esc(tx(r, 'text'))}</span>`).join('');
-    $('rNote').textContent = f.coach_note_ar || '';
-    const sw = f.swaps || [];
-    $('rSwaps').innerHTML = sw.length ? L`<h3 style="margin:14px 0 0">بدائل أذكى</h3>` + sw.map((x) => {
+  function sizeName() { const t = $('rName'); t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }
+  $('rName').oninput = sizeName;
+  $('rName').onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } };
+  function paintPortion() {
+    $('rPortionSeg').innerHTML = PORTIONS.map(([v, l]) => `<button type="button" data-p="${v}" aria-pressed="${v === rPortion}">${l || T('كاملة')}</button>`).join('');
+    $('rPortionSeg').querySelectorAll('button').forEach((b) => (b.onclick = () => { rPortion = Number(b.dataset.p); paintPortion(); updateTotals(); }));
+  }
+  /** Swaps, score reasons, assumptions and sources live behind one "details" fold. */
+  function renderMore(meal) {
+    const sc = meal.score, f = meal.final, sw = f.swaps || [];
+    $('rReasons').innerHTML = sc ? sc.reasons.map((r) => `<span class="chip ${r.good ? 'good' : 'bad'}">${esc(tx(r, 'text'))}</span>`).join('') : '';
+    $('rSwaps').innerHTML = sw.length ? L`<h3 style="margin:12px 0 0">بدائل أذكى</h3>` + sw.map((x) => {
       const dk = Math.round(x.delta_kcal), dp = Math.round(x.delta_protein_g);
       const good = planGoal === 'gain' ? dk > 0 : dk <= 0;
       return `<div class="swap"><div class="arrow"><span class="from">${esc(x.instead_of_ar)}</span><svg width="16" height="16"><use href="#i-chev-l"/></svg><span>${esc(x.choose_ar)}</span></div>
         <div class="chips">${dk ? L`<span class="chip ${good ? 'good' : 'bad'}"><span dir="ltr">${dk > 0 ? '+' : '−'}${fmt(Math.abs(dk))}</span> سعرة</span>` : ''}${dp ? L`<span class="chip ${dp > 0 ? 'good' : 'bad'}"><span dir="ltr">${dp > 0 ? '+' : '−'}${fmt(Math.abs(dp))}</span> غ بروتين</span>` : ''}</div>
         ${x.why_ar ? `<div class="small muted" style="margin-top:6px">${esc(x.why_ar)}</div>` : ''}</div>`;
     }).join('') : '';
+    $('rMoreBox').classList.remove('hidden');
+  }
+  /** "Does it fit my goal?" — recomputed live from the portion. */
+  function fitLine(kcal) {
+    const sc = current && current.score;
+    if (!sc || sc.remaining_before_kcal == null) return '';
+    const after = Math.round(sc.remaining_before_kcal - kcal);
+    const pill = `<span class="sc g-${sc.grade}">${sc.score}/10</span>`;
+    let cls, icon, text;
+    if (sc.goal === 'gain') {
+      const share = kcal / Math.max(1, sc.daily_target_kcal || 1);
+      [cls, icon] = share >= 0.2 ? ['good', '✓'] : ['warn', '!'];
+      text = (share >= 0.2 ? T('تقرّبك من هدف الزيادة') : T('حصة صغيرة لهدف الزيادة')) + (after > 0 ? L` · باقي ${fmt(after)}` : '');
+    } else if (after >= 0) { cls = 'good'; icon = '✓'; text = L`مناسبة لهدفك · يبقى لك ${fmt(after)}`; }
+    else if (after >= -200) { cls = 'warn'; icon = '!'; text = L`تتجاوز ميزانية اليوم بـ${fmt(-after)}`; }
+    else { cls = 'bad'; icon = '!'; text = L`أعلى من المتبقي لك اليوم بـ${fmt(-after)}`; }
+    return `<span class="dot ${cls}">${icon}</span><span>${text}</span>${pill}`;
+  }
+  function smartNote(kcalScaled) {
+    const f = current.final, sc = current.score;
+    if (f.coach_note_ar) return '💡 ' + esc(f.coach_note_ar);
+    if (!sc || !sc.reasons.length) return '';
+    return '💡 ' + sc.reasons.slice(0, 2).map((r) => esc(tx(r, 'text'))).join(' · ');
   }
   function list(ul, card, arr) { ul.innerHTML = arr.map((x) => `<li>${x}</li>`).join(''); card.classList.toggle('hidden', !arr.length); }
   function renderItems() {
-    $('rItems').innerHTML = items.map((it, idx) => L`
-      <details class="item"><summary><span><b>${esc(nameOf(it))}</b><br><span class="small muted">${fmt1(it.quantity)} ${esc(it.unit)}${it.grams ? L` · ${fmt(it.grams)} غ` : ''}</span></span><b class="num">${fmt(it.calories)}</b></summary>
-        <label>الاسم</label><input data-i="${idx}" data-k="${LANG === 'en' ? 'name' : 'name_ar'}" value="${esc(nameOf(it))}">
-        <div class="fields">
-          <div><label>الكمية</label><input data-i="${idx}" data-k="quantity" type="number" inputmode="decimal" step="0.25" value="${it.quantity}"></div>
-          <div><label>الوحدة</label><input data-i="${idx}" data-k="unit" value="${esc(it.unit)}"></div>
-          ${NUM_FIELDS.map(([k, l]) => `<div><label>${l}</label><input data-i="${idx}" data-k="${k}" type="number" inputmode="decimal" value="${it[k] ?? ''}"></div>`).join('')}
-        </div>
-        <button class="btn text" data-del="${idx}">حذف الصنف</button>
-      </details>`).join('');
-    $('rItems').querySelectorAll('input').forEach((inp) => (inp.oninput = () => {
-      const it = items[+inp.dataset.i], k = inp.dataset.k;
-      it[k] = ['name', 'name_ar', 'unit'].includes(k) ? inp.value : inp.value === '' ? (k === 'grams' ? null : 0) : Number(inp.value);
-      updateTotals();
-    }));
-    $('rItems').querySelectorAll('[data-del]').forEach((b) => (b.onclick = () => { items.splice(+b.dataset.del, 1); renderItems(); }));
+    $('rItemsH').textContent = L`المكونات (${items.length})`;
+    $('rItemsList').textContent = items.map((it) => nameOf(it)).join(' · ');
+    $('rItems').innerHTML = items.map((it, idx) => L`<div class="rvRow" data-i="${idx}"><span style="min-width:0"><b>${esc(nameOf(it))}</b><div class="q"><bdi>${fmt1(it.quantity)} ${esc(it.unit)}</bdi>${it.grams ? L` · <bdi>${fmt(it.grams)} غ</bdi>` : ''}</div></span><span class="num"><b>${fmt(it.calories)}</b> <span class="q">سعرة</span></span></div>`).join('');
+    $('rItems').querySelectorAll('.rvRow').forEach((r) => (r.onclick = () => openItem(+r.dataset.i)));
     updateTotals();
   }
   function updateTotals() {
-    const p = Number($('rPortion').value);
+    const p = rPortion;
     const t = items.reduce((a, i) => { for (const k of ['calories', 'protein_g', 'carbs_g', 'fat_g', 'fiber_g']) a[k] += (Number(i[k]) || 0) * p; return a; }, { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0 });
     $('rTotal').textContent = fmt(t.calories);
-    $('rShare').textContent = planCache ? L`${fmt((t.calories / planCache.targetKcal) * 100)}% من هدف اليوم` : '';
-    $('rMacros').innerHTML = macroRows(t, planCache ? { protein_g: planCache.proteinG, carbs_g: planCache.carbsG, fat_g: planCache.fatG, fiber_g: planCache.fiberG } : null);
+    $('rShare').textContent = planCache ? L`سعرة · ${fmt((t.calories / planCache.targetKcal) * 100)}% من هدف اليوم` : T('سعرة');
+    $('rFit').innerHTML = fitLine(t.calories);
+    $('rNote').innerHTML = smartNote();
+    const tg = planCache ? { protein_g: planCache.proteinG, carbs_g: planCache.carbsG, fat_g: planCache.fatG } : null;
+    $('rMacros').innerHTML = [[T('بروتين'), 'protein_g', 'var(--p)'], [T('كارب'), 'carbs_g', 'var(--c)'], [T('دهون'), 'fat_g', 'var(--f)']].map(([l, k, c]) => {
+      const want = tg ? tg[k] : 0, pct = want ? Math.min(100, (t[k] / want) * 100) : 0;
+      return L`<div class="m"><div class="l"><i style="background:${c}"></i>${l}</div><div class="v num">${fmt(t[k])}<small> غ</small></div>${want ? L`<div class="bar"><i style="width:${pct}%;background:${c}"></i></div><div class="r">من ${fmt(want)}</div>` : ''}</div>`;
+    }).join('');
   }
-  $('rPortion').oninput = () => { $('rPortionLbl').textContent = `${fmt(Number($('rPortion').value) * 100)}%`; updateTotals(); };
-  $('rAdd').onclick = () => { items.push({ name: 'Item', name_ar: T('صنف'), quantity: 1, unit: T('حصة'), grams: null, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, sugar_g: 0, sodium_mg: 0 }); renderItems(); const d = $('rItems').lastElementChild; if (d) d.open = true; };
+
+  // ---- edit one ingredient in a sheet; values scale with the quantity ----
+  let itIdx = -1, itBase = null;
+  const IT_FIELDS = () => [['calories', T('السعرات')], ['protein_g', T('بروتين (غ)')], ['carbs_g', T('كربوهيدرات (غ)')], ['fat_g', T('دهون (غ)')], ['fiber_g', T('ألياف (غ)')], ['grams', T('الوزن (غ)')]];
+  function qtyStep(q) { return q >= 10 ? (q >= 100 ? 25 : 5) : q >= 2 ? 1 : 0.25; }
+  function openItem(i) {
+    itIdx = i; const it = items[i]; itBase = { ...it };
+    $('itTitle').textContent = L`تعديل: ${nameOf(it)}`;
+    $('itName').value = nameOf(it);
+    paintItem();
+    $('itSheet').classList.remove('hidden');
+  }
+  function paintItem() {
+    const it = items[itIdx];
+    $('itQty').innerHTML = `<bdi>${fmt1(it.quantity)} ${esc(it.unit)}</bdi>${it.grams ? L` · <bdi>${fmt(it.grams)} غ</bdi>` : ''}`;
+    $('itFields').innerHTML = IT_FIELDS().map(([k, l]) => `<div><label>${l}</label><input data-k="${k}" type="number" inputmode="decimal" value="${it[k] ?? ''}"></div>`).join('');
+    $('itFields').querySelectorAll('input').forEach((inp) => (inp.oninput = () => {
+      const k = inp.dataset.k; it[k] = inp.value === '' ? (k === 'grams' ? null : 0) : Number(inp.value);
+      itBase = { ...it }; // manual numbers become the new base for scaling
+      renderItems();
+    }));
+  }
+  function scaleItemTo(q) {
+    const it = items[itIdx], b = itBase, f = b.quantity ? q / b.quantity : 1;
+    if (q <= 0 || !Number.isFinite(f)) return;
+    it.quantity = Math.round(q * 100) / 100;
+    for (const k of ['calories', 'protein_g', 'carbs_g', 'fat_g', 'fiber_g', 'sugar_g', 'sodium_mg', 'grams']) if (b[k] != null) it[k] = k === 'calories' || k === 'sodium_mg' || k === 'grams' ? Math.round(b[k] * f) : Math.round(b[k] * f * 10) / 10;
+    paintItem(); renderItems();
+  }
+  $('itMinus').onclick = () => { const q = items[itIdx].quantity; scaleItemTo(Math.max(qtyStep(q - 0.01), q - qtyStep(q - 0.01))); };
+  $('itPlus').onclick = () => { const q = items[itIdx].quantity; scaleItemTo(q + qtyStep(q)); };
+  $('itName').oninput = () => { const it = items[itIdx]; it[LANG === 'en' ? 'name' : 'name_ar'] = $('itName').value; renderItems(); };
+  const closeItem = () => { $('itSheet').classList.add('hidden'); itIdx = -1; };
+  $('itDone').onclick = closeItem; $('itDim').onclick = closeItem;
+  $('itDel').onclick = () => { if (itIdx < 0) return; items.splice(itIdx, 1); closeItem(); renderItems(); };
+  $('rAdd').onclick = () => { items.push({ name: 'Item', name_ar: T('صنف'), quantity: 1, unit: T('حصة'), grams: null, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, sugar_g: 0, sodium_mg: 0 }); renderItems(); openItem(items.length - 1); };
   $('rBack').onclick = () => show('today');
   $('rConfirm').onclick = async () => {
     if (!items.length) return toast(T('أضيفي صنفاً واحداً على الأقل'));
     $('rConfirm').disabled = true;
     try {
-      const f = current.final, p = Number($('rPortion').value);
+      const f = current.final, p = rPortion;
       const patch = { kind: rKindSel, items: items.map((i) => ({ ...i, name: i.name || i.name_ar })), [LANG === 'en' ? 'meal_name' : 'meal_name_ar']: $('rName').value.trim() || nameOf(f, 'meal_name'), restaurant: $('rRest').value.trim() || null, ...(p !== 1 ? { portionFactor: p } : {}) };
       if (!f.meal_name && !patch.meal_name) patch.meal_name = patch.meal_name_ar;
       if (!f.meal_name_ar && !patch.meal_name_ar) patch.meal_name_ar = patch.meal_name;

@@ -6,6 +6,10 @@ export interface MealScore {
   label_ar: string;
   label_en: string;
   reasons: { good: boolean; text_ar: string; text_en: string }[];
+  /** Context for "does it fit my goal?" — lets the app recompute live when the portion changes. */
+  goal?: 'lose' | 'maintain' | 'gain';
+  remaining_before_kcal?: number;
+  daily_target_kcal?: number;
 }
 
 /**
@@ -53,7 +57,7 @@ export function scoreMeal(n: Nutrients, ctx: { goal: 'lose' | 'maintain' | 'gain
   const grade = score >= 8 ? 'excellent' : score >= 6 ? 'good' : score >= 4 ? 'ok' : 'poor';
   const label_ar = { excellent: 'اختيار ممتاز', good: 'اختيار جيد', ok: 'مقبول', poor: 'يحتاج تحسين' }[grade];
   const label_en = { excellent: 'Excellent choice', good: 'Good choice', ok: 'OK', poor: 'Needs work' }[grade];
-  return { score, grade, label_ar, label_en, reasons: reasons.slice(0, 4) };
+  return { score, grade, label_ar, label_en, reasons: reasons.slice(0, 4), goal: ctx.goal, remaining_before_kcal: Math.round(ctx.remainingBeforeKcal), daily_target_kcal: Math.round(ctx.dailyTargetKcal) };
 }
 
 // ---------------------------------------------------------------- Ramadan
