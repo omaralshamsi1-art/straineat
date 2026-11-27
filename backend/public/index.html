@@ -913,11 +913,12 @@ html[dir="ltr"] .scard.ban .go1 svg { transform: scaleX(-1); }
 .mlAll { display: block; width: 100%; border: 0; border-top: 1px solid var(--line); background: none; color: var(--muted); font: inherit; font-weight: 700; font-size: 14px; padding: 13px 0 4px; cursor: pointer; }
 html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
 /* compact empty insight row + tighter meal rows */
-.stack.empty { min-height: 0; margin: 8px 0 0; }
+.stack.empty { display: none; }
+.stack { margin: 10px 0 0; } .stack .peek { inset: 8px 12px -6px; }
 .stack-empty { padding: 4px 0; font-size: 13px; }
 .stack-empty .restore { border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; padding: 2px 4px; text-decoration: underline; text-underline-offset: 3px; }
 #stackMore:empty { display: none; }
-.dayhead { margin-top: 14px; }
+.dayhead { margin-top: 12px; }
 #mealList .meal { padding: 8px 0; gap: 10px; }
 #mealList .meal .t small, #mealList .meal .k small { line-height: 1.3; }
 .card.meals { padding-top: 10px; padding-bottom: 6px; }
@@ -2202,11 +2203,8 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
   function renderStack() {
     const el = $('stack'); const all = stackCards(); const hidden = dismissed().length;
     const restore = hidden ? `<button class="restore" id="stRestore">↺ ${L`إظهار البطاقات المخفية (${hidden})`}</button>` : '';
-    if (!all.length) {
-      // one slim line instead of an empty block
-      el.innerHTML = `<div class="stack-empty"><svg width="16" height="16"><use href="#i-check"/></svg>${T('لا جديد الآن')}${hidden ? ` · <button class="restore" id="stRestore">↺ ${L`إظهار المخفية (${hidden})`}</button>` : ''}</div>`;
-      el.classList.add('empty'); $('stackMore').innerHTML = ''; bindRestore(); return;
-    }
+    $('stackMore').innerHTML = '';
+    if (!all.length) { el.innerHTML = ''; el.classList.add('empty'); return; } // nothing new → no row at all
     el.classList.remove('empty');
     const n = all.length, i0 = ((stackPos % n) + n) % n;
     const cards = all.slice(i0).concat(all.slice(0, i0));
@@ -2218,7 +2216,6 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
         ${n > 1 ? `<div class="dots" aria-label="${i0 + 1}/${n}">${Array.from({ length: n }, (_, k) => `<i class="${k === i0 ? 'on' : ''}"></i>`).join('')}<span>${T('اسحب للتالي')}</span></div>` : ''}</div>
       ${c.acts ? `<button class="go1" data-a="0" aria-label="${esc(c.acts[0][0])}"><svg width="18" height="18"><use href="#i-chev-l"/></svg></button>` : ''}
       <button class="x" aria-label="${T('إخفاء')}">×</button></div>`;
-    $('stackMore').innerHTML = restore; bindRestore();
     const top = $('scTop');
     top.querySelectorAll('[data-a]').forEach((btn) => (btn.onclick = (e) => { e.stopPropagation(); c.acts[+btn.dataset.a][1](); }));
     // swipe = next card (they cycle, nothing is lost); × = hide for today (can be restored)

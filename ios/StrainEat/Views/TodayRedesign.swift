@@ -596,17 +596,7 @@ struct InsightStack: View {
                         })
                     .id(c.id)
                     .transition(.opacity)
-            } else {
-                Label(t("Nothing new right now", "لا جديد الآن"), systemImage: "checkmark.circle")
-                    .font(.footnote).foregroundStyle(Theme.muted).padding(10)
             }
-        }
-        if !gone.isEmpty {
-            Button { gone = []; pos = 0; UserDefaults.standard.set(gone, forKey: key) } label: {
-                Label(t("Show hidden cards (\(gone.count))", "إظهار البطاقات المخفية (\(gone.count))"), systemImage: "arrow.counterclockwise")
-                    .font(.caption).foregroundStyle(Theme.muted)
-            }
-            .buttonStyle(.plain)
         }
         }
         .onAppear { gone = UserDefaults.standard.stringArray(forKey: key) ?? [] }
