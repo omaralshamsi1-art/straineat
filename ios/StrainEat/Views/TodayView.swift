@@ -14,9 +14,6 @@ struct TodayView: View {
                         FocusSection(balance: b, isToday: store.isToday)
                         InsightStack(balance: b, schedule: store.isToday ? schedule : nil, motivation: store.motivation, isToday: store.isToday,
                                      onLog: onLog, onSuggest: { showIdeas = true }, onSchedule: { schedule = $0 })
-                        if let r = b.ramadan, r.active || r.needsChoice { RamadanCard(view: r) }
-                        TodayMonitors(balance: b, isToday: store.isToday)
-                        WaterCard(isToday: store.isToday, fastingDay: b.ramadan?.active == true)
                         HStack {
                             Text(t("My day", "يومي")).font(.title3.weight(.heavy))
                             Spacer()
@@ -32,6 +29,9 @@ struct TodayView: View {
                         TimelineCard(meals: b.meals, schedule: store.isToday ? schedule : nil, onLog: onLog,
                                      onSchedule: { schedule = $0 },
                                      onEditTimes: { NotificationCenter.default.post(name: .openPlan, object: nil) })
+                        TodayMonitors(balance: b, isToday: store.isToday)
+                        if let r = b.ramadan, r.active || r.needsChoice { RamadanCard(view: r) }
+                        WaterCard(isToday: store.isToday, fastingDay: b.ramadan?.active == true)
                         BodyTodayCard(activity: b.activity, isToday: store.isToday, showWellness: false)
                     } else if let e = store.error {
                         Card { VStack(spacing: 10) {

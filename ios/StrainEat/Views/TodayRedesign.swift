@@ -218,6 +218,7 @@ struct TimelineCard: View {
     var onSchedule: (DaySchedule) -> Void
     var onEditTimes: () -> Void
     @State private var busy: String?
+    @State private var showAll = false
 
     private enum Row: Identifiable {
         case meal(Balance.MealRow), slot(DaySchedule.Slot)
@@ -230,6 +231,11 @@ struct TimelineCard: View {
         var rows: [Row] = meals.map { .meal($0) }
         for s in schedule?.slots ?? [] where s.items.isEmpty && !drafts.contains(where: { abs($0 - hhmm(s.time)) <= 180 }) { rows.append(.slot(s)) }
         rows.sort { $0.at < $1.at }
+        // Default: the last three meals added; "View all meals" shows the full day with planned slots.
+        let recent = Array(meals.sorted { minutesOf($0.eatenAt) > minutesOf($1.eatenAt) }.prefix(3).reversed())
+        let compact = !showAll && !meals.isEmpty && rows.count > recent.count
+        let shown: [Row] = compact ? recent.map { .meal($0) } : rows
+        let canToggle = !meals.isEmpty && rows.count > recent.count
         return Card {
             HStack(spacing: 6) {
                 if !meals.isEmpty { Text(t("\(meals.count) meals ·", "\(meals.count) وجبات ·")) }
@@ -242,12 +248,21 @@ struct TimelineCard: View {
                 Text(t("No meals yet.", "لا وجبات بعد.")).font(.footnote).foregroundStyle(Theme.muted)
                 Button(action: onLog) { Label(t("Log your meal", "سجّل وجبتك"), systemImage: "camera.fill") }.buttonStyle(SoftButtonStyle())
             }
-            ForEach(Array(rows.enumerated()), id: \.element.id) { i, r in
+            ForEach(Array(shown.enumerated()), id: \.element.id) { i, r in
                 if i > 0 { Divider() }
                 switch r {
                 case .meal(let m): mealRow(m)
                 case .slot(let s): slotRow(s)
                 }
+            }
+            if canToggle {
+                Divider()
+                Button { withAnimation(.snappy) { showAll.toggle() } } label: {
+                    Label(compact ? t("View all meals", "عرض كل الوجبات") : t("Show less", "عرض أقل"), systemImage: compact ? "arrow.forward" : "chevron.up")
+                        .labelStyle(TrailingIconLabel())
+                        .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.muted).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -598,32 +613,51 @@ struct InsightStack: View {
     }
 
     private func card(_ c: Item, index: Int, count: Int) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 10) {
-                Image(systemName: c.icon).foregroundStyle(c.tone == "good" ? Theme.good : c.tone == "low" ? Theme.bad : c.tone == "info" ? Color(red: 0.12, green: 0.56, blue: 0.91) : Theme.warn)
-                Text(c.title).font(.headline).lineLimit(2)
-                Spacer()
-                if count > 1 { Text("\(index)/\(count)").font(.caption).foregroundStyle(Theme.muted).monospacedDigit() }
-                Button { fly(c.id, dir: appLang == .ar ? -1 : 1, hide: true) } label: { Image(systemName: "xmark").font(.caption.weight(.bold)).foregroundStyle(Theme.muted).padding(6) }
-                    .accessibilityLabel(t("Hide", "إخفاء"))
-            }
-            if !c.sub.isEmpty { Text(c.sub).font(.subheadline).foregroundStyle(Theme.muted).padding(.leading, 30) }
-            if !c.acts.isEmpty {
-                HStack(spacing: 8) {
-                    ForEach(Array(c.acts.enumerated()), id: \.offset) { _, a in
-                        Button(a.0, action: a.2).font(.subheadline.weight(.bold))
-                            .foregroundStyle(a.1 ? Color(red: 0.09, green: 0.07, blue: 0.12) : Theme.ink)
-                            .padding(.horizontal, 16).frame(minHeight: 38)
-                            .background(a.1 ? Theme.brand2 : Theme.card2, in: Capsule())
+        let tint: (Color, Color, Color) = c.tone == "low" || c.tone == "bad"
+            ? (Color(red: 0.18, green: 0.12, blue: 0.11), Color(red: 0.16, green: 0.13, blue: 0.12), Color(red: 0.29, green: 0.18, blue: 0.17))
+            : c.tone == "info" ? (Color(red: 0.11, green: 0.15, blue: 0.2), Color(red: 0.1, green: 0.15, blue: 0.19), Color(red: 0.17, green: 0.24, blue: 0.32))
+            : (Color(red: 0.11, green: 0.16, blue: 0.12), Color(red: 0.1, green: 0.16, blue: 0.15), Color(red: 0.17, green: 0.29, blue: 0.21))
+        return HStack(alignment: .center, spacing: 12) {
+            Image(systemName: "lightbulb").font(.title3.weight(.semibold)).foregroundStyle(Color(red: 0.95, green: 0.82, blue: 0.35))
+                .frame(width: 46, height: 46).background(Color(red: 0.95, green: 0.82, blue: 0.35).opacity(0.14), in: Circle())
+            VStack(alignment: .leading, spacing: 4) {
+                Text(c.title).font(.headline.weight(.heavy)).foregroundStyle(.white).lineLimit(2)
+                if !c.sub.isEmpty { Text(c.sub).font(.subheadline).foregroundStyle(.white.opacity(0.8)) }
+                if c.acts.count > 1 {
+                    HStack(spacing: 8) {
+                        ForEach(Array(c.acts.enumerated()), id: \.offset) { _, a in
+                            Button(a.0, action: a.2).font(.subheadline.weight(.bold))
+                                .foregroundStyle(a.1 ? Color(red: 0.09, green: 0.07, blue: 0.12) : .white)
+                                .padding(.horizontal, 14).frame(minHeight: 34)
+                                .background(a.1 ? Theme.brand2 : Color.white.opacity(0.08), in: Capsule())
+                        }
                     }
+                    .buttonStyle(.plain).padding(.top, 4)
                 }
-                .buttonStyle(.plain).padding(.leading, 30)
+                if count > 1 {
+                    HStack(spacing: 5) {
+                        ForEach(0..<count, id: \.self) { k in Circle().fill(k == index - 1 ? Theme.good : Color.white.opacity(0.35)).frame(width: 6, height: 6) }
+                        Text(t("Swipe for next", "اسحب للتالي")).font(.caption2).foregroundStyle(.white.opacity(0.6)).padding(.leading, 4)
+                    }
+                    .padding(.top, 2)
+                }
             }
-            if count > 1 { Text(t("Swipe for next", "اسحب للتالي")).font(.caption2).foregroundStyle(Theme.muted).frame(maxWidth: .infinity) }
+            Spacer(minLength: 0)
+            if let first = c.acts.first {
+                Button(action: first.2) {
+                    Image(systemName: "chevron.forward").font(.subheadline.weight(.bold)).foregroundStyle(.white)
+                        .frame(width: 34, height: 34).background(Color.white.opacity(0.08), in: Circle())
+                }
+                .buttonStyle(.plain).accessibilityLabel(first.0)
+            }
         }
         .padding(14)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .shadow(color: .black.opacity(0.18), radius: 9, y: 4)
+        .background(LinearGradient(colors: [tint.0, tint.1], startPoint: .leading, endPoint: .trailing), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(tint.2))
+        .overlay(alignment: .topTrailing) {
+            Button { fly(c.id, dir: appLang == .ar ? -1 : 1, hide: true) } label: { Image(systemName: "xmark").font(.caption2.weight(.bold)).foregroundStyle(.white.opacity(0.6)).padding(8) }
+                .accessibilityLabel(t("Hide", "إخفاء"))
+        }
     }
 
     /// Swipe = next card (they cycle); × = hide for today (restorable).
@@ -682,4 +716,9 @@ struct TodayMonitors: View {
         }
         .buttonStyle(.plain)
     }
+}
+
+/// Text first, icon after (e.g. "View all meals →").
+struct TrailingIconLabel: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View { HStack(spacing: 6) { configuration.title; configuration.icon } }
 }

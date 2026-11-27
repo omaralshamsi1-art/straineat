@@ -9,6 +9,8 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "عرض كل الوجبات": "View all meals",
+    "عرض أقل": "Show less",
     "سعرة يومياً": "kcal a day",
     "حرقك اليومي": "Your daily burn",
     "كيف حسبناها؟": "How we calculated it",
