@@ -392,7 +392,8 @@ describe('WHOOP', () => {
     expect(whoopDays.map((w) => w.kg)).toEqual([89.3, 88.4]); // no repeats, nothing new for an unchanged number
     kg = 88.0;
     await whoop.sync('u3', today, today);
-    expect((await s.repo.listWeights('u3', d(10), today)).filter((w) => w.source === 'whoop').map((w) => w.kg)).toEqual([89.3, 88.4, 88.0]);
+    // the new weight lands on the user's local day (Dubai), which can already be tomorrow in UTC
+    expect((await s.repo.listWeights('u3', d(10), d(-1))).filter((w) => w.source === 'whoop').map((w) => w.kg)).toEqual([89.3, 88.4, 88.0]);
   });
 });
 

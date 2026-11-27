@@ -9,6 +9,11 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "بعد إعداد خطتك": "after you set up your plan",
+    "بعد أول وجبة": "after your first meal",
+    "من ساعتك": "from your watch",
+    "سجّل أول كوب": "log your first glass",
+    "من WHOOP": "from WHOOP",
     "حجم العرض": "Display size",
     "صغير": "Small",
     "كبير": "Large",

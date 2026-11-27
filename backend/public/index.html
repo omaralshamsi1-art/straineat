@@ -962,6 +962,7 @@ html[data-size="sm"] { zoom: .9; }
 html[data-size="lg"] { zoom: 1.1; }
 /* large: keep the header on one line by dropping the wordmark (the logo stays) */
 html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
+#tilesGrid > .ftile:last-child:nth-child(odd) { grid-column: 1 / -1; } /* a lone last tile spans the row */
 </style>
 </head>
 <body>
@@ -2437,13 +2438,27 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     }
     return null;
   }
+  function emptyTile(id) {
+    const E = {
+      left: ['fi-flame', T('متبقي'), T('بعد إعداد خطتك')], protein: ['fi-protein', T('البروتين'), T('بعد أول وجبة')], carbs: ['fi-grain', T('الكربوهيدرات'), T('بعد أول وجبة')],
+      fat: ['fi-avocado', T('الدهون'), T('بعد أول وجبة')], fiber: ['fi-leaf', T('الألياف'), T('بعد أول وجبة')], burn: ['fi-bolt', T('الحرق'), T('من ساعتك')],
+      water: ['fi-drop', T('الماء'), T('سجّل أول كوب')], steps: ['fi-steps', T('الخطوات'), T('من Apple Health')], sleep: ['fi-moon', T('النوم'), T('من WHOOP')],
+      recovery: ['fi-heartpulse', T('الاستشفاء'), T('من WHOOP')], strain: ['fi-pulse', T('الجهد'), T('من WHOOP')],
+      week_budget: ['fi-calendar', T('ميزانية الأسبوع'), T('هذا الأسبوع')], week_protein: ['fi-medal', T('أيام البروتين'), T('هذا الأسبوع')],
+      week_water: ['fi-drop', T('أيام الماء'), T('هذا الأسبوع')], week_steps: ['fi-steps', T('أيام الخطوات'), T('هذا الأسبوع')],
+    }[id];
+    if (!E) return null;
+    const devices = ['burn', 'steps', 'sleep', 'recovery', 'strain'].includes(id);
+    return { ic: E[0], c: 'var(--muted)', l: E[1], v: '—', s: E[2], f: 0, go: id === 'water' ? () => openWater() : devices ? () => show('sdev') : null, det: null, empty: true };
+  }
   const tileBtn = (id, d) => `<button class="ftile" data-ft="${id}" style="--tc:${d.c}"><span class="ic"><svg width="22" height="22"><use href="#${d.ic}"/></svg></span><span class="tx"><small>${esc(d.l)}</small><b class="num" dir="auto">${esc(d.v)}</b>${d.s ? `<span>${esc(d.s)}</span>` : ''}</span><i class="pg" style="width:${Math.round(d.f * 100)}%"></i></button>`;
   function renderFocus() {
     const ringsHero = layout.hero === 'rings';
     const hd = ringsHero ? null : focusData(layout.hero);
     $('heroRings').classList.toggle('hidden', !ringsHero && !!hd);
     $('heroOne').classList.toggle('hidden', ringsHero || !hd);
-    const ready = layout.tiles.filter((id) => ringsHero || id !== layout.hero).map((id) => [id, focusData(id)]).filter(([, d]) => d); // tiles without data stay hidden
+    // every chosen tile always shows (stable layout); without data it shows — and where the data comes from
+    const ready = layout.tiles.filter((id) => ringsHero || id !== layout.hero).map((id) => [id, focusData(id) || emptyTile(id)]).filter(([, d]) => d);
     let side = [], rest = ready;
     if (!ringsHero && hd) {
       side = ready.slice(0, 3); rest = ready.slice(3);
@@ -2455,7 +2470,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     }
     $('sideTiles').innerHTML = side.map(([id, d]) => tileBtn(id, d)).join('');
     $('tilesGrid').innerHTML = rest.map(([id, d]) => tileBtn(id, d)).join('');
-    $('focus').querySelectorAll('[data-ft]').forEach((el) => (el.onclick = () => { const d = focusData(el.dataset.ft); if (d) d.go ? d.go() : openDetail(d.det); }));
+    $('focus').querySelectorAll('[data-ft]').forEach((el) => (el.onclick = () => { const d = focusData(el.dataset.ft) || emptyTile(el.dataset.ft); if (!d) return; if (d.go) d.go(); else if (d.det) openDetail(d.det); }));
   }
   async function loadWeek() {
     if (isoDay(day) !== isoDay(new Date())) { weekSum = null; renderFocus(); return; }
