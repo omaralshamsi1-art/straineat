@@ -30,9 +30,9 @@ final class ExtraAnalyses {
     func start() {
         guard listener == nil else { return }
         listener = Task { [weak self] in
-            for await result in Transaction.updates { await self?.deliver(result) }
+            for await result in StoreKit.Transaction.updates { await self?.deliver(result) }
         }
-        Task { for await result in Transaction.unfinished { await self.deliver(result) } }
+        Task { for await result in StoreKit.Transaction.unfinished { await self.deliver(result) } }
     }
 
     func refresh() async {
@@ -71,7 +71,7 @@ final class ExtraAnalyses {
 
     /// Sends a verified transaction to the server, then finishes it. Unfinished ones are retried by StoreKit.
     @discardableResult
-    private func deliver(_ result: VerificationResult<Transaction>) async -> Bool {
+    private func deliver(_ result: VerificationResult<StoreKit.Transaction>) async -> Bool {
         guard case let .verified(tx) = result else { message = t("Apple couldn't verify this purchase.", "تعذّر التحقق من الشراء عند Apple."); return false }
         do {
             let _: RedeemResponse = try await APIClient.shared.post("iap/apple", ["transactionId": String(tx.id)])
