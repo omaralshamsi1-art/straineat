@@ -7,7 +7,8 @@ import { StepsService } from './steps/steps.service';
 import { WaterService } from './water/water.service';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { AiContextInterceptor, AiUsageLog } from './usage/ai-usage';
 import { LocalizedErrorFilter } from './common/i18n-errors';
 import { ANTHROPIC_CLIENT, anthropicFactory, NutritionAgentService } from './agent/nutrition-agent.service';
 import { AuthGuard } from './auth/auth.guard';
@@ -26,7 +27,7 @@ import {
   ProfileController,
   WhoopController,
   AssistantController,
-  ScheduleController, WaterController, StepsController, WeekController, McpController, OAuthController, AccountController, LegalController, GroupsController,
+  ScheduleController, WaterController, StepsController, WeekController, McpController, OAuthController, AccountController, LegalController, GroupsController, AdminController,
 } from './controllers';
 import { ScheduleService } from './schedule/schedule.service';
 import { ShortcutService } from './energy/shortcut.service';
@@ -47,10 +48,12 @@ import { REPOSITORY } from './storage/repository';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true })],
-  controllers: [HealthController, AuthController, FoodsController, MotivationController, PushController, MealsController, PlanController, WorkoutsController, CoachController, EnergyController, ProfileController, WhoopController, AssistantController, ScheduleController, WaterController, StepsController, WeekController, McpController, OAuthController, AccountController, LegalController, GroupsController],
+  controllers: [HealthController, AuthController, FoodsController, MotivationController, PushController, MealsController, PlanController, WorkoutsController, CoachController, EnergyController, ProfileController, WhoopController, AssistantController, ScheduleController, WaterController, StepsController, WeekController, McpController, OAuthController, AccountController, LegalController, GroupsController, AdminController],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_FILTER, useClass: LocalizedErrorFilter },
+    { provide: APP_INTERCEPTOR, useClass: AiContextInterceptor },
+    AiUsageLog,
     { provide: ANTHROPIC_CLIENT, useFactory: anthropicFactory, inject: [ConfigService] },
     {
       provide: REPOSITORY,

@@ -3,6 +3,7 @@ import { BadGatewayException, Inject, Injectable, Logger, Optional, ServiceUnava
 import { ConfigService } from '@nestjs/config';
 import { normalizeEstimate } from '../common/nutrition-math';
 import { FETCH, FetchFn } from '../common/fetch';
+import { AiUsageLog } from '../usage/ai-usage';
 import { EMPTY_NUTRIENTS, KnownMeal, NutritionEstimate, SourceRef } from '../common/types';
 import { buildSystemPrompt, buildUserText, CoachContext, SUBMIT_TOOL_NAME, SUBMIT_TOOL_SCHEMA } from './prompts';
 
@@ -57,8 +58,31 @@ export class NutritionAgentService {
     @Inject(ANTHROPIC_CLIENT) private readonly client: MessagesClient | null,
     config: ConfigService,
     @Optional() @Inject(FETCH) fetchFn?: FetchFn,
+    @Optional() private readonly usage?: AiUsageLog,
   ) {
-    this.fetchFn = fetchFn ?? fetch;
+    const base = fetchFn ?? fetch;
+    // Every Gemini request (incl. retries and fallbacks) is counted per user for the owner's usage page.
+    this.fetchFn = (async (url: any, init?: any) => {
+      const res = await base(url, init);
+      const m = /generativelanguage\.googleapis\.com\/v1beta\/models\/([^:]+):generateContent/.exec(String(url));
+      if (m && this.usage) {
+        const model = decodeURIComponent(m[1]);
+        const fallback = model !== this.model;
+        if (res.ok) {
+          res.clone().json().then(
+            (d: any) => {
+              const u = d?.usageMetadata ?? {};
+              const searches = d?.candidates?.[0]?.groundingMetadata?.webSearchQueries?.length ?? 0;
+              void this.usage!.record({ model, ok: true, fallback, inTok: u.promptTokenCount ?? 0, outTok: (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0), searches });
+            },
+            () => void this.usage!.record({ model, ok: true, fallback, inTok: 0, outTok: 0, searches: 0 }),
+          );
+        } else {
+          void this.usage.record({ model, ok: false, fallback, inTok: 0, outTok: 0, searches: 0 });
+        }
+      }
+      return res;
+    }) as FetchFn;
     this.geminiKey = config.get<string>('GEMINI_API_KEY')?.trim().replace(/^["']|["']$/g, '') || undefined;
     // LLM_PROVIDER wins; otherwise use Gemini when only a Gemini key is configured.
     const explicit = config.get<string>('LLM_PROVIDER');

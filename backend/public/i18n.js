@@ -9,6 +9,22 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "استخدام الذكاء الاصطناعي": "AI usage",
+    "للمالك فقط": "owner only",
+    "الفترة": "Period",
+    "7 أيام": "7 days",
+    "30 يوم": "30 days",
+    "{} بديل": "{} fallback",
+    "{} فشل": "{} failed",
+    "{} بحث": "{} searches",
+    "طلب": "requests",
+    "عمليات المستخدمين": "User actions",
+    "طلبات Google": "Google requests",
+    "التوكنز (دخول / خروج)": "Tokens (in / out)",
+    "التكلفة التقديرية": "Estimated cost",
+    "لا يوجد استخدام في هذه الفترة.": "No usage in this period.",
+    "الحد اليومي لكل مستخدم: {} تحليل (صورة أو نص) و{} رسالة للمساعد. حسابك مستثنى.": "Daily limit per user: {} analyses (photo or text) and {} assistant messages. Your account is exempt.",
+    "طلبات Google قد تزيد عن العمليات: إعادة المحاولة أو النموذج البديل عند الضغط تُحسب طلباً إضافياً.": "Google requests can exceed actions: a retry or the fallback model under load counts as an extra request.",
     "↺ صوّر من جديد": "↺ Retake",
     "حلّل الوجبة": "Analyse meal",
     "تبي الدقة أعلى؟ أضف تفاصيل (اختياري)": "Want more accuracy? Add details (optional)",

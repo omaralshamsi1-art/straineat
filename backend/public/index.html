@@ -1238,6 +1238,12 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
       </details>
     </div>
 
+    <div class="card hidden" id="usageCard">
+      <h3>استخدام الذكاء الاصطناعي <span class="small">للمالك فقط</span></h3>
+      <div class="langsw" role="group" aria-label="الفترة" id="usageDays" style="justify-content:flex-start;margin:0 0 10px"><button type="button" data-d="1">اليوم</button><button type="button" data-d="7">7 أيام</button><button type="button" data-d="30">30 يوم</button></div>
+      <div id="usageBody"></div>
+    </div>
+
     <div class="card" id="privCard">
       <h3>الخصوصية والبيانات</h3>
       <div class="row" style="align-items:center;padding:4px 0"><span>التحليل بالذكاء الاصطناعي<br><span class="small muted" id="aiConsentState">—</span></span><button class="btn ghost" id="aiConsentBtn" style="width:auto;padding:0 14px;min-height:40px;font-size:14px">—</button></div>
@@ -1455,7 +1461,7 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
     if (v === 'progress') { loadProgress(); loadChallenge(); }
     if (v === 'plan') { loadLocation(); loadScheduleSettings(); }
     if (v === 'plan' || v === 'settings') loadPlan();
-    if (v === 'settings') { loadAiApps(); loadPrivacy(); }
+    if (v === 'settings') { loadAiApps(); loadPrivacy(); loadUsage(); }
     if (v === 'snap') { resetCapture(); snapMode('photo'); openCam(); } // one tap → camera
   }
   document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
@@ -2874,6 +2880,32 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
       $('aiNo').onclick = () => { close(); toast(T('بدون الموافقة تقدر تسجّل وجباتك يدوياً أو من السجل')); resolve(false); };
     });
   }
+  // ---------------- owner: AI usage ----------------
+  let usageN = 7;
+  async function loadUsage() {
+    let r;
+    try { r = await api(`admin/usage?days=${usageN}`); } catch { $('usageCard').classList.add('hidden'); return; }
+    $('usageCard').classList.remove('hidden');
+    document.querySelectorAll('#usageDays button').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.d) === usageN)));
+    const t = r.total, usd = (x) => `$${x < 0.01 && x > 0 ? x.toFixed(4) : x.toFixed(2)}`;
+    const acts = (c) => c.photo + c.text + c.chat + c.coach + c.other;
+    const row = (u) => {
+      const c = u.total;
+      const parts = [c.photo && L`📷 ${c.photo}`, c.text && L`✍️ ${c.text}`, c.chat && L`💬 ${c.chat}`, c.coach && L`🧭 ${c.coach}`, c.other && L`⚙️ ${c.other}`].filter(Boolean).join(' · ');
+      const extra = [c.fallback && L`${c.fallback} بديل`, c.fail && L`${c.fail} فشل`, c.search && L`${c.search} بحث`].filter(Boolean).join(' · ');
+      return `<div class="row" style="padding:10px 0;border-top:1px solid var(--line);align-items:flex-start"><div style="flex:1;min-width:0"><b>${esc(u.name || u.email || u.id.slice(0, 8))}</b>${u.email && u.name ? `<div class="small muted">${esc(u.email)}</div>` : ''}<div class="small">${parts || '—'}</div>${extra ? `<div class="small muted">${extra}</div>` : ''}</div><div style="text-align:end"><b>${c.req}</b><div class="small muted">${T('طلب')}</div><div class="small">${usd(c.cost)}</div></div></div>`;
+    };
+    $('usageBody').innerHTML = `
+      <div class="grid2" style="gap:8px;margin-bottom:6px">
+        <div><div class="small muted">${T('عمليات المستخدمين')}</div><b style="font-size:22px">${acts(t)}</b></div>
+        <div><div class="small muted">${T('طلبات Google')}</div><b style="font-size:22px">${t.req}</b></div>
+        <div><div class="small muted">${T('التوكنز (دخول / خروج)')}</div><b>${t.in.toLocaleString(LOC)} / ${t.out.toLocaleString(LOC)}</b></div>
+        <div><div class="small muted">${T('التكلفة التقديرية')}</div><b>${usd(t.cost)}</b></div>
+      </div>
+      ${r.users.length ? r.users.map(row).join('') : `<p class="small muted">${T('لا يوجد استخدام في هذه الفترة.')}</p>`}
+      <p class="small muted" style="margin:10px 0 0">${L`الحد اليومي لكل مستخدم: ${r.limits.analyze} تحليل (صورة أو نص) و${r.limits.chat} رسالة للمساعد. حسابك مستثنى.`}<br>${T('طلبات Google قد تزيد عن العمليات: إعادة المحاولة أو النموذج البديل عند الضغط تُحسب طلباً إضافياً.')}</p>`;
+  }
+  document.querySelectorAll('#usageDays button').forEach((b) => (b.onclick = () => { usageN = Number(b.dataset.d); loadUsage(); }));
   async function loadPrivacy() {
     let p = null; try { p = await api('profile'); } catch { return; }
     aiOk = !!p.aiConsentAt; if (aiOk) ls.set('ns_ai_ok', '1'); else ls.del('ns_ai_ok');

@@ -1,3 +1,7 @@
+import { ForbiddenException, Inject } from '@nestjs/common';
+import { REPOSITORY, Repository } from './storage/repository';
+import { AiUsageLog, UsageCounters } from './usage/ai-usage';
+import { DAILY_LIMITS } from './auth/auth.service';
 import {
   BadRequestException,
   Body,
@@ -673,4 +677,34 @@ export class GroupsController {
   @Post(':id/code') rotate(@UserId() userId: string, @Param('id') id: string) { return this.groups.rotateCode(userId, id); }
   @Delete(':id/members/:member') remove(@UserId() userId: string, @Param('id') id: string, @Param('member') member: string) { return this.groups.removeMember(userId, id, member); }
   @Post(':id/leave') leave(@UserId() userId: string, @Param('id') id: string) { return this.groups.leave(userId, id); }
+}
+
+/** Owner-only: AI usage per user and per day (counts and estimated cost — no meal content). */
+@Controller('admin')
+export class AdminController {
+  constructor(private readonly usageLog: AiUsageLog, @Inject(REPOSITORY) private readonly repo: Repository) {}
+
+  @Get('usage')
+  async usage(@Role() role: string, @Query('days') daysQ?: string) {
+    if (role !== 'owner') throw new ForbiddenException('Owner only');
+    const n = Math.min(Math.max(Number(daysQ) || 7, 1), 31);
+    const days = await this.usageLog.days(n);
+    const per = new Map<string, UsageCounters[]>();
+    for (const d of days) for (const [id, c] of Object.entries(d.users)) per.set(id, [...(per.get(id) ?? []), c]);
+    const users = await Promise.all(
+      [...per.entries()].map(async ([id, list]) => {
+        const u = id === 'system' || id === 'owner' ? null : await this.repo.getUserById(id).catch(() => null);
+        const today = days[0].users[id];
+        return { id, name: u?.name ?? (id === 'system' ? 'System' : id === 'owner' ? 'Owner' : null), email: u?.email ?? null, today: today ?? null, total: AiUsageLog.sum(list) };
+      }),
+    );
+    users.sort((a, b) => b.total.req - a.total.req);
+    return {
+      days: days.map((d) => ({ date: d.date, total: AiUsageLog.sum(Object.values(d.users)) })),
+      users,
+      total: AiUsageLog.sum(users.map((u) => u.total)),
+      limits: DAILY_LIMITS,
+      note: 'Cost is an estimate at paid-tier list prices; grounded searches are free up to the monthly allowance.',
+    };
+  }
 }

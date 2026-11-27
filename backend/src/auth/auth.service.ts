@@ -163,7 +163,16 @@ export class AuthService {
 }
 
 /** Per-user daily AI quotas (owner unlimited). */
-export const DAILY_LIMITS = { analyze: 20, coach: 12, chat: 30 } as const;
+const lim = (name: string, d: number) => {
+  const n = Number(process.env[name]);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : d;
+};
+/** Per-user daily caps (owner exempt). Photo + text analyses share `analyze`. */
+export const DAILY_LIMITS = {
+  analyze: lim('AI_DAILY_LIMIT', 15),
+  coach: lim('AI_COACH_DAILY_LIMIT', 12),
+  chat: lim('AI_CHAT_DAILY_LIMIT', 30),
+} as const;
 
 @Injectable()
 export class UsageService {
