@@ -1,4 +1,5 @@
-import { ForbiddenException, Inject } from '@nestjs/common';
+import { ForbiddenException, Inject, Optional } from '@nestjs/common';
+import { appAccountToken, CREDIT_PACK, CreditsService } from './iap/credits.service';
 import { REPOSITORY, Repository } from './storage/repository';
 import { AiUsageLog, UsageCounters } from './usage/ai-usage';
 import { DAILY_LIMITS } from './auth/auth.service';
@@ -65,15 +66,26 @@ export class MealsController {
   constructor(
     private readonly meals: MealsService,
     private readonly usage: UsageService,
+    @Optional() private readonly credits?: CreditsService,
   ) {}
+
+  /** A purchased credit is returned if the analysis it paid for fails. */
+  private async refundOnFail<T>(userId: string, paid: string, run: () => Promise<T>): Promise<T> {
+    try {
+      return await run();
+    } catch (e) {
+      if (paid === 'credit') await this.credits?.refund(userId).catch(() => undefined);
+      throw e;
+    }
+  }
 
   /** multipart/form-data: photo=<file>, mealName?, restaurant?, portion?, note?, eatenAt? */
   @Post('analyze')
   @UseInterceptors(FileInterceptor('photo', { limits: { fileSize: 5 * 1024 * 1024 } }))
   async analyze(@UserId() userId: string, @Role() role: string, @UploadedFile() photo: Express.Multer.File, @Body() hints: AnalyzeHints) {
     if (!photo) throw new BadRequestException('photo file is required');
-    await this.usage.consume(userId, role, 'analyze');
-    return this.meals.analyzePhoto(userId, photo.buffer, photo.mimetype, hints);
+    const paid = await this.usage.consume(userId, role, 'analyze');
+    return this.refundOnFail(userId, paid, () => this.meals.analyzePhoto(userId, photo.buffer, photo.mimetype, hints));
   }
 
   @Post()
@@ -84,8 +96,8 @@ export class MealsController {
   /** Typed or dictated description, e.g. "أكلت شاورما دجاج وعصير برتقال". */
   @Post('analyze-text')
   async analyzeText(@UserId() userId: string, @Role() role: string, @Body() body: { text: string; restaurant?: string; eatenAt?: string }) {
-    await this.usage.consume(userId, role, 'analyze');
-    return this.meals.analyzeText(userId, body?.text, { restaurant: body?.restaurant, eatenAt: body?.eatenAt });
+    const paid = await this.usage.consume(userId, role, 'analyze');
+    return this.refundOnFail(userId, paid, () => this.meals.analyzeText(userId, body?.text, { restaurant: body?.restaurant, eatenAt: body?.eatenAt }));
   }
 
   @Get('favorites')
@@ -410,7 +422,7 @@ export class AssistantController {
 
   @Post('actions/:id/confirm')
   confirm(@UserId() userId: string, @Role() role: string, @Param('id', ParseUUIDPipe) id: string) {
-    return this.assistant.confirm(userId, id, () => this.usage.consume(userId, role, 'analyze'));
+    return this.assistant.confirm(userId, id, async () => { await this.usage.consume(userId, role, 'analyze'); });
   }
 
   @Post('actions/:id/dismiss')
@@ -706,5 +718,32 @@ export class AdminController {
       limits: DAILY_LIMITS,
       note: 'Cost is an estimate at paid-tier list prices; grounded searches are free up to the monthly allowance.',
     };
+  }
+}
+
+/** Extra AI analyses (consumable In-App Purchase on iOS). */
+@Controller('iap')
+export class IapController {
+  constructor(private readonly credits: CreditsService, private readonly usage: UsageService) {}
+
+  @Get('credits')
+  async status(@UserId() userId: string) {
+    const w = await this.credits.wallet(userId);
+    return {
+      balance: w.balance,
+      bought: w.bought,
+      used: w.used,
+      freeLeftToday: await this.usage.remainingToday(userId),
+      dailyLimit: DAILY_LIMITS.analyze,
+      pack: CREDIT_PACK,
+      productId: this.credits.productId,
+      appAccountToken: appAccountToken(userId),
+    };
+  }
+
+  /** Body: { transactionId } from StoreKit 2 after a successful purchase. */
+  @Post('apple')
+  redeem(@UserId() userId: string, @Body() body: { transactionId?: string }) {
+    return this.credits.redeemApple(userId, String(body?.transactionId ?? ''));
   }
 }

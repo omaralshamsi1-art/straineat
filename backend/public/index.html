@@ -1439,7 +1439,11 @@ html[data-theme="dark"] .snapChips button[aria-pressed="true"] { color: #0d1411;
     if (res.status === 401 && !path.startsWith('auth/login') && !path.startsWith('auth/register')) {
       ls.del('ns_key'); ls.del('ns_token'); show('setup'); throw new Error((data && data.message) || T('سجّل الدخول من جديد'));
     }
-    if (!res.ok) throw new Error((data && data.message) || L`خطأ ${res.status}`);
+    if (!res.ok) {
+      let msg = (data && data.message) || L`خطأ ${res.status}`;
+      if (data && data.code === 'AI_LIMIT' && data.canBuy) msg += ' ' + T('تقدر تشتري 30 تحليل إضافي من تطبيق StrainEat على الآيفون.');
+      const err = new Error(msg); err.code = data && data.code; throw err;
+    }
     return data;
   }
 

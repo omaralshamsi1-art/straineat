@@ -155,7 +155,10 @@ struct PhotoLogPanel: View {
         do {
             let r = try await APIClient.shared.analyze(image: image, mealName: nil, restaurant: restaurant.trimmingCharacters(in: .whitespaces), portion: portion, note: n)
             result = r.meal
-        } catch { self.error = error.localizedDescription }
+        } catch {
+            self.error = error.localizedDescription
+            if (error as? APIError)?.isAILimit == true { ExtraAnalyses.shared.offer = true }
+        }
     }
 }
 
@@ -260,7 +263,10 @@ struct TextLogPanel: View {
             let r = try await APIClient.shared.analyzeText(text.trimmingCharacters(in: .whitespacesAndNewlines), restaurant: restaurant)
             text = ""; restaurant = ""
             result = r.meal
-        } catch { self.error = error.localizedDescription }
+        } catch {
+            self.error = error.localizedDescription
+            if (error as? APIError)?.isAILimit == true { ExtraAnalyses.shared.offer = true }
+        }
     }
 }
 

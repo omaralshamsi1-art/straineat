@@ -3,9 +3,15 @@ import UIKit
 
 enum APIError: LocalizedError {
     case http(Int, String)
+    /// Daily free AI analyses used up — the user can buy an extra pack.
+    case aiLimit(String)
     var errorDescription: String? {
-        switch self { case let .http(code, msg): return t("Server error (\(code)): \(msg)", "خطأ من الخادم (\(code)): \(msg)") }
+        switch self {
+        case let .http(code, msg): return t("Server error (\(code)): \(msg)", "خطأ من الخادم (\(code)): \(msg)")
+        case let .aiLimit(msg): return msg
+        }
     }
+    var isAILimit: Bool { if case .aiLimit = self { return true } else { return false } }
 }
 
 /// Talks to the StrainEat backend. Auth: the owner's server key (+ X-User-Id), or an account token (Bearer).
@@ -262,7 +268,9 @@ final class APIClient {
         let (data, resp) = try await session.data(for: req)
         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(code) else {
-            let msg = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["message"] as? String
+            let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let msg = obj?["message"] as? String
+            if code == 429, obj?["code"] as? String == "AI_LIMIT" { throw APIError.aiLimit(msg ?? "") }
             if code == 401 { await MainActor.run { NotificationCenter.default.post(name: .strainEatUnauthorized, object: nil) } }
             throw APIError.http(code, msg ?? String(data: data, encoding: .utf8) ?? "")
         }

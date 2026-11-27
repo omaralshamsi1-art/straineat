@@ -9,6 +9,7 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "تقدر تشتري 30 تحليل إضافي من تطبيق StrainEat على الآيفون.": "You can buy 30 extra analyses in the StrainEat iPhone app.",
     "استخدام الذكاء الاصطناعي": "AI usage",
     "للمالك فقط": "owner only",
     "الفترة": "Period",

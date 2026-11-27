@@ -14,6 +14,7 @@ struct PlanTab: View {
                 VStack(spacing: 14) {
                     if let plan { PlanSummaryCard(plan: plan, onEdit: { editing = true }) }
                     AccountCard()
+                    ExtraAnalysesRow()
                     PrivacyCard(aiConsentAt: profile?.aiConsentAt)
                     DevicesCard(profile: profile, onChange: { Task { await load() } })
                     if let profile { RamadanSettingsCard(profile: profile, onSaved: { Task { await load() } }) }

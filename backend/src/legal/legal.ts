@@ -6,7 +6,7 @@ export type LegalPage = 'privacy' | 'terms' | 'support';
 export type Lang = 'ar' | 'en';
 export interface LegalOpts { name: string; email: string; geminiTier: 'paid' | 'free'; base: string }
 
-export const LEGAL_UPDATED = '2026-11-26';
+export const LEGAL_UPDATED = '2026-11-27';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
@@ -153,6 +153,8 @@ function terms(o: LegalOpts, ar: boolean): string {
 <p>ربط WHOOP وApple Health وتطبيقات الذكاء الاصطناعي اختياري، ويخضع استخدامك لتلك الخدمات لشروطها. ما نتحكم في تلك الخدمات ولا في توفّرها.</p>
 <h2>6. ميزات تجريبية وتغييرات</h2>
 <p>بعض الميزات تجريبية وقد تتغير أو تتوقف. نقدّم الخدمة «كما هي» بدون ضمانات بأنها ستكون متاحة دائماً أو خالية من الأخطاء.</p>
+<h2>6أ. الاستخدام المجاني والمشتريات الاختيارية</h2>
+<p>التطبيق مجاني مع حد يومي لتحليلات الذكاء الاصطناعي (الصورة أو النص). يمكنك اختيارياً شراء باقات تحليلات إضافية داخل تطبيق الآيفون عبر Apple. الباقة تُستخدم بعد انتهاء الحد المجاني لليوم، ولا تنتهي صلاحيتها، ولا يمكن تحويلها لحساب آخر. إذا فشل تحليل مدفوع يُعاد رصيده تلقائياً. الدفع والاسترداد يتمان عبر Apple ووفق شروطها، وحذف الحساب يحذف الرصيد المتبقي.</p>
 <h2>7. حدود المسؤولية</h2>
 <p>إلى الحد الذي يسمح به القانون، لا نتحمّل مسؤولية أي ضرر غير مباشر أو تبعي ناتج عن استخدام الخدمة أو الاعتماد على تقديراتها.</p>
 <h2>8. إنهاء الحساب</h2>
@@ -177,6 +179,8 @@ function terms(o: LegalOpts, ar: boolean): string {
 <p>Connecting WHOOP, Apple Health or AI apps is optional and your use of them is governed by their own terms. We don’t control those services or their availability.</p>
 <h2>6. Beta features and changes</h2>
 <p>Some features are in beta and may change or stop. The service is provided “as is”, without a guarantee that it will always be available or error-free.</p>
+<h2>6a. Free use and optional purchases</h2>
+<p>The app is free with a daily limit on AI analyses (photo or text). You can optionally buy packs of extra analyses in the iPhone app through Apple. A pack is used after the day’s free limit, doesn’t expire and can’t be moved to another account. If a paid analysis fails, its credit is returned automatically. Payment and refunds are handled by Apple under its terms; deleting your account deletes any remaining balance.</p>
 <h2>7. Limitation of liability</h2>
 <p>To the extent permitted by law, we are not liable for indirect or consequential loss arising from using the service or relying on its estimates.</p>
 <h2>8. Ending your account</h2>

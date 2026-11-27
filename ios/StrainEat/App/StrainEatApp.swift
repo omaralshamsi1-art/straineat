@@ -34,11 +34,13 @@ struct RootView: View {
     @State private var tabBeforeSnap = 0
     @State private var showAssistant = UserDefaults.standard.bool(forKey: "openAssistant")
     @State private var aiConsentModel = AIConsent.shared
+    @State private var extraModel = ExtraAnalyses.shared
     private var screenName: String { ["today", "progress", "snap", "plan"][min(max(tab, 0), 3)] }
 
     var body: some View {
         @Bindable var store = store
         @Bindable var aiConsent = aiConsentModel
+        @Bindable var extra = extraModel
         Group {
             if !store.signedIn {
                 AuthView()
@@ -54,6 +56,7 @@ struct RootView: View {
                         .tag(3).tabItem { Label(t("Plan", "الخطة"), systemImage: "target") }
                 }
                 .task {
+                    ExtraAnalyses.shared.start()
                     if !UserDefaults.standard.bool(forKey: "screenshotMode") {
                         try? await HealthKitManager.shared.requestAuthorization()
                         HealthKitManager.shared.enableBackgroundSync()
@@ -71,6 +74,7 @@ struct RootView: View {
                 .onReceive(NotificationCenter.default.publisher(for: .openPlan)) { _ in tab = 3 }
                 .onOpenURL { url in if url.host == "today" { tab = 0 } } // from the home-screen widget
                 .sheet(isPresented: $aiConsent.asking) { AIConsentSheet() }
+                .sheet(isPresented: $extra.offer) { ExtraAnalysesSheet().environment(\.layoutDirection, appLayoutDirection) }
                 .sheet(isPresented: $showAssistant) {
                     AssistantView(screen: screenName, onChanged: { Task { await store.refresh() } })
                         .environment(\.layoutDirection, appLayoutDirection)
