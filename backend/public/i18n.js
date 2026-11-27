@@ -9,6 +9,17 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "الأجهزة والربط": "Devices & connections",
+    "مصدر الحرق والأجهزة": "Burn source & devices",
+    "ChatGPT و Claude و Gemini": "ChatGPT, Claude & Gemini",
+    "الإشعارات": "Notifications",
+    "التطبيق": "App",
+    "WHOOP و Apple Health والإدخال اليدوي": "WHOOP, Apple Health and manual entry",
+    "سجّل وجباتك من مساعدك · {} مربوط": "Log meals from your assistant · {} connected",
+    "سجّل وجباتك من مساعدك": "Log meals from your assistant",
+    "أضف تذكير دواء أو فيتامين": "Add a medicine or vitamin reminder",
+    "موافقة التحليل · حذف الحساب": "AI consent · delete account",
+    "WHOOP: {}": "WHOOP: {}",
     "إظهار المخفية ({})": "Show hidden ({})",
     "عرض كل الوجبات": "View all meals",
     "عرض أقل": "Show less",

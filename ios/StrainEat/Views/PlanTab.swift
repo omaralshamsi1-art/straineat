@@ -12,7 +12,13 @@ struct PlanTab: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 12) {
-                    if let plan { PlanHero(plan: plan) }
+                    if let plan {
+                        PlanHero(plan: plan)
+                        NavigationLink { subPage(t("How we calculated it", "كيف حسبناها؟")) { PlanSummaryCard(plan: plan, onEdit: { editing = true }) } } label: {
+                            Text(t("How we calculated it ›", "كيف حسبناها؟ ‹")).font(.footnote.weight(.semibold)).foregroundStyle(Theme.muted).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 4)
+                        }
+                        .buttonStyle(.plain)
+                    }
                     if let profile {
                         NavigationLink { subPage(t("Meal schedule", "جدول الوجبات")) { MealRemindersCard(); ScheduleSettingsCard(profile: profile) } } label: {
                             PlanLink(icon: "fork.knife", title: t("Meal schedule & reminders", "جدول الوجبات والتذكيرات"), subtitle: schedSummary(profile))
@@ -56,19 +62,45 @@ struct PlanTab: View {
     }
 
     private var settingsPage: some View {
-        subPage(t("Settings", "الإعدادات")) {
-            AccountCard()
-            ExtraAnalysesRow()
-            PrivacyCard(aiConsentAt: profile?.aiConsentAt)
-            DevicesCard(profile: profile, onChange: { Task { await load() } })
-            if let profile { WaterSettingsCard(profile: profile) }
-            if let profile { MedRemindersCard(profile: profile) }
-            Card(title: t("Appearance", "المظهر"), icon: "circle.lefthalf.filled") { ThemePicker() }
-            Card(title: "Language · اللغة", icon: "globe") { LanguagePicker() }
-            if let plan { PlanSummaryCard(plan: plan, onEdit: { editing = true }) }
-            Text("StrainEat \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
-                .font(.caption2).foregroundStyle(Theme.muted)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 8) {
+                NavigationLink { subPage(t("Account", "حسابي")) { AccountCard() } } label: {
+                    PlanLink(icon: "person.crop.circle.fill", title: store.me?.name ?? t("Account", "حسابي"), subtitle: store.me?.email ?? "")
+                }
+                groupHeader(t("Devices & connections", "الأجهزة والربط"))
+                NavigationLink { subPage(t("Burn source & devices", "مصدر الحرق والأجهزة")) { DevicesCard(profile: profile, onChange: { Task { await load() } }) } } label: {
+                    PlanLink(icon: "applewatch", title: t("Burn source & devices", "مصدر الحرق والأجهزة"), subtitle: store.whoopConnected ? t("WHOOP connected · Apple Health", "WHOOP مربوط · Apple Health") : t("WHOOP, Apple Health", "WHOOP و Apple Health"))
+                }
+                groupHeader(t("Reminders", "التذكيرات"))
+                if let profile {
+                    NavigationLink { subPage(t("Water", "الماء")) { WaterSettingsCard(profile: profile) } } label: {
+                        PlanLink(icon: "drop.fill", title: t("Water", "الماء"), subtitle: t("Daily goal and reminders", "الهدف اليومي والتذكيرات"))
+                    }
+                    NavigationLink { subPage(t("Medicines & vitamins", "الأدوية والفيتامينات")) { MedRemindersCard(profile: profile) } } label: {
+                        PlanLink(icon: "pills.fill", title: t("Medicines & vitamins", "الأدوية والفيتامينات"), subtitle: t("Daily reminders", "تذكيرات يومية"))
+                    }
+                }
+                groupHeader(t("App", "التطبيق"))
+                Card(title: t("Appearance", "المظهر"), icon: "circle.lefthalf.filled") { ThemePicker() }
+                Card(title: "Language · اللغة", icon: "globe") { LanguagePicker() }
+                ExtraAnalysesRow()
+                groupHeader(t("Privacy", "الخصوصية"))
+                NavigationLink { subPage(t("Privacy & data", "الخصوصية والبيانات")) { PrivacyCard(aiConsentAt: profile?.aiConsentAt) } } label: {
+                    PlanLink(icon: "lock.fill", title: t("Privacy & data", "الخصوصية والبيانات"), subtitle: t("AI consent · delete account", "موافقة التحليل · حذف الحساب"))
+                }
+                Text("StrainEat \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
+                    .font(.caption2).foregroundStyle(Theme.muted).frame(maxWidth: .infinity).padding(.top, 8)
+            }
+            .buttonStyle(.plain)
+            .padding(16)
         }
+        .screenBackground()
+        .navigationTitle(t("Settings", "الإعدادات"))
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func groupHeader(_ s: String) -> some View {
+        Text(s).font(.caption.weight(.heavy)).foregroundStyle(Theme.muted).padding(.top, 10).padding(.horizontal, 6)
     }
 
     private func schedSummary(_ p: Profile) -> String {

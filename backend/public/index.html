@@ -922,6 +922,19 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
 #mealList .meal { padding: 8px 0; gap: 10px; }
 #mealList .meal .t small, #mealList .meal .k small { line-height: 1.3; }
 .card.meals { padding-top: 10px; padding-bottom: 6px; }
+/* ---- Settings: grouped list + sub-screens ---- */
+.stAcc { display: flex; align-items: center; gap: 12px; width: 100%; background: var(--card); border: 0; border-radius: 20px; padding: 14px; color: var(--ink); font: inherit; text-align: start; cursor: pointer; margin-bottom: 6px; }
+.stAcc .av { width: 50px; height: 50px; border-radius: 50%; background: var(--y-soft, #3a3522); color: var(--y, #f3ef9e); display: grid; place-items: center; font-weight: 800; font-size: 20px; flex: none; }
+.stAcc .t, .stRow .t { flex: 1; min-width: 0; } .stAcc b { display: block; font-size: 17px; } .stAcc small, .stRow small { display: block; color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stAcc .ch, .stRow .ch { color: var(--muted); font-size: 20px; } html[dir="ltr"] .stAcc .ch, html[dir="ltr"] .stRow .ch, html[dir="ltr"] .stBack { transform: scaleX(-1); }
+.stGh { color: var(--muted); font-size: 12px; font-weight: 800; margin: 16px 8px 6px; }
+.stGrp { background: var(--card); border-radius: 18px; overflow: hidden; }
+.stRow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: 0; border-top: 1px solid var(--line); background: none; color: var(--ink); font: inherit; text-align: start; }
+.stGrp > .stRow:first-child, .stGrp > .stRow.hidden + .stRow { border-top: 0; }
+button.stRow { cursor: pointer; }
+.stRow .ic { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-size: 16px; flex: none; }
+.stRow b { display: block; font-size: 15px; font-weight: 700; }
+.stRow .langsw { margin: 0; flex: none; } .stRow .langsw button { padding: 6px 10px; font-size: 12.5px; min-height: 0; }
 </style>
 </head>
 <body>
@@ -1339,6 +1352,37 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
 
   <section id="v-settings" class="hidden fade">
     <div class="greet"><em class="acc">الإعدادات</em></div>
+    <button class="stAcc" data-go="sacc"><span class="av" id="stAv">·</span><span class="t"><b id="stName">—</b><small id="stEmail" dir="ltr"></small></span><span class="ch">‹</span></button>
+    <div class="stGh">الأجهزة والربط</div>
+    <div class="stGrp">
+      <button class="stRow " data-go="sdev"><span class="ic" style="background:#1d3346">⌚</span><span class="t"><b>مصدر الحرق والأجهزة</b><small id="stSumDev"></small></span><span class="ch">‹</span></button>
+      <button class="stRow " data-go="sai"><span class="ic" style="background:#2c2546">✨</span><span class="t"><b>ChatGPT و Claude و Gemini</b><small id="stSumAi"></small></span><span class="ch">‹</span></button>
+    </div>
+    <div class="stGh">التذكيرات</div>
+    <div class="stGrp">
+      <button class="stRow " data-go="snotif"><span class="ic" style="background:#3a2e1d">🔔</span><span class="t"><b>الإشعارات</b><small id="stSumPush"></small></span><span class="ch">‹</span></button>
+      <button class="stRow " data-go="smed"><span class="ic" style="background:#1f3a2a">💊</span><span class="t"><b>الأدوية والفيتامينات</b><small id="stSumMed"></small></span><span class="ch">‹</span></button>
+    </div>
+    <div class="stGh">التطبيق</div>
+    <div class="stGrp">
+      <div class="stRow "><span class="ic" style="background:var(--card-2)">🌓</span><span class="t"><b>المظهر</b></span><div class="langsw" role="group" aria-label="المظهر" id="themeSw"><button type="button" data-theme-opt="system">تلقائي</button><button type="button" data-theme-opt="light">فاتح</button><button type="button" data-theme-opt="dark">داكن</button></div></div>
+      <div class="stRow "><span class="ic" style="background:var(--card-2)">🌐</span><span class="t"><b>اللغة</b></span><div class="langsw" role="group" aria-label="Language"><button type="button" data-lang="en">English</button><button type="button" data-lang="ar">العربية</button></div></div>
+    </div>
+    <div class="stGh">الخصوصية</div>
+    <div class="stGrp">
+      <button class="stRow " data-go="spriv"><span class="ic" style="background:var(--card-2)">🔒</span><span class="t"><b>الخصوصية والبيانات</b><small id="stSumPriv"></small></span><span class="ch">‹</span></button>
+      <button class="stRow hidden" id="stUsageRow" data-go="susage"><span class="ic" style="background:var(--card-2)">📊</span><span class="t"><b>استخدام الذكاء الاصطناعي</b><small id="stSumUsage"></small></span><span class="ch">‹</span></button>
+      <div class="stRow hidden" id="stInvRow"><span class="ic" style="background:var(--card-2)">👥</span><span class="t"><b>دعوة مستخدمين</b></span><span class="ch">‹</span></div>
+    </div>
+    <div class="card">
+      <button class="rvDel" id="logout" style="margin-top:0">تسجيل الخروج</button>
+      <p class="small muted" style="text-align:center;margin:6px 0 0">للتثبيت: زر المشاركة ← "إضافة إلى الشاشة الرئيسية" · <a href="privacy.html">الخصوصية</a></p>
+      <p class="small muted" style="text-align:center;margin:6px 0 0">StrainEat أداة متابعة وليس بديلاً عن استشارة طبية.</p>
+    </div>
+  </section>
+
+  <section id="v-sacc" class="hidden fade">
+    <div class="rvTop"><button class="snapX stBack" aria-label="رجوع">›</button><b>حسابي</b><span></span></div>
     <div class="card">
       <h3>حسابي</h3>
       <div class="kv"><div><span class="muted">الاسم</span><b id="acName">—</b></div><div><span class="muted">البريد</span><b id="acEmail" style="direction:ltr">—</b></div><div><span class="muted">الصلاحية</span><b id="acRole">—</b></div></div>
@@ -1348,80 +1392,11 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
         <div style="height:10px"></div><button class="btn ghost" id="clBtn">ربط البريد بحسابي</button>
       </div>
     </div>
+    <button class="card hidden navcard" id="invCard"><b>دعوة مستخدمين</b><span class="muted">›</span></button>
+  </section>
 
-    <div class="card" id="aiCard">
-      <h3>سجّل من ChatGPT أو Claude أو Gemini <span class="chip2 lo" style="font-size:11px">تجريبي</span></h3>
-      <p class="small muted" style="margin-top:-4px">اربط StrainEat مرة وحدة، وبعدها صوّر وجبتك أو اكتبها في المحادثة هناك، وتنحفظ في حسابك هنا. التحليل يمشي على اشتراكك في تلك الخدمة.</p>
-      <label class="small muted">رابط الخادم</label>
-      <div style="display:flex;gap:8px;margin-top:4px"><input id="aiServer" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiServer" style="width:auto;padding:0 16px">نسخ</button></div>
-      <p class="small muted" style="margin:8px 0 0">أضفه كـ connector مخصص، وبيفتح لك StrainEat عشان توافق. ما فيه مفاتيح تنسخها.</p>
-      <details class="small" style="margin-top:10px;line-height:1.7"><summary><b>Claude</b></summary>افتح claude.ai في المتصفح (سفاري أو كروم، حتى من الجوال — مب من داخل تطبيق Claude): الإعدادات ← Connectors ← Add custom connector ← الصق الرابط ← اختر Sign in ← Add، وبعدين Connect ووافق في StrainEat.</details>
-      <details class="small" style="margin-top:6px;line-height:1.7"><summary><b>ChatGPT</b></summary>افتح chatgpt.com في المتصفح (سفاري أو كروم، حتى من الجوال): الإعدادات ← Apps ← Advanced settings ← فعّل Developer mode، ثم Create app، الصق الرابط واختر OAuth، وبعدين وافق في StrainEat.</details>
-      <details class="small" style="margin-top:6px;line-height:1.7"><summary><b>Gemini</b></summary>افتح gemini.google.com/devmode في المتصفح (Settings ← Gemini Apps Developer Mode): ‏+ Create new، الصق الرابط في MCP Server URL، اضغط Connect ووافق في StrainEat.</details>
-      <div id="aiApps" style="margin-top:12px"></div>
-      <p class="small muted" style="margin-top:10px">جرّب: «سجّل غدائي» مع صورة الوجبة، أو «كم باقي لي اليوم؟». الخيارات تختلف حسب خطتك في كل خدمة. الأرقام تقدير من الذكاء الاصطناعي، وإذا سجّلت نفس الوجبة قبل نستخدم قيمك المحفوظة.</p>
-      <details class="small" style="margin-top:8px;line-height:1.7"><summary class="muted">متقدم: ربط بمفتاح (للتطبيقات اللي ما تدعم تسجيل الدخول)</summary>
-        <button class="btn ghost" id="aiShow" style="margin-top:8px">أظهر المفتاح</button>
-        <div id="aiBox" class="hidden">
-          <label class="small muted" style="margin-top:8px">قيمة Authorization (سرية مثل كلمة السر)</label>
-          <div style="display:flex;gap:8px;margin-top:4px"><input id="aiHeader" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiHeader" style="width:auto;padding:0 16px">نسخ</button></div>
-          <label class="small muted" style="margin-top:8px">رابط الربط الخاص فيك (سري مثل كلمة السر)</label>
-          <div style="display:flex;gap:8px;margin-top:4px"><input id="aiUrl" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiUrl" style="width:auto;padding:0 16px">نسخ</button></div>
-          <button class="btn text" id="aiRotate" style="margin-top:4px">مفتاح جديد (يلغي القديم في كل الخدمات)</button>
-        </div>
-      </details>
-    </div>
-
-    <div class="card hidden" id="usageCard">
-      <h3>استخدام الذكاء الاصطناعي <span class="small">للمالك فقط</span></h3>
-      <div class="langsw" role="group" aria-label="الفترة" id="usageDays" style="justify-content:flex-start;margin:0 0 10px"><button type="button" data-d="1">اليوم</button><button type="button" data-d="7">7 أيام</button><button type="button" data-d="30">30 يوم</button></div>
-      <div id="usageBody"></div>
-    </div>
-
-    <div class="card" id="privCard">
-      <h3>الخصوصية والبيانات</h3>
-      <div class="row" style="align-items:center;padding:4px 0"><span>التحليل بالذكاء الاصطناعي<br><span class="small muted" id="aiConsentState">—</span></span><button class="btn ghost" id="aiConsentBtn" style="width:auto;padding:0 14px;min-height:40px;font-size:14px">—</button></div>
-      <p class="small muted" style="line-height:1.6;margin:8px 0">StrainEat أداة تتبّع وليس بديلاً عن الطبيب. الأرقام تقديرية؛ استشر طبيبك قبل أي تغيير كبير في أكلك أو نشاطك.</p>
-      <p class="small"><a href="/privacy" target="_blank">سياسة الخصوصية</a> · <a href="/terms" target="_blank">شروط الاستخدام</a> · <a href="/support" target="_blank">الدعم</a></p>
-      <button class="btn text" id="delAcc" style="color:var(--bad,#e5484d);margin-top:4px">حذف الحساب</button>
-      <div id="delBox" class="hidden">
-        <p class="small" style="line-height:1.7">يمسح حسابك وكل وجباتك وأوزانك وماءك وخطتك وإعداداتك نهائياً، ويلغي ربط WHOOP وتطبيقات الذكاء الاصطناعي. ما ينقدر التراجع عنه.</p>
-        <label class="small muted">اكتب DELETE للتأكيد</label>
-        <input id="delConfirm" dir="ltr" autocomplete="off" autocapitalize="characters" placeholder="DELETE" style="margin-top:4px">
-        <button class="btn" id="delGo" style="margin-top:8px;background:var(--bad,#e5484d);color:#fff">حذف حسابي نهائياً</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>التذكيرات <span class="small" id="pushState">—</span></h3>
-      <p class="small muted" style="margin-top:-4px">نذكّرك في أوقات وجباتك المعتادة إذا لم تسجّل، وبقياس الوزن صباحاً. على الآيفون: أضف التطبيق للشاشة الرئيسية أولاً.</p>
-      <label class="check"><input type="checkbox" id="rmMeals" checked> تذكير الوجبات</label>
-      <label class="check"><input type="checkbox" id="rmWeight" checked> تذكير الوزن الصباحي</label>
-      <label class="check"><input type="checkbox" id="rmWater" checked> تذكير شرب الماء (إذا تأخرت عن هدفك)</label>
-      <label class="check"><input type="checkbox" id="hotEnv"> أشتغل أو أتمرن في الحر أغلب الأيام (+750 مل لهدف الماء)</label>
-      <button class="btn ghost" id="pushBtn">تفعيل التنبيهات على هذا الجهاز</button>
-      <button class="btn ghost hidden" id="pushTest">إرسال تنبيه تجريبي</button>
-    </div>
-
-    <div class="card" id="medCard">
-      <h3>الأدوية والفيتامينات <span class="small" id="medCount"></span></h3>
-      <p class="small muted" style="margin-top:-4px">نرسل لك تنبيهاً في كل وقت تحدده. هذه تذكيرات فقط — اتبع جرعات طبيبك أو الصيدلي.</p>
-      <p class="small" id="medPush" style="margin:0 0 8px"></p>
-      <div id="medList"></div>
-      <details id="medAdd" style="margin-top:10px">
-        <summary class="btn ghost" style="list-style:none">+ إضافة تذكير</summary>
-        <label for="medName">الاسم</label><input id="medName" maxlength="60" placeholder="مثال: فيتامين د">
-        <div class="grid2">
-          <div><label for="medDose">الجرعة (اختياري)</label><input id="medDose" maxlength="40" placeholder="مثال: حبة واحدة"></div>
-          <div><label for="medKind">النوع</label><select id="medKind"><option value="medicine">دواء</option><option value="vitamin">فيتامين</option><option value="supplement">مكمل غذائي</option><option value="other">أخرى</option></select></div>
-        </div>
-        <label>الأوقات</label>
-        <div id="medTimes" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-        <button type="button" class="chip src" id="medAddTime" style="cursor:pointer;margin-top:8px">+ وقت آخر</button>
-        <button class="btn" id="medSave" style="margin-top:12px">حفظ التذكير</button>
-      </details>
-    </div>
-
+  <section id="v-sdev" class="hidden fade">
+    <div class="rvTop"><button class="snapX stBack" aria-label="رجوع">›</button><b>مصدر الحرق والأجهزة</b><span></span></div>
     <div class="card" id="srcCard">
       <h3>مصدر الحرق</h3>
       <label for="pSrc" style="margin-top:0">المصدر المفضل</label>
@@ -1467,7 +1442,6 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
         <div style="padding:12px 14px"><button class="btn ghost" id="srcManualGo">إدخال الحرق اليوم</button></div>
       </div>
     </div>
-
     <div class="card" id="manualCard">
       <h3>الحرق اليوم (إدخال يدوي)</h3>
       <p class="small muted" style="margin-top:-4px">لمن لا يستخدم WHOOP: انقلي الأرقام من تطبيق "صحتي".</p>
@@ -1478,26 +1452,96 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
       <div style="height:12px"></div>
       <button class="btn ghost" id="eSave">حفظ الحرق</button>
     </div>
+  </section>
 
-    <div class="card">
-      <h3>المظهر</h3>
-      <div class="langsw" role="group" aria-label="المظهر" id="themeSw"><button type="button" data-theme-opt="system">تلقائي</button><button type="button" data-theme-opt="light">فاتح</button><button type="button" data-theme-opt="dark">داكن</button></div>
-      <p class="small muted" style="margin:8px 0 0">تلقائي = يتبع إعداد جهازك.</p>
-    </div>
-
-    <div class="card">
-      <h3>Language · اللغة</h3>
-      <div class="langsw" role="group" aria-label="Language"><button type="button" data-lang="en">English</button><button type="button" data-lang="ar">العربية</button></div>
-    </div>
-
-    <button class="card hidden navcard" id="invCard"><b>دعوة مستخدمين</b><span class="muted">›</span></button>
-
-    <div class="card">
-      <button class="btn text" id="logout">تسجيل الخروج</button>
-      <p class="small muted" style="text-align:center;margin:6px 0 0">للتثبيت: زر المشاركة ← "إضافة إلى الشاشة الرئيسية" · <a href="privacy.html">الخصوصية</a></p>
-      <p class="small muted" style="text-align:center;margin:6px 0 0">StrainEat أداة متابعة وليس بديلاً عن استشارة طبية.</p>
+  <section id="v-sai" class="hidden fade">
+    <div class="rvTop"><button class="snapX stBack" aria-label="رجوع">›</button><b>ChatGPT و Claude و Gemini</b><span></span></div>
+    <div class="card" id="aiCard">
+      <h3>سجّل من ChatGPT أو Claude أو Gemini <span class="chip2 lo" style="font-size:11px">تجريبي</span></h3>
+      <p class="small muted" style="margin-top:-4px">اربط StrainEat مرة وحدة، وبعدها صوّر وجبتك أو اكتبها في المحادثة هناك، وتنحفظ في حسابك هنا. التحليل يمشي على اشتراكك في تلك الخدمة.</p>
+      <label class="small muted">رابط الخادم</label>
+      <div style="display:flex;gap:8px;margin-top:4px"><input id="aiServer" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiServer" style="width:auto;padding:0 16px">نسخ</button></div>
+      <p class="small muted" style="margin:8px 0 0">أضفه كـ connector مخصص، وبيفتح لك StrainEat عشان توافق. ما فيه مفاتيح تنسخها.</p>
+      <details class="small" style="margin-top:10px;line-height:1.7"><summary><b>Claude</b></summary>افتح claude.ai في المتصفح (سفاري أو كروم، حتى من الجوال — مب من داخل تطبيق Claude): الإعدادات ← Connectors ← Add custom connector ← الصق الرابط ← اختر Sign in ← Add، وبعدين Connect ووافق في StrainEat.</details>
+      <details class="small" style="margin-top:6px;line-height:1.7"><summary><b>ChatGPT</b></summary>افتح chatgpt.com في المتصفح (سفاري أو كروم، حتى من الجوال): الإعدادات ← Apps ← Advanced settings ← فعّل Developer mode، ثم Create app، الصق الرابط واختر OAuth، وبعدين وافق في StrainEat.</details>
+      <details class="small" style="margin-top:6px;line-height:1.7"><summary><b>Gemini</b></summary>افتح gemini.google.com/devmode في المتصفح (Settings ← Gemini Apps Developer Mode): ‏+ Create new، الصق الرابط في MCP Server URL، اضغط Connect ووافق في StrainEat.</details>
+      <div id="aiApps" style="margin-top:12px"></div>
+      <p class="small muted" style="margin-top:10px">جرّب: «سجّل غدائي» مع صورة الوجبة، أو «كم باقي لي اليوم؟». الخيارات تختلف حسب خطتك في كل خدمة. الأرقام تقدير من الذكاء الاصطناعي، وإذا سجّلت نفس الوجبة قبل نستخدم قيمك المحفوظة.</p>
+      <details class="small" style="margin-top:8px;line-height:1.7"><summary class="muted">متقدم: ربط بمفتاح (للتطبيقات اللي ما تدعم تسجيل الدخول)</summary>
+        <button class="btn ghost" id="aiShow" style="margin-top:8px">أظهر المفتاح</button>
+        <div id="aiBox" class="hidden">
+          <label class="small muted" style="margin-top:8px">قيمة Authorization (سرية مثل كلمة السر)</label>
+          <div style="display:flex;gap:8px;margin-top:4px"><input id="aiHeader" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiHeader" style="width:auto;padding:0 16px">نسخ</button></div>
+          <label class="small muted" style="margin-top:8px">رابط الربط الخاص فيك (سري مثل كلمة السر)</label>
+          <div style="display:flex;gap:8px;margin-top:4px"><input id="aiUrl" readonly dir="ltr" style="flex:1;font-size:13px"><button class="btn" data-copy="aiUrl" style="width:auto;padding:0 16px">نسخ</button></div>
+          <button class="btn text" id="aiRotate" style="margin-top:4px">مفتاح جديد (يلغي القديم في كل الخدمات)</button>
+        </div>
+      </details>
     </div>
   </section>
+
+  <section id="v-snotif" class="hidden fade">
+    <div class="rvTop"><button class="snapX stBack" aria-label="رجوع">›</button><b>الإشعارات</b><span></span></div>
+    <div class="card">
+      <h3>التذكيرات <span class="small" id="pushState">—</span></h3>
+      <p class="small muted" style="margin-top:-4px">نذكّرك في أوقات وجباتك المعتادة إذا لم تسجّل، وبقياس الوزن صباحاً. على الآيفون: أضف التطبيق للشاشة الرئيسية أولاً.</p>
+      <label class="check"><input type="checkbox" id="rmMeals" checked> تذكير الوجبات</label>
+      <label class="check"><input type="checkbox" id="rmWeight" checked> تذكير الوزن الصباحي</label>
+      <label class="check"><input type="checkbox" id="rmWater" checked> تذكير شرب الماء (إذا تأخرت عن هدفك)</label>
+      <label class="check"><input type="checkbox" id="hotEnv"> أشتغل أو أتمرن في الحر أغلب الأيام (+750 مل لهدف الماء)</label>
+      <button class="btn ghost" id="pushBtn">تفعيل التنبيهات على هذا الجهاز</button>
+      <button class="btn ghost hidden" id="pushTest">إرسال تنبيه تجريبي</button>
+    </div>
+  </section>
+
+  <section id="v-smed" class="hidden fade">
+    <div class="rvTop"><button class="snapX stBack" aria-label="رجوع">›</button><b>الأدوية والفيتامينات</b><span></span></div>
+    <div class="card" id="medCard">
+      <h3>الأدوية والفيتامينات <span class="small" id="medCount"></span></h3>
+      <p class="small muted" style="margin-top:-4px">نرسل لك تنبيهاً في كل وقت تحدده. هذه تذكيرات فقط — اتبع جرعات طبيبك أو الصيدلي.</p>
+      <p class="small" id="medPush" style="margin:0 0 8px"></p>
+      <div id="medList"></div>
+      <details id="medAdd" style="margin-top:10px">
+        <summary class="btn ghost" style="list-style:none">+ إضافة تذكير</summary>
+        <label for="medName">الاسم</label><input id="medName" maxlength="60" placeholder="مثال: فيتامين د">
+        <div class="grid2">
+          <div><label for="medDose">الجرعة (اختياري)</label><input id="medDose" maxlength="40" placeholder="مثال: حبة واحدة"></div>
+          <div><label for="medKind">النوع</label><select id="medKind"><option value="medicine">دواء</option><option value="vitamin">فيتامين</option><option value="supplement">مكمل غذائي</option><option value="other">أخرى</option></select></div>
+        </div>
+        <label>الأوقات</label>
+        <div id="medTimes" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <button type="button" class="chip src" id="medAddTime" style="cursor:pointer;margin-top:8px">+ وقت آخر</button>
+        <button class="btn" id="medSave" style="margin-top:12px">حفظ التذكير</button>
+      </details>
+    </div>
+  </section>
+
+  <section id="v-spriv" class="hidden fade">
+    <div class="rvTop"><button class="snapX stBack" aria-label="رجوع">›</button><b>الخصوصية والبيانات</b><span></span></div>
+    <div class="card" id="privCard">
+      <h3>الخصوصية والبيانات</h3>
+      <div class="row" style="align-items:center;padding:4px 0"><span>التحليل بالذكاء الاصطناعي<br><span class="small muted" id="aiConsentState">—</span></span><button class="btn ghost" id="aiConsentBtn" style="width:auto;padding:0 14px;min-height:40px;font-size:14px">—</button></div>
+      <p class="small muted" style="line-height:1.6;margin:8px 0">StrainEat أداة تتبّع وليس بديلاً عن الطبيب. الأرقام تقديرية؛ استشر طبيبك قبل أي تغيير كبير في أكلك أو نشاطك.</p>
+      <p class="small"><a href="/privacy" target="_blank">سياسة الخصوصية</a> · <a href="/terms" target="_blank">شروط الاستخدام</a> · <a href="/support" target="_blank">الدعم</a></p>
+      <button class="btn text" id="delAcc" style="color:var(--bad,#e5484d);margin-top:4px">حذف الحساب</button>
+      <div id="delBox" class="hidden">
+        <p class="small" style="line-height:1.7">يمسح حسابك وكل وجباتك وأوزانك وماءك وخطتك وإعداداتك نهائياً، ويلغي ربط WHOOP وتطبيقات الذكاء الاصطناعي. ما ينقدر التراجع عنه.</p>
+        <label class="small muted">اكتب DELETE للتأكيد</label>
+        <input id="delConfirm" dir="ltr" autocomplete="off" autocapitalize="characters" placeholder="DELETE" style="margin-top:4px">
+        <button class="btn" id="delGo" style="margin-top:8px;background:var(--bad,#e5484d);color:#fff">حذف حسابي نهائياً</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-susage" class="hidden fade">
+    <div class="rvTop"><button class="snapX stBack" aria-label="رجوع">›</button><b>استخدام الذكاء الاصطناعي</b><span></span></div>
+    <div class="card" id="usageCard">
+      <h3>استخدام الذكاء الاصطناعي <span class="small">للمالك فقط</span></h3>
+      <div class="langsw" role="group" aria-label="الفترة" id="usageDays" style="justify-content:flex-start;margin:0 0 10px"><button type="button" data-d="1">اليوم</button><button type="button" data-d="7">7 أيام</button><button type="button" data-d="30">30 يوم</button></div>
+      <div id="usageBody"></div>
+    </div>
+  </section>
+
 </div>
 
 <nav id="nav" class="hidden" aria-label="التنقل">
@@ -1582,7 +1626,8 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
   }
 
   // ---------------- navigation ----------------
-  const VIEWS = ['setup', 'onb', 'today', 'progress', 'snap', 'review', 'plan', 'settings', 'psched', 'pram', 'ploc'];
+  const VIEWS = ['setup', 'onb', 'today', 'progress', 'snap', 'review', 'plan', 'settings', 'psched', 'pram', 'ploc', 'sacc', 'sdev', 'sai', 'snotif', 'smed', 'spriv', 'susage'];
+  const SET_SUBS = ['sacc', 'sdev', 'sai', 'snotif', 'smed', 'spriv', 'susage'];
   let reviewPrev = 'today';
   function show(v) {
     let scrollTo = 0;
@@ -1596,20 +1641,22 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
     $('askFab').classList.toggle('hidden', v === 'setup' || v === 'onb' || v === 'snap' || v === 'review');
     curView = v;
     $('dayNav').style.visibility = v === 'today' ? 'visible' : 'hidden';
-    const navV = v === 'psched' || v === 'pram' || v === 'ploc' ? 'plan' : v;
+    const navV = v === 'psched' || v === 'pram' || v === 'ploc' ? 'plan' : SET_SUBS.includes(v) ? 'settings' : v;
     document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === navV));
     window.scrollTo(0, 0);
     if (v === 'today') loadToday();
     if (v === 'progress') { loadProgress(); loadChallenge(); }
     if (v === 'psched') loadScheduleSettings();
     if (v === 'ploc') loadLocation();
-    if (v === 'plan' || v === 'settings' || v === 'pram') loadPlan();
-    if (v === 'settings') { loadAiApps(); loadPrivacy(); loadUsage(); }
+    const setV = v === 'settings' || SET_SUBS.includes(v);
+    if (v === 'plan' || setV || v === 'pram') loadPlan();
+    if (setV) { loadAiApps(); loadPrivacy(); loadUsage(); setTimeout(paintSettingsSummary, 900); }
     if (v === 'snap') { resetCapture(); snapMode('photo'); openCam(); } // one tap → camera
   }
   document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
   document.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => show(b.dataset.go)));
   document.querySelectorAll('.plBack').forEach((b) => (b.onclick = () => show('plan')));
+  document.querySelectorAll('.stBack').forEach((b) => (b.onclick = () => show('settings')));
 
   // ---------------- swipe back on second-level screens ----------------
   // Swipe right (and, in Arabic, also left — the mirrored iOS gesture) closes the top layer.
@@ -1620,6 +1667,7 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
     if (vis('ask')) { closeAsk(); return true; }
     if (vis('cam')) return false; // the camera has its own ✕
     if (['psched', 'pram', 'ploc'].includes(curView)) { show('plan'); return true; }
+    if (SET_SUBS.includes(curView)) { show('settings'); return true; }
     if (curView === 'review') { show(reviewPrev || 'today'); return true; }
     if (curView === 'snap') { closeSnap(); return true; }
     return false;
@@ -1638,6 +1686,22 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
       if (dx > 0 || LANG === 'ar') goBack();
     }, { passive: true });
   })();
+
+  // ---------------- settings: one-line summaries on the main list ----------------
+  function paintSettingsSummary() {
+    const txt = (id) => { const e = document.getElementById(id); return e ? e.textContent.trim() : ''; };
+    const name = txt('acName'), email = txt('acEmail');
+    $('stName').textContent = name && name !== '—' ? name : T('حسابي'); $('stEmail').textContent = email && email !== '—' ? email : '';
+    $('stAv').textContent = (name && name !== '—' ? name : '?').trim().charAt(0).toUpperCase();
+    const w = txt('wStatus');
+    $('stSumDev').textContent = w && w !== '—' ? L`WHOOP: ${w}` : T('WHOOP و Apple Health والإدخال اليدوي');
+    const apps = document.querySelectorAll('#aiApps [data-revoke]').length;
+    $('stSumAi').textContent = apps ? L`سجّل وجباتك من مساعدك · ${apps} مربوط` : T('سجّل وجباتك من مساعدك');
+    $('stSumPush').textContent = txt('pushState') || '—';
+    $('stSumMed').textContent = txt('medCount') || T('أضف تذكير دواء أو فيتامين');
+    $('stSumPriv').textContent = T('موافقة التحليل · حذف الحساب');
+  }
+  $('stInvRow').onclick = () => $('invCard').click();
 
   // ---------------- setup ----------------
   function authTab(t) {
@@ -2934,7 +2998,7 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
       $('acRole').textContent = me.role === 'owner' ? T('المالك') : T('مستخدم');
       if (me.name) ls.set('ns_name', me.name === 'meera' ? T('ميرا') : me.name);
       $('acClaim').classList.toggle('hidden', !(me.role === 'owner' && !me.account && key()));
-      $('invCard').classList.toggle('hidden', me.role !== 'owner');
+      $('invCard').classList.toggle('hidden', me.role !== 'owner'); $('stInvRow').classList.toggle('hidden', me.role !== 'owner');
       // invite list opens from the card (Settings › Invite users)
     } catch (e) { console.warn(e); }
   }
@@ -3072,8 +3136,9 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
   let usageN = 7;
   async function loadUsage() {
     let r;
-    try { r = await api(`admin/usage?days=${usageN}`); } catch { $('usageCard').classList.add('hidden'); return; }
-    $('usageCard').classList.remove('hidden');
+    try { r = await api(`admin/usage?days=${usageN}`); } catch { $('usageCard').classList.add('hidden'); $('stUsageRow').classList.add('hidden'); return; }
+    $('usageCard').classList.remove('hidden'); $('stUsageRow').classList.remove('hidden');
+    $('stSumUsage').textContent = `${T('للمالك فقط')} · ${usageN === 1 ? T('اليوم') : L`${usageN} أيام`}: $${r.total.cost.toFixed(2)}`;
     document.querySelectorAll('#usageDays button').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.d) === usageN)));
     const t = r.total, usd = (x) => `$${x < 0.01 && x > 0 ? x.toFixed(4) : x.toFixed(2)}`;
     const acts = (c) => c.photo + c.text + c.chat + c.coach + c.other;
