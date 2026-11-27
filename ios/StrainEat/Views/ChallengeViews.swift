@@ -113,7 +113,7 @@ struct BoardRowView: View {
 }
 
 /// Progress-tab card: weekly total for your first group, or a call to action.
-struct ChallengeCard: View {
+struct GroupChallengeCard: View {
     @State private var groups: [GroupSummary]?
     @State private var board: Board?
     @State private var selected: String? = UserDefaults.standard.string(forKey: "challengeGroup")

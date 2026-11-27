@@ -16,7 +16,7 @@ struct ProgressTab: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
-                    ChallengeCard()
+                    GroupChallengeCard()
                     weightCard
                     if let history { WeekBarsCard(history: history) }
                     WeeklyReportCard()
