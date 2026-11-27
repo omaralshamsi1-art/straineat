@@ -789,6 +789,7 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
 .chChamp { margin: 8px 0 6px; padding: 11px 13px; border-radius: 14px; background: color-mix(in srgb, var(--brand-2) 14%, transparent); font-size: 14px; }
 .chRow { display: flex; align-items: center; gap: 12px; padding: 10px 2px; }
 .chPin { position: sticky; bottom: 0; background: color-mix(in srgb, var(--ink) 8%, var(--bg)); border-top: 1px solid var(--line); margin: 8px -16px -16px; padding: 10px 18px 14px; }
+.chDot { width: 34px; height: 34px; border-radius: 50%; display: inline-grid; place-items: center; flex: none; font-weight: 800; font-size: 14px; color: #111; }
 .chFeed { font-size: 14.5px; line-height: 1.6; padding: 9px 0; border-top: 1px solid var(--line); }
 .chFeed:first-of-type { border-top: 0; }
 </style>
@@ -2497,7 +2498,7 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
   }
   async function groupSettings(gid) {
     let g; try { g = await api(`groups/${gid}`); } catch { return; }
-    const members = g.members.map((m) => `<div class="row" style="padding:8px 0;border-top:1px solid var(--line);align-items:center"><span>${chRing(100, m.color, m.name).replace('class="chAv"', 'class="chAv" style="width:34px;height:34px;transform:scale(.65);margin:-9px"')} <b>${esc(m.me ? T('أنت') : m.name)}</b>${m.owner ? ` <span class="chip2">${T('المنشئ')}</span>` : ''}</span>${g.owner && !m.me ? `<button class="btn text" data-rm="${esc(m.id)}" style="width:auto">${T('إزالة')}</button>` : ''}</div>`).join('');
+    const members = g.members.map((m) => `<div class="row" style="padding:8px 0;border-top:1px solid var(--line);align-items:center"><span style="display:flex;align-items:center;gap:10px"><span class="chDot" style="background:${esc(m.color)}">${esc([...m.name][0] || '?')}</span><b>${esc(m.me ? T('أنت') : m.name)}</b>${m.owner ? `<span class="chip2">${T('المنشئ')}</span>` : ''}</span>${g.owner && !m.me ? `<button class="btn text" data-rm="${esc(m.id)}" style="width:auto">${T('إزالة')}</button>` : ''}</div>`).join('');
     $('chSet').innerHTML = `<h3>${T('المجموعة')}</h3>
       <label class="small muted">${T('اسمك في المجموعة')}</label>
       <div style="display:flex;gap:8px;margin-top:4px"><input id="chMyName" maxlength="24" value="${esc(g.me.name)}" style="flex:1"><button class="btn" id="chSaveName" style="width:auto;padding:0 16px">${T('حفظ')}</button></div>

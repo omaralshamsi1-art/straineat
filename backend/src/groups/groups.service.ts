@@ -197,10 +197,12 @@ export class GroupsService {
   }
 
   // ---------- scoring ----------
-  private async memberDays(userId: string, period: Period): Promise<{ days: DayStat[]; progressPct: number | null }> {
+  /** `since` = when the member joined the group: days before that don't count against them. */
+  private async memberDays(userId: string, period: Period, since?: string): Promise<{ days: DayStat[]; progressPct: number | null }> {
     const profile = await this.profiles.get(userId);
     const today = localDate(new Date(), profile.timezone);
-    const from = period === 'day' ? today : period === 'week' ? weekStart(today) : `${today.slice(0, 8)}01`;
+    let from = period === 'day' ? today : period === 'week' ? weekStart(today) : `${today.slice(0, 8)}01`;
+    if (since) { const joined = localDate(new Date(since), profile.timezone); if (joined > from) from = joined > today ? today : joined; }
     const n = Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86400000) + 1;
     const [hist, plan] = await Promise.all([this.plans.history(userId, n), this.plans.plan(userId)]);
     // the user's own recent average strain (28 days before the period) for the effort tab
@@ -228,7 +230,7 @@ export class GroupsService {
     if (!data || Date.now() - data.at > BOARD_TTL_MS) {
       const rows = [];
       for (const m of g.members) {
-        const { days } = await this.memberDays(m.userId, period).catch(() => ({ days: [] as DayStat[] }));
+        const { days } = await this.memberDays(m.userId, period, m.joinedAt).catch(() => ({ days: [] as DayStat[] }));
         const sc = scoreMember(tab, period, days);
         if (sc) rows.push({ uid: m.userId, id: memberId(g, m), name: m.name, color: m.color, pct: sc.pct, detail: sc.detail });
       }
