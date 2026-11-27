@@ -1,6 +1,7 @@
 import { McpService } from './mcp/mcp.service';
 import { OAuthService } from './mcp/oauth.service';
 import { AccountService } from './account/account.service';
+import { GroupsService } from './groups/groups.service';
 import { WeekService } from './week/week.service';
 import { StepsService } from './steps/steps.service';
 import { WaterService } from './water/water.service';
@@ -25,7 +26,7 @@ import {
   ProfileController,
   WhoopController,
   AssistantController,
-  ScheduleController, WaterController, StepsController, WeekController, McpController, OAuthController, AccountController, LegalController,
+  ScheduleController, WaterController, StepsController, WeekController, McpController, OAuthController, AccountController, LegalController, GroupsController,
 } from './controllers';
 import { ScheduleService } from './schedule/schedule.service';
 import { ShortcutService } from './energy/shortcut.service';
@@ -46,7 +47,7 @@ import { REPOSITORY } from './storage/repository';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true })],
-  controllers: [HealthController, AuthController, FoodsController, MotivationController, PushController, MealsController, PlanController, WorkoutsController, CoachController, EnergyController, ProfileController, WhoopController, AssistantController, ScheduleController, WaterController, StepsController, WeekController, McpController, OAuthController, AccountController, LegalController],
+  controllers: [HealthController, AuthController, FoodsController, MotivationController, PushController, MealsController, PlanController, WorkoutsController, CoachController, EnergyController, ProfileController, WhoopController, AssistantController, ScheduleController, WaterController, StepsController, WeekController, McpController, OAuthController, AccountController, LegalController, GroupsController],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_FILTER, useClass: LocalizedErrorFilter },
@@ -81,6 +82,7 @@ import { REPOSITORY } from './storage/repository';
     McpService,
     OAuthService,
     AccountService,
+    GroupsService,
   ],
 })
 export class AppModule {}

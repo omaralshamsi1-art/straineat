@@ -763,6 +763,34 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
 #wCard .wGoal { margin-top: 16px; }
 #wCard .wGoal .row b { font-size: 17px; }
 #wCard .wGoal .bar { margin-top: 8px; }
+/* challenge groups */
+#chCard .chTop { display: flex; align-items: center; gap: 8px; }
+#chCard .chTop h3 { margin: 0; flex: 1; }
+#chCard .chMini { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+#chCard .chMini:first-of-type { border-top: 0; }
+.chRk { width: 22px; text-align: center; font-weight: 800; color: var(--muted); }
+.chAv { position: relative; width: 52px; height: 52px; flex: none; }
+.chAv svg { position: absolute; inset: 0; }
+.chAv i { position: absolute; inset: 6px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 16px; color: #111; }
+.chNm { flex: 1; min-width: 0; }
+.chNm b { font-size: 16.5px; font-weight: 800; }
+.chNm .pc { color: var(--brand-2); font-weight: 800; margin: 0 6px; font-size: 16.5px; unicode-bidi: isolate; }
+.chNm div { color: var(--muted); font-size: 14px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chMe { background: color-mix(in srgb, var(--brand-2) 14%, transparent); border-radius: 14px; padding-inline: 10px !important; border-top-color: transparent !important; }
+.chTabs { display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--line); margin: -4px -4px 0; scrollbar-width: none; }
+.chTabs::-webkit-scrollbar { display: none; }
+.chTabs button { flex: none; background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 12px 11px; font: inherit; font-weight: 700; font-size: 14.5px; color: var(--muted); cursor: pointer; }
+.chTabs button.on { color: var(--ink); border-color: var(--brand-2); }
+.chSeg { display: flex; margin: 14px 0 6px; border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.chSeg button { flex: 1; background: none; border: 0; padding: 9px 0; border-radius: 999px; font: inherit; font-weight: 700; font-size: 14px; color: var(--muted); cursor: pointer; }
+.chSeg button.on { background: var(--ink); color: var(--bg); }
+.chMeta { display: flex; justify-content: space-between; font-size: 13px; margin: 8px 2px 4px; }
+.chMeta b { display: block; color: var(--brand-2); letter-spacing: .03em; } .chMeta span { color: var(--muted); }
+.chChamp { margin: 8px 0 6px; padding: 11px 13px; border-radius: 14px; background: color-mix(in srgb, var(--brand-2) 14%, transparent); font-size: 14px; }
+.chRow { display: flex; align-items: center; gap: 12px; padding: 10px 2px; }
+.chPin { position: sticky; bottom: 0; background: color-mix(in srgb, var(--ink) 8%, var(--bg)); border-top: 1px solid var(--line); margin: 8px -16px -16px; padding: 10px 18px 14px; }
+.chFeed { font-size: 14.5px; line-height: 1.6; padding: 9px 0; border-top: 1px solid var(--line); }
+.chFeed:first-of-type { border-top: 0; }
 </style>
 </head>
 <body>
@@ -919,6 +947,8 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
   <section id="v-progress" class="hidden fade">
     <div class="greet"><em class="acc">تقدّمك</em></div>
     <div class="sub" id="pSub"></div>
+
+    <div class="card" id="chCard"><div class="loading"><div class="spinner"></div></div></div>
 
     <div class="card" id="wCard">
       <div class="wHead"><h3>الوزن</h3><span class="chip src" id="pWeightSrc" hidden></span><span style="flex:1"></span><button class="wAdd" id="wAddBtn">+ وزن</button></div>
@@ -1373,7 +1403,7 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
     document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
     window.scrollTo(0, 0);
     if (v === 'today') loadToday();
-    if (v === 'progress') loadProgress();
+    if (v === 'progress') { loadProgress(); loadChallenge(); }
     if (v === 'plan') { loadLocation(); loadScheduleSettings(); }
     if (v === 'plan' || v === 'settings') loadPlan();
     if (v === 'settings') { loadAiApps(); loadPrivacy(); }
@@ -2390,6 +2420,132 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
   }
 
   // ---------------- progress ----------------
+
+  /* ---------- challenge groups ---------- */
+  const CH_TABS = () => [['total', T('المجموع')], ['steps', T('الخطوات')], ['protein', T('البروتين')], ['calories', T('السعرات')], ['water', T('الماء')], ['strain', T('الجهد')]];
+  const CH_PER = () => [['day', T('اليوم')], ['week', T('الأسبوع')], ['month', T('الشهر')]];
+  function chRing(pct, color, initial) {
+    const r = 23, C = 2 * Math.PI * r, v = Math.max(0, Math.min(100, pct)) / 100 * C;
+    return `<div class="chAv"><svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="${r}" fill="none" stroke="var(--line)" stroke-width="4"/><circle cx="26" cy="26" r="${r}" fill="none" stroke="var(--brand-2)" stroke-width="4" stroke-linecap="round" stroke-dasharray="${v.toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 26 26)"/></svg><i style="background:${esc(color)}">${esc([...initial][0] || '?')}</i></div>`;
+  }
+  function chSub(tab, r) {
+    const d = r.detail || {};
+    if (d.kind === 'points') return L`${fmt(d.points)} نقطة من ${fmt(d.max)}`;
+    if (d.kind === 'days') return L`${d.hit}/${d.of} أيام وصل الهدف`;
+    if (d.kind === 'status') return d.ok ? T('✓ ضمن الهدف') : T('ما وصل الهدف بعد');
+    const v = d.value ?? 0, t = d.target;
+    if (tab === 'steps') return t && r.me ? L`${fmt(v)} من ${fmt(t)} خطوة` : L`${fmt(v)} خطوة`;
+    if (tab === 'water') return t && r.me ? L`${fmt1(v / 1000)} من ${fmt1(t / 1000)} لتر` : L`${fmt1(v / 1000)} لتر`;
+    if (tab === 'protein') return t ? L`${fmt(v)} من ${fmt(t)} غ بروتين` : L`${fmt(v)} غ بروتين`;
+    if (tab === 'calories') return t ? L`${fmt(v)} من ${fmt(t)} سعرة` : L`${fmt(v)} سعرة`;
+    if (tab === 'strain') return t ? L`جهد ${fmt1(v)} · معدلك ${fmt1(t)}` : L`جهد ${fmt1(v)}`;
+    return '';
+  }
+  function chRowHtml(tab, r, cls = 'chRow') {
+    return `<div class="${cls}${r.me ? ' chMe' : ''}">${chRing(r.pct, r.color, r.name)}<div class="chNm"><b>${r.rank}. ${esc(r.me ? T('أنت') : r.name)}</b><span class="pc" dir="ltr">${fmt(r.pct)}%</span><div>${esc(chSub(tab, r))}</div></div></div>`;
+  }
+  async function loadChallenge() {
+    const c = $('chCard'); if (!c) return;
+    let groups = [];
+    try { groups = await api('groups'); } catch { c.innerHTML = ''; return; }
+    if (!groups.length) {
+      c.innerHTML = `<div class="chTop"><h3>🏆 ${T('نافس أصدقاءك')}</h3></div>
+        <p class="small muted" style="margin:6px 0 12px;line-height:1.6">${T('مجموعات خاصة بدعوة. كل شخص ينقاس على هدفه هو — الخطوات والبروتين والماء والالتزام. وزنك وأكلك ما يظهرون لأحد.')}</p>
+        <div class="grid2"><button class="btn" id="chNew">${T('مجموعة جديدة')}</button><button class="btn ghost" id="chJoin">${T('انضم بكود')}</button></div>`;
+      $('chNew').onclick = openCreateGroup; $('chJoin').onclick = () => openJoin('');
+      return;
+    }
+    const gid = groups.some((g) => g.id === ls.get('ns_group')) ? ls.get('ns_group') : groups[0].id;
+    let b; try { b = await api(`groups/${gid}/board?tab=total&period=week`); } catch (e) { c.innerHTML = ''; return; }
+    const top = b.rows.slice(0, 3), mine = b.me && b.me.rank > 3 ? [b.me] : [];
+    c.innerHTML = `<div class="chTop"><h3>🏆 ${T('تحدي الأسبوع')}</h3>${groups.length > 1 ? `<select id="chPick" style="width:auto;font-size:13px;padding:6px 10px">${groups.map((g) => `<option value="${esc(g.id)}"${g.id === gid ? ' selected' : ''}>${esc(g.name)}</option>`).join('')}</select>` : `<span class="chip">${esc(b.group.name)}</span>`}</div>
+      <div class="small muted" style="margin:4px 0 6px">${T('يبدأ من جديد كل اثنين')}${b.average != null ? ' · ' + L`متوسط المجموعة ${fmt(b.average)}٪` : ''}</div>
+      ${[...top, ...mine].map((r) => chRowHtml('total', r, 'chMini')).join('')}
+      <div class="grid2" style="margin-top:10px"><button class="btn" id="chOpen">${T('افتح اللوحة')}</button><button class="btn ghost" id="chInv">${T('ادعُ شخص')}</button></div>`;
+    $('chOpen').onclick = () => openBoard(gid);
+    $('chInv').onclick = () => inviteGroup(gid);
+    if ($('chPick')) $('chPick').onchange = (e) => { ls.set('ns_group', e.target.value); loadChallenge(); };
+  }
+  async function openBoard(gid, tab = 'total', period = 'week') {
+    ls.set('ns_group', gid);
+    let b;
+    try { b = await api(`groups/${gid}/board?tab=${tab}&period=${period}`); } catch (e) { return toast(e.message); }
+    detOpen(b.group.name);
+    const tabs = CH_TABS().map(([k, l]) => `<button data-t="${k}" class="${k === tab ? 'on' : ''}">${l}</button>`).join('');
+    const seg = CH_PER().map(([k, l]) => `<button data-p="${k}" class="${k === period ? 'on' : ''}">${l}</button>`).join('');
+    const tabName = CH_TABS().find((x) => x[0] === tab)[1], perName = CH_PER().find((x) => x[0] === period)[1];
+    const champ = b.champion ? `<div class="chChamp">🏆 ${b.champion.me ? L`أنت الأول في ${tabName} — ${fmt(b.champion.pct)}٪ من هدفك` : L`${b.champion.name} الأول في ${tabName} — ${fmt(b.champion.pct)}٪ من الهدف`}</div>` : '';
+    const empty = !b.rows.length ? `<p class="small muted" style="text-align:center;padding:24px 8px">${tab === 'strain' ? T('الجهد يظهر لأعضاء WHOOP بعد أسبوع من البيانات.') : T('ما فيه بيانات بعد لهذي الفترة.')}</p>` : '';
+    const pin = b.me && b.me.rank > 6 ? `<div class="chPin">${chRowHtml(tab, b.me)}</div>` : '';
+    $('detBody').innerHTML = `<div class="chTabs">${tabs}</div><div class="chSeg">${seg}</div>
+      <div class="chMeta"><div><b>${T('الأداء')}</b><span>${b.average != null ? L`متوسط المجموعة ${fmt(b.average)}٪` : '—'}</span></div><div style="text-align:end"><b style="color:var(--ink)">${perName}</b><span>${L`آخر تحديث ${new Date(b.updatedAt).toLocaleTimeString(LOC, { hour: 'numeric', minute: '2-digit' })}`}</span></div></div>
+      ${champ}${b.rows.map((r) => chRowHtml(tab, r)).join('')}${empty}
+      <div class="card" style="margin-top:14px" id="chFeedCard"><h3>${T('آخر الإنجازات')}</h3><div id="chFeed"><div class="loading"><div class="spinner"></div></div></div></div>
+      <div class="card" id="chSet"></div>${pin}`;
+    $('detBody').querySelectorAll('[data-t]').forEach((x) => x.onclick = () => openBoard(gid, x.dataset.t, period));
+    $('detBody').querySelectorAll('[data-p]').forEach((x) => x.onclick = () => openBoard(gid, tab, x.dataset.p));
+    groupFeed(gid); groupSettings(gid);
+  }
+  async function groupFeed(gid) {
+    let f; try { f = await api(`groups/${gid}/feed`); } catch { $('chFeedCard').remove(); return; }
+    if (!f.items.length) { $('chFeed').innerHTML = `<p class="small muted" style="margin:0">${T('أول إنجاز بيظهر هنا — سلسلة 7 أيام تسجيل، أسبوع بروتين قوي، أو مرحلة في الهدف.')}</p>`; return; }
+    $('chFeed').innerHTML = f.items.map((i) => {
+      const who = i.me ? T('أنت') : i.name;
+      const t = i.kind === 'streak' ? L`🔥 ${who} — ${i.n} يوم تسجيل متواصل` : i.kind === 'protein' ? L`💪 ${who} — وصل هدف البروتين ${i.n} أيام هالأسبوع` : L`🎉 ${who} — وصل ${i.n}٪ من هدف الوزن`;
+      return `<div class="chFeed">${esc(t)}</div>`;
+    }).join('');
+  }
+  async function groupSettings(gid) {
+    let g; try { g = await api(`groups/${gid}`); } catch { return; }
+    const members = g.members.map((m) => `<div class="row" style="padding:8px 0;border-top:1px solid var(--line);align-items:center"><span>${chRing(100, m.color, m.name).replace('class="chAv"', 'class="chAv" style="width:34px;height:34px;transform:scale(.65);margin:-9px"')} <b>${esc(m.me ? T('أنت') : m.name)}</b>${m.owner ? ` <span class="chip2">${T('المنشئ')}</span>` : ''}</span>${g.owner && !m.me ? `<button class="btn text" data-rm="${esc(m.id)}" style="width:auto">${T('إزالة')}</button>` : ''}</div>`).join('');
+    $('chSet').innerHTML = `<h3>${T('المجموعة')}</h3>
+      <label class="small muted">${T('اسمك في المجموعة')}</label>
+      <div style="display:flex;gap:8px;margin-top:4px"><input id="chMyName" maxlength="24" value="${esc(g.me.name)}" style="flex:1"><button class="btn" id="chSaveName" style="width:auto;padding:0 16px">${T('حفظ')}</button></div>
+      <label class="row" style="margin-top:12px;align-items:center;gap:10px"><span style="flex:1"><b>${T('شارك مراحل هدف الوزن')}</b><br><span class="small muted">${T('مثل «وصل 50٪ من هدفه» — بدون أي رقم وزن')}</span></span><input type="checkbox" id="chMile" style="width:22px;height:22px"${g.me.shareMilestones ? ' checked' : ''}></label>
+      <button class="btn ghost" id="chInvite2" style="margin-top:12px">${T('ادعُ شخص')}</button>
+      <div style="margin-top:12px">${members}</div>
+      ${g.owner ? `<button class="btn text" id="chRotate" style="margin-top:8px">${T('رابط دعوة جديد (يلغي القديم)')}</button>` : ''}
+      <button class="btn text" id="chLeave" style="margin-top:4px;color:var(--bad)">${T('مغادرة المجموعة')}</button>`;
+    $('chSaveName').onclick = async () => { try { await api(`groups/${gid}/me`, { method: 'PATCH', json: { displayName: $('chMyName').value } }); toast(T('تم الحفظ ✓')); } catch (e) { toast(e.message); } };
+    $('chMile').onchange = async (e) => { try { await api(`groups/${gid}/me`, { method: 'PATCH', json: { shareMilestones: e.target.checked } }); } catch (er) { toast(er.message); } };
+    $('chInvite2').onclick = () => inviteGroup(gid, g);
+    if ($('chRotate')) $('chRotate').onclick = async () => { if (!confirmTap($('chRotate'))) return; try { const r = await api(`groups/${gid}/code`, { method: 'POST' }); toast(T('تم إنشاء رابط جديد')); inviteGroup(gid, r); } catch (e) { toast(e.message); } };
+    $('chLeave').onclick = async () => { if (!confirmTap($('chLeave'))) return; try { await api(`groups/${gid}/leave`, { method: 'POST' }); ls.del('ns_group'); $('det').classList.add('hidden'); document.body.style.overflow = ''; loadChallenge(); } catch (e) { toast(e.message); } };
+    $('chSet').querySelectorAll('[data-rm]').forEach((x) => x.onclick = async () => { if (!confirmTap(x)) return; try { await api(`groups/${gid}/members/${x.dataset.rm}`, { method: 'DELETE' }); groupSettings(gid); } catch (e) { toast(e.message); } });
+  }
+  async function inviteGroup(gid, g) {
+    try { g = g || await api(`groups/${gid}`); } catch (e) { return toast(e.message); }
+    const url = `${location.origin}/app/#join=${g.code}`;
+    const text = L`انضم لمجموعتي «${g.name}» في StrainEat — نتنافس على الالتزام بأهدافنا. الكود: ${g.code}`;
+    try { if (navigator.share) await navigator.share({ title: 'StrainEat', text, url }); else { await navigator.clipboard.writeText(`${text}\n${url}`); toast(T('نُسخ رابط الدعوة ✓')); } } catch {}
+  }
+  function openCreateGroup() {
+    detOpen(T('مجموعة جديدة'));
+    $('detBody').innerHTML = `<div class="card"><label class="small muted">${T('اسم المجموعة')}</label><input id="cgName" maxlength="40" placeholder="${esc(T('مثلاً: فريق SHEEN'))}" style="margin-top:4px">
+      <label class="small muted" style="margin-top:12px">${T('اسمك اللي يشوفه الأعضاء')}</label><input id="cgMe" maxlength="24" style="margin-top:4px">
+      <p class="small muted" style="line-height:1.6">${T('الأعضاء يشوفون اسمك ونسبتك من أهدافك بس — مب وزنك ولا أكلك.')}</p>
+      <button class="btn" id="cgGo">${T('إنشاء وإرسال الدعوة')}</button></div>`;
+    $('cgGo').onclick = async () => {
+      $('cgGo').disabled = true;
+      try { const g = await api('groups', { method: 'POST', json: { name: $('cgName').value, displayName: $('cgMe').value } }); ls.set('ns_group', g.id); await inviteGroup(g.id, g); openBoard(g.id); loadChallenge(); }
+      catch (e) { $('cgGo').disabled = false; toast(e.message); }
+    };
+  }
+  async function openJoin(code) {
+    ls.del('ns_join');
+    detOpen(T('انضم لمجموعة'));
+    $('detBody').innerHTML = `<div class="card"><div id="jgInfo"></div><label class="small muted">${T('كود الدعوة')}</label><input id="jgCode" dir="ltr" autocapitalize="characters" value="${esc(code || '')}" style="margin-top:4px;letter-spacing:.15em">
+      <label class="small muted" style="margin-top:12px">${T('اسمك اللي يشوفه الأعضاء')}</label><input id="jgMe" maxlength="24" style="margin-top:4px">
+      <p class="small muted" style="line-height:1.6">${T('الأعضاء يشوفون اسمك ونسبتك من أهدافك بس — مب وزنك ولا أكلك.')}</p>
+      <button class="btn" id="jgGo">${T('انضمام')}</button></div>`;
+    if (code) api(`groups/invite/${encodeURIComponent(code)}`).then((p) => { $('jgInfo').innerHTML = `<h3 style="margin-top:0">${esc(p.name)}</h3><p class="small muted">${L`${p.members} أعضاء`}</p>`; }).catch((e) => toast(e.message, 5000));
+    $('jgGo').onclick = async () => {
+      $('jgGo').disabled = true;
+      try { const g = await api('groups/join', { method: 'POST', json: { code: $('jgCode').value, displayName: $('jgMe').value } }); toast(T('أهلاً فيك بالمجموعة ✓')); openBoard(g.id); loadChallenge(); }
+      catch (e) { $('jgGo').disabled = false; toast(e.message, 5000); }
+    };
+  }
+
   async function loadProgress() {
     try {
       const [w, plan, h] = await Promise.all([api('weights?days=90'), api('plan'), api('history?days=7')]);
@@ -3456,11 +3612,16 @@ html[dir="ltr"] .mon2b .t { font-size: 13px; }
   async function boot() {
     if (!signedIn()) { if (ls.get('ns_oauth_req')) setTimeout(() => toast(T('سجّل دخولك عشان تكمل ربط تطبيق الذكاء الاصطناعي'), 5000), 300); return show('setup'); }
     if (ls.get('ns_oauth_req')) setTimeout(() => openOAuthConsent(ls.get('ns_oauth_req')), 0);
+    else if (ls.get('ns_join')) setTimeout(() => openJoin(ls.get('ns_join')), 0);
     const prof = await api('profile');
     // keep the AI / notification language in step with the UI
     if (prof.language !== LANG) api('profile', { method: 'PUT', json: { language: LANG } }).catch(() => {});
     if (!prof.onboarded) return startOnboarding(prof);
     show('today');
+  }
+  if (location.hash.startsWith('#join=')) {
+    ls.set('ns_join', decodeURIComponent(location.hash.slice(6)));
+    history.replaceState(null, '', location.pathname);
   }
   if (location.hash.startsWith('#oauth=')) {
     ls.set('ns_oauth_req', decodeURIComponent(location.hash.slice(7)));

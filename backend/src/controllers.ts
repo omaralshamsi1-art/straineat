@@ -44,6 +44,7 @@ import { McpService } from './mcp/mcp.service';
 import { OAuthError, OAuthService } from './mcp/oauth.service';
 import { AccountService } from './account/account.service';
 import { LegalPage, renderLegal } from './legal/legal';
+import { GroupsService } from './groups/groups.service';
 import { validateProfilePatch } from './profile/profile.service';
 
 @Controller('health')
@@ -654,4 +655,22 @@ export class LegalController {
 
   @Public() @Get('support')
   support(@Query('lang') lang: string, @Headers('accept-language') al: string, @Req() req: Request, @Res() res: Response) { this.render('support', lang, al, req, res); }
+}
+
+/** Private challenge groups (invite-only leaderboards against each member's own targets). */
+@Controller('groups')
+export class GroupsController {
+  constructor(private readonly groups: GroupsService) {}
+  @Get() list(@UserId() userId: string) { return this.groups.list(userId); }
+  @Post() create(@UserId() userId: string, @Body() body: any) { return this.groups.create(userId, body); }
+  @Get('invite/:code') preview(@Param('code') code: string) { return this.groups.preview(code); }
+  @Post('join') join(@UserId() userId: string, @Body() body: any) { return this.groups.join(userId, body); }
+  @Get(':id') info(@UserId() userId: string, @Param('id') id: string) { return this.groups.info(userId, id); }
+  @Get(':id/board') board(@UserId() userId: string, @Param('id') id: string, @Query('tab') tab?: string, @Query('period') period?: string) { return this.groups.board(userId, id, tab, period); }
+  @Get(':id/feed') feed(@UserId() userId: string, @Param('id') id: string) { return this.groups.feed(userId, id); }
+  @Patch(':id/me') me(@UserId() userId: string, @Param('id') id: string, @Body() body: any) { return this.groups.updateMe(userId, id, body); }
+  @Patch(':id') rename(@UserId() userId: string, @Param('id') id: string, @Body() body: any) { return this.groups.rename(userId, id, body?.name); }
+  @Post(':id/code') rotate(@UserId() userId: string, @Param('id') id: string) { return this.groups.rotateCode(userId, id); }
+  @Delete(':id/members/:member') remove(@UserId() userId: string, @Param('id') id: string, @Param('member') member: string) { return this.groups.removeMember(userId, id, member); }
+  @Post(':id/leave') leave(@UserId() userId: string, @Param('id') id: string) { return this.groups.leave(userId, id); }
 }
