@@ -346,8 +346,6 @@ html[dir="rtl"] #askSend svg { transform: scaleX(-1); }
 .act .s, .act .st { unicode-bidi: plaintext; }
 </style>
 <style>
-@font-face { font-family: "Noto Naskh Arabic"; font-weight: 500 700; font-display: swap; src: url("vendor/fonts/naskh-600.woff2") format("woff2"); }
-@font-face { font-family: "Instrument Serif"; font-style: italic; font-weight: 400 600; font-display: swap; src: url("vendor/fonts/instrument-serif-italic.woff2") format("woff2"); }
 /* ================= v2 design: pastel cards, bold type, serif accents, floating tab bar ================= */
 :root {
   --bg: #ffffff; --card: #f1f1f2; --card-2: #ffffff; --ink: #111113; --muted: #6e6e73; --line: #e3e3e6;
@@ -367,8 +365,8 @@ html, body { font-family: var(--font); letter-spacing: -0.005em; }
 .brand { font-family: var(--font); letter-spacing: -0.03em; }
 .brand b { color: var(--ink); opacity: .55; }
 .greet { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; margin: 14px 0 4px; }
-em.acc, .acc { font-style: italic; font-weight: 500; font-family: "Instrument Serif", "Noto Naskh Arabic", Georgia, serif; letter-spacing: 0; }
-html[dir="rtl"] em.acc, html[dir="rtl"] .acc { font-style: normal; font-family: "Noto Naskh Arabic", "Instrument Serif", serif; font-weight: 600; }
+/* page titles use the same font as the rest of the app (no serif/italic accent) */
+em.acc, .acc { font-style: normal; font-weight: inherit; font-family: inherit; letter-spacing: inherit; }
 .sub { font-size: 15px; }
 .card { border-radius: var(--r); padding: 20px; margin: 14px 0; box-shadow: none; background: var(--card); }
 .card h3 { font-size: 19px; font-weight: 800; color: var(--ink); letter-spacing: -0.02em; }
