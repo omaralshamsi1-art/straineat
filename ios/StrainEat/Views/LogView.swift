@@ -121,10 +121,10 @@ struct PhotoLogPanel: View {
             Text(t("Want more accuracy? Add details (optional)", "تبي الدقة أعلى؟ أضف تفاصيل (اختياري)"))
                 .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.muted)
             FlowChips {
-                Chip(title: t("Half plate", "نص صحن"), on: portion == "half plate") { portion = portion == "half plate" ? nil : "half plate" }
-                Chip(title: t("Full plate", "صحن كامل"), on: portion == "full plate") { portion = portion == "full plate" ? nil : "full plate" }
-                Chip(title: t("No sauce", "بدون صوص"), on: noSauce) { noSauce.toggle() }
-                Chip(title: t("📍 From a restaurant", "📍 من مطعم"), on: fromRestaurant) { fromRestaurant.toggle(); if !fromRestaurant { restaurant = "" } }
+                SnapChip(title: t("Half plate", "نص صحن"), on: portion == "half plate") { portion = portion == "half plate" ? nil : "half plate" }
+                SnapChip(title: t("Full plate", "صحن كامل"), on: portion == "full plate") { portion = portion == "full plate" ? nil : "full plate" }
+                SnapChip(title: t("No sauce", "بدون صوص"), on: noSauce) { noSauce.toggle() }
+                SnapChip(title: t("📍 From a restaurant", "📍 من مطعم"), on: fromRestaurant) { fromRestaurant.toggle(); if !fromRestaurant { restaurant = "" } }
             }
             if fromRestaurant { InputField(title: t("Restaurant name", "اسم المطعم"), text: $restaurant) }
             HStack(spacing: 8) {
@@ -159,7 +159,7 @@ struct PhotoLogPanel: View {
     }
 }
 
-struct Chip: View {
+struct SnapChip: View {
     let title: String
     let on: Bool
     let action: () -> Void
