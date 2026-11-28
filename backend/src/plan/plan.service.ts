@@ -118,7 +118,10 @@ export class PlanService {
   async weights(userId: string, days = 90) {
     const profile = await this.profiles.get(userId);
     const today = localDate(new Date(), profile.timezone);
-    const raw = await this.repo.listWeights(userId, addDays(today, -Math.min(Math.max(days, 7), 730)), today);
+    // the trend always starts from the same point (≥120 days back), so "current" doesn't change with the range asked for
+    const span = Math.min(Math.max(days, 7), 730);
+    const from = addDays(today, -span);
+    const raw = await this.repo.listWeights(userId, addDays(today, -Math.max(span, 120)), today);
     const byDate = new Map<string, WeightEntry>();
     for (const w of raw) {
       const cur = byDate.get(w.date);
@@ -127,7 +130,7 @@ export class PlanService {
     const entries = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
     const trend = weightTrend(entries.map((e) => ({ date: e.date, kg: e.kg })));
     return {
-      entries: trend.map((t, i) => ({ ...t, source: entries[i].source })),
+      entries: trend.map((t, i) => ({ ...t, source: entries[i].source })).filter((e) => e.date >= from),
       current: trend.length ? trend[trend.length - 1].trend : profile.weightKg,
     };
   }

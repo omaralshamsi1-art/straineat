@@ -5,7 +5,7 @@ import { addDays, pickEnergy, PlanService } from '../plan/plan.service';
 import { estimatedTdee, ProfileService } from '../profile/profile.service';
 import { burnBonus } from '../insights/insights';
 import { REPOSITORY, Repository } from '../storage/repository';
-import { buildDay, defaultSchedule, usualMealTimes, ramadanSchedule, SLOT_LABEL, slotTargets, toMin } from './schedule';
+import { buildDay, rebalanceOpenSlots, defaultSchedule, usualMealTimes, ramadanSchedule, SLOT_LABEL, slotTargets, toMin } from './schedule';
 
 const minuteIn = (iso: string, tz: string) =>
   toMin(new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso)));
@@ -38,6 +38,10 @@ export class ScheduleService {
     const skip = await this.repo.getCache(userId, `schedule-skip:${d}`);
     const skipped: string[] = Array.isArray((skip?.payload as any)?.slots) ? (skip!.payload as any).slots : [];
     const view = buildDay(schedule.slots, targets, meals, nowMin, (m) => minuteIn(m.eatenAt, tz), skipped);
+    if (d === today) {
+      const eaten = meals.filter((m) => m.status === 'confirmed').reduce((a, m) => a + (m.final?.totals?.calories ?? 0), 0);
+      rebalanceOpenSlots(view.slots, dayTarget, eaten);
+    }
     const lang = p.language === 'ar' ? 'ar' : 'en';
     return {
       date: d,

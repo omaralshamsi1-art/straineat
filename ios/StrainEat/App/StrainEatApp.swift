@@ -111,8 +111,7 @@ final class AppStore {
     var selectedDateKey: String { DateFormatter.isoDay.string(from: day) }
 
     static func hasCredentials() -> Bool {
-        let d = UserDefaults.standard
-        return !(d.string(forKey: "apiKey") ?? "").isEmpty || !(d.string(forKey: "accessToken") ?? "").isEmpty
+        SecureStore.get(SecureStore.apiKey) != nil || SecureStore.get(SecureStore.accessToken) != nil
     }
 
     /// Bumped on every refresh so cards that load their own data (schedule…) reload too.
@@ -168,17 +167,15 @@ final class AppStore {
     }
 
     func signIn(token: String, user: AuthUser) {
-        let d = UserDefaults.standard
-        d.set(token, forKey: "accessToken")
-        d.set("", forKey: "apiKey")
+        SecureStore.set(SecureStore.accessToken, token)
+        SecureStore.set(SecureStore.apiKey, nil)
         me = user
         signedIn = true
     }
 
     func signInOwner(apiKey: String, userId: String) {
-        let d = UserDefaults.standard
-        d.set(apiKey, forKey: "apiKey")
-        d.set(userId, forKey: "devUserId")
+        SecureStore.set(SecureStore.apiKey, apiKey)
+        UserDefaults.standard.set(userId, forKey: "devUserId")
         signedIn = true
     }
 
@@ -189,16 +186,14 @@ final class AppStore {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         Task {
             await PushRegistration.unregister() // needs the old token, so it runs before the token is cleared
-            let d = UserDefaults.standard
-            d.set("", forKey: "accessToken")
-            d.set("", forKey: "apiKey")
+            SecureStore.set(SecureStore.accessToken, nil)
+            SecureStore.set(SecureStore.apiKey, nil)
         }
     }
 
     func handleUnauthorized() {
         // Only an expired account token signs the user out; a wrong owner key is fixed in settings.
-        if !(UserDefaults.standard.string(forKey: "accessToken") ?? "").isEmpty,
-           (UserDefaults.standard.string(forKey: "apiKey") ?? "").isEmpty {
+        if SecureStore.get(SecureStore.accessToken) != nil, SecureStore.get(SecureStore.apiKey) == nil {
             signOut()
             error = t("Session expired — please sign in again", "انتهت الجلسة — سجّل الدخول مرة أخرى")
         }

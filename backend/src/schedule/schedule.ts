@@ -131,6 +131,8 @@ export function slotTargets(slots: SlotDef[], targetKcal: number, ramadanSplit?:
 export type SlotStatus = 'done' | 'now' | 'upcoming' | 'missed' | 'skipped';
 export interface SlotView extends SlotDef {
   targetKcal: number;
+  /** the slot's fixed plan share (targetKcal is rebalanced for open slots) */
+  planKcal?: number;
   status: SlotStatus;
   eatenKcal: number;
   items: { id: string; name: string; name_ar: string; kcal: number; kind: MealKind }[];
@@ -175,6 +177,23 @@ export const SLOT_LABEL: Record<SlotId, { en: string; ar: string }> = {
   evening: { en: 'Evening meal', ar: 'وجبة المساء' },
 };
 
+/**
+ * Slots still ahead share what's left of the day (same proportions as their plan share),
+ * so "aim for about N kcal" never ignores what's already been eaten (capped at 1.5× the plan share). 0 = target reached.
+ */
+export function rebalanceOpenSlots(view: SlotView[], dayTarget: number, eatenKcal: number) {
+  const open = view.filter((s) => s.status === 'upcoming' || s.status === 'now');
+  const share = open.reduce((a, s) => a + s.targetKcal, 0);
+  const left = Math.max(0, dayTarget - eatenKcal);
+  for (const s of open) {
+    s.planKcal = s.targetKcal;
+    // never more than 1.5× the slot's plan share: skipped meals shouldn't pile onto one big dinner
+    const fair = share > 0 ? left * (s.targetKcal / share) : 0;
+    s.targetKcal = Math.round(Math.min(fair, s.targetKcal * 1.5) / 10) * 10;
+  }
+  return view;
+}
+
 /** Which schedule notifications are due now (sent once per slot per day by the caller). */
 export function dueSlotReminders(view: SlotView[], nowMin: number, lang: 'en' | 'ar', opts: { fasting: boolean }) {
   const out: { key: string; title: string; body: string }[] = [];
@@ -188,8 +207,8 @@ export function dueSlotReminders(view: SlotView[], nowMin: number, lang: 'en' | 
     if (nowMin >= t - 10 && nowMin <= t + 4) {
       out.push(
         lang === 'ar'
-          ? { key: `slot:${s.id}:before`, title: `${s.kind === 'snack' ? '🍎' : '🍽️'} وقت ${name}`, body: `هدفك حوالي ${s.targetKcal} سعرة. افتح "ماذا آكل الآن؟" لاقتراحات جاهزة.` }
-          : { key: `slot:${s.id}:before`, title: `${s.kind === 'snack' ? '🍎' : '🍽️'} ${name} time`, body: `Aim for about ${s.targetKcal} kcal. Open "What should I eat now?" for ideas.` },
+          ? { key: `slot:${s.id}:before`, title: `${s.kind === 'snack' ? '🍎' : '🍽️'} وقت ${name}`, body: s.targetKcal > 0 ? `هدفك حوالي ${s.targetKcal} سعرة. افتح "ماذا آكل الآن؟" لاقتراحات جاهزة.` : 'وصلت هدفك اليوم — إذا جعت، خلّها خفيفة: خضار أو بروتين.' }
+          : { key: `slot:${s.id}:before`, title: `${s.kind === 'snack' ? '🍎' : '🍽️'} ${name} time`, body: s.targetKcal > 0 ? `Aim for about ${s.targetKcal} kcal. Open "What should I eat now?" for ideas.` : "You've reached today's target — if you're hungry, keep it light: veg or protein." },
       );
     } else if (s.kind === 'meal' && nowMin >= t + 60 && nowMin <= t + 95) {
       out.push(

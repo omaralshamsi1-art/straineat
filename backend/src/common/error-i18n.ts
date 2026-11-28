@@ -1,0 +1,77 @@
+/** English server messages a person can see, in Arabic (used by LocalizedErrorFilter for Accept-Language: ar). */
+const EN_TO_AR: Record<string, string> = {
+  'Session expired — please sign in again': 'انتهت الجلسة — سجّل الدخول مرة أخرى',
+  'Invalid or expired access token': 'انتهت الجلسة — سجّل الدخول مرة أخرى',
+  'Invalid token': 'انتهت الجلسة — سجّل الدخول مرة أخرى',
+  'This account no longer exists': 'هذا الحساب لم يعد موجوداً',
+  'Image too large (max 5 MB) — resize on device': 'الصورة كبيرة (الحد 5 ميغا) — صغّرها وحاول مرة ثانية',
+  'photo file is required': 'أرفق صورة للوجبة',
+  'text is required': 'اكتب وصفاً للوجبة',
+  'No AI provider configured': 'التحليل بالذكاء الاصطناعي غير متاح الآن — حاول لاحقاً',
+  'No AI provider configured (set ANTHROPIC_API_KEY or GEMINI_API_KEY)': 'التحليل بالذكاء الاصطناعي غير متاح الآن — حاول لاحقاً',
+  'GEMINI_API_KEY is not set': 'التحليل بالذكاء الاصطناعي غير متاح الآن — حاول لاحقاً',
+  'Gemini free-tier limit reached — try again shortly': 'خدمة التحليل مزدحمة الآن، جرّب بعد دقيقة',
+  'meal_name and items are required': 'اكتب اسم الوجبة وأضف مكوّناً واحداً على الأقل',
+  'kind must be meal, snack or drink': 'اختر النوع: وجبة أو سناك أو مشروب',
+  'Invalid eatenAt': 'وقت الأكل غير صحيح',
+  'entry not found': 'غير موجود',
+  'Type DELETE to confirm': 'اكتب DELETE للتأكيد',
+  'The owner account can’t be deleted from the app': 'لا يمكن حذف حساب المالك من التطبيق',
+  'Invalid timezone': 'المنطقة الزمنية غير صحيحة',
+  'startDate must be YYYY-MM-DD': 'تاريخ البداية غير صحيح',
+  'date must be YYYY-MM-DD': 'التاريخ غير صحيح',
+  'birthDate must be YYYY-MM-DD in the past': 'تاريخ الميلاد غير صحيح',
+  'targetDate must be YYYY-MM-DD within the next 3 years': 'تاريخ الهدف لازم يكون خلال 3 سنوات',
+  'ramadan times must be HH:MM': 'أوقات رمضان لازم تكون مثل 18:05',
+  'At most 20 reminders': 'الحد 20 تذكيراً',
+  'Each reminder needs a name': 'كل تذكير يحتاج اسماً',
+  'Reminder times must be 1–6 values like 08:00': 'أوقات التذكير من 1 إلى 6 مثل 08:00',
+  'Group name is required': 'اكتب اسم المجموعة',
+  'Group not found': 'المجموعة غير موجودة',
+  'This group is full': 'المجموعة مكتملة',
+  'This invite link is invalid or was replaced': 'رابط الدعوة غير صالح أو تم تغييره',
+  'Only the group owner can remove members': 'فقط منشئ المجموعة يقدر يحذف الأعضاء',
+  'Only the group owner can rename it': 'فقط منشئ المجموعة يقدر يغيّر اسمها',
+  'Only the group owner can reset the invite link': 'فقط منشئ المجموعة يقدر يغيّر رابط الدعوة',
+  'Can’t remove that member': 'لا يمكن حذف هذا العضو',
+  'Only the owner can invite': 'فقط المالك يقدر يرسل دعوات',
+  'Owner only': 'للمالك فقط',
+  'WHOOP not connected — connect it in Settings': 'WHOOP غير مربوط — اربطه من الإعدادات',
+  'WHOOP session expired — reconnect WHOOP in Settings': 'انتهى ربط WHOOP — اربطه من جديد من الإعدادات',
+  'State expired — try connecting again': 'انتهت المهلة — حاول الربط مرة ثانية',
+  'In-app purchases are not configured yet': 'الشراء داخل التطبيق غير متاح بعد',
+  'Could not verify the purchase with Apple — try again shortly': 'ما قدرنا نتحقق من الشراء مع أبل — حاول بعد شوي',
+  'Purchase not found at Apple': 'ما لقينا عملية الشراء عند أبل',
+  'This purchase belongs to another account': 'عملية الشراء هذه لحساب آخر',
+  'This purchase was refunded': 'تم استرجاع مبلغ هذه العملية',
+  'Unknown product': 'منتج غير معروف',
+  'Invalid sync token': 'رمز المزامنة غير صالح — أنشئ رابطاً جديداً من الإعدادات',
+  'Missing sync token': 'رمز المزامنة مفقود',
+  'invalid subscription': 'تعذّر تفعيل التنبيهات على هذا الجهاز',
+  'unsupported push service': 'هذا المتصفح لا يدعم التنبيهات',
+  'invalid device token': 'تعذّر تفعيل التنبيهات على هذا الجهاز',
+  'This sign-in request expired — start the connection again from the AI app': 'انتهت صلاحية طلب الربط — ابدأ من جديد من تطبيق الذكاء الاصطناعي',
+  'Unknown app': 'تطبيق غير معروف',
+  'No such connected app': 'التطبيق غير مربوط',
+  'only manual workouts can be deleted here': 'يمكن حذف الأنشطة اليدوية فقط',
+};
+
+const PATTERNS_AR: [RegExp, (m: RegExpMatchArray) => string][] = [
+  [/^kg must be between (\d+) and (\d+)$/, (m) => `الوزن لازم يكون بين ${m[1]} و${m[2]} كغ`],
+  [/^ml must be between (\d+) and (\d+)$/, (m) => `الكمية لازم تكون بين ${m[1]} و${m[2]} مل`],
+  [/^(\w+) must be between ([\d.]+) and ([\d.]+)$/, (m) => `القيمة لازم تكون بين ${m[2]} و${m[3]}`],
+  [/^portionFactor/, () => 'حجم الحصة غير صحيح'],
+  [/^Invalid date /, () => 'التاريخ غير صحيح'],
+  [/^You can be in up to (\d+) groups$/, (m) => `تقدر تكون في ${m[1]} مجموعات كحد أقصى`],
+  [/^Unsupported image type/, () => 'نوع الصورة غير مدعوم — استخدم JPG أو PNG'],
+  [/^WHOOP (API|token error)/, () => 'تعذّر الاتصال بـ WHOOP — حاول لاحقاً أو أعد الربط من الإعدادات'],
+  [/^invalid /i, () => 'قيمة غير صحيحة'],
+];
+
+/** English server message → Arabic (unknown messages are returned unchanged). */
+export function toArabic(msg: string): string {
+  if (!msg) return msg;
+  if (EN_TO_AR[msg]) return EN_TO_AR[msg];
+  for (const [re, f] of PATTERNS_AR) { const m = msg.match(re); if (m) return f(m); }
+  return msg;
+}

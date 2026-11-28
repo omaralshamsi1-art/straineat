@@ -1749,7 +1749,8 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     const auth = token() ? { Authorization: `Bearer ${token()}` } : key() ? { 'X-API-Key': key(), 'X-User-Id': user() } : {};
     const headers = { 'Accept-Language': LANG, ...auth, ...(opts.headers || {}) };
     if (opts.json !== undefined) { headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(opts.json); }
-    const res = await fetch(`/${path}`, { ...opts, headers });
+    let res;
+    try { res = await fetch(`/${path}`, { ...opts, headers }); } catch { throw new Error(T('ما في اتصال بالإنترنت — حاول مرة ثانية')); }
     const text = await res.text();
     let data; try { data = text ? JSON.parse(text) : null; } catch { data = text; }
     if (res.status === 401 && !path.startsWith('auth/login') && !path.startsWith('auth/register')) {
@@ -2381,7 +2382,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
         const lbl = LANG === 'en' ? nx.label_en : nx.label_ar;
         const mins = Math.max(0, hmToMin(nx.time) - nowMinLocal());
         const when = nx.status === 'now' ? T('الآن') : mins >= 60 ? L`بعد ${Math.round(mins / 60)} س` : L`بعد ${mins} د`;
-        out.push({ id: `next:${nx.id}`, icon: 'i-clock', title: `${esc(lbl)} · <span class="num" dir="ltr">${esc(nx.time)}</span>`, sub: `${L`هدفك حوالي ${fmt(nx.targetKcal)} سعرة`} · ${when}`, acts: [[T('اقترح وجبة'), openSuggest, 1]] });
+        out.push({ id: `next:${nx.id}`, icon: 'i-clock', title: `${esc(lbl)} · <span class="num" dir="ltr">${esc(nx.time)}</span>`, sub: `${nx.targetKcal > 0 ? L`هدفك حوالي ${fmt(nx.targetKcal)} سعرة` : T('وصلت هدفك اليوم — خلّها خفيفة')} · ${when}`, acts: [[T('اقترح وجبة'), openSuggest, 1]] });
       } else if (b.remainingKcal > 150) {
         out.push({ id: 'next:done', icon: 'i-clock', title: T('انتهت وجبات اليوم المخططة'), sub: L`متبقي ${fmt(b.remainingKcal)} سعرة`, acts: [[T('اقترح شيئاً خفيفاً'), openSuggest, 1]] });
       }

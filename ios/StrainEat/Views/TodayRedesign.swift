@@ -196,7 +196,7 @@ struct NextUpHeader: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(s.label) · \(s.time)").font(.headline)
-                    Text(t("Aim for about \(fmt(s.targetKcal)) kcal", "هدفك حوالي \(fmt(s.targetKcal)) سعرة")).font(.subheadline).foregroundStyle(Theme.muted)
+                    Text(s.targetKcal > 0 ? t("Aim for about \(fmt(s.targetKcal)) kcal", "هدفك حوالي \(fmt(s.targetKcal)) سعرة") : t("Target reached today — keep it light", "وصلت هدفك اليوم — خلّها خفيفة")).font(.subheadline).foregroundStyle(Theme.muted)
                 }
                 Spacer()
                 Text(s.status == "now" ? t("Now", "الآن") : mins >= 60 ? t("In \(Int((Double(mins) / 60).rounded())) h", "بعد \(Int((Double(mins) / 60).rounded())) س") : t("In \(mins) min", "بعد \(mins) د"))
@@ -544,7 +544,7 @@ struct InsightStack: View {
                 let mins = max(0, hhmm(nx.time) - minutesOf(Date()))
                 let when = nx.status == "now" ? t("Now", "الآن") : mins >= 60 ? t("In \(Int((Double(mins) / 60).rounded())) h", "بعد \(Int((Double(mins) / 60).rounded())) س") : t("In \(mins) min", "بعد \(mins) د")
                 out.append(Item(id: "next:\(nx.id)", icon: "clock", title: "\(nx.label) · \(nx.time)",
-                                sub: t("Aim for about \(fmt(nx.targetKcal)) kcal", "هدفك حوالي \(fmt(nx.targetKcal)) سعرة") + " · " + when,
+                                sub: (nx.targetKcal > 0 ? t("Aim for about \(fmt(nx.targetKcal)) kcal", "هدفك حوالي \(fmt(nx.targetKcal)) سعرة") : t("Target reached today — keep it light", "وصلت هدفك اليوم — خلّها خفيفة")) + " · " + when,
                                 acts: [(t("Suggest a meal", "اقترح وجبة"), true, onSuggest)]))
             } else if (b.remainingKcal ?? 0) > 150 {
                 out.append(Item(id: "next:done", icon: "clock", title: t("Today's planned meals are done", "انتهت وجبات اليوم المخططة"),

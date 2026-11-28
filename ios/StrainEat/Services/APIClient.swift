@@ -23,9 +23,9 @@ final class APIClient {
         let fallback = Bundle.main.object(forInfoDictionaryKey: "StrainEatAPIBaseURL") as? String ?? "http://localhost:3000"
         return URL(string: (stored?.isEmpty == false ? stored! : fallback))!
     }
-    var accessToken: String? { UserDefaults.standard.string(forKey: "accessToken").flatMap { $0.isEmpty ? nil : $0 } }
+    var accessToken: String? { SecureStore.get(SecureStore.accessToken) }
     var devUserId: String { UserDefaults.standard.string(forKey: "devUserId") ?? "local-user" }
-    var apiKey: String? { UserDefaults.standard.string(forKey: "apiKey").flatMap { $0.isEmpty ? nil : $0 } }
+    var apiKey: String? { SecureStore.get(SecureStore.apiKey) }
 
     private let session: URLSession = {
         let c = URLSessionConfiguration.default

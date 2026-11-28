@@ -351,12 +351,68 @@ struct ProgressHeader: View {
     var body: some View {
         VStack(spacing: 6) {
             if let s {
+                // VoiceOver reads each card as one sentence instead of unlabeled shapes
                 JourneyCard(j: s.journey)
-                if let b = s.bmi { BMICard(b: b) }
-                if s.week.score != nil { WeekHabitsCard(w: s.week) }
-                if s.monitor.sugar != nil || s.monitor.water != nil || s.monitor.fiber != nil { NutritionJars(m: s.monitor) }
+                    .accessibilityElement(children: .ignore).accessibilityLabel(A11y.journey(s.journey))
+                if let b = s.bmi {
+                    BMICard(b: b).accessibilityElement(children: .ignore).accessibilityLabel(A11y.bmi(b))
+                }
+                if s.week.score != nil {
+                    WeekHabitsCard(w: s.week).accessibilityElement(children: .ignore).accessibilityLabel(A11y.week(s.week))
+                }
+                if s.monitor.sugar != nil || s.monitor.water != nil || s.monitor.fiber != nil {
+                    NutritionJars(m: s.monitor).accessibilityElement(children: .ignore).accessibilityLabel(A11y.monitor(s.monitor))
+                }
             }
         }
         .task(id: refresh) { s = try? await APIClient.shared.progressSummary() }
+    }
+}
+
+/// Spoken summaries of the Progress cards.
+enum A11y {
+    private static func kg(_ v: Double?) -> String { v.map { String(format: "%.1f", $0) } ?? "—" }
+
+    static func journey(_ j: ProgressSummary.Journey) -> String {
+        let head = t("Your journey", "رحلتك")
+        switch j.status {
+        case "no_target": return head + ". " + t("No goal weight set yet.", "لم تحدد وزنك المستهدف بعد.")
+        case "reached": return head + ". " + t("You reached your goal weight, \(kg(j.currentKg)) kilograms.", "وصلت لوزنك المستهدف، \(kg(j.currentKg)) كيلو.")
+        default:
+            var parts = [head, t("Now \(kg(j.currentKg)) kilograms, goal \(kg(j.targetKg)).", "الآن \(kg(j.currentKg)) كيلو، والهدف \(kg(j.targetKg)).")]
+            if let f = j.frac { parts.append(t("\(Int((f * 100).rounded())) percent of the way.", "قطعت \(Int((f * 100).rounded())) بالمئة من الطريق.")) }
+            if j.status == "collecting", let n = j.needDays { parts.append(t("Needs \(n) days of weigh-ins for an arrival date.", "نحتاج \(n) يوماً من الوزن لتقدير تاريخ الوصول.")) }
+            if j.status == "stalled" { parts.append(t("Your weight has been steady lately.", "وزنك ثابت هالفترة.")) }
+            if let e = j.eta { parts.append(t("Expected arrival \(e).", "الوصول المتوقع \(e).")) }
+            if let a = j.aheadDays, a != 0 { parts.append(a > 0 ? t("\(a) days ahead of plan.", "أبكر من خطتك بـ\(a) يوم.") : t("\(-a) days behind plan.", "متأخر عن خطتك \(-a) يوم.")) }
+            if j.tooFast == true { parts.append(t("You're losing faster than is healthy — eat a little more.", "تنزل أسرع من المعدل الصحي — زد أكلك شوي.")) }
+            return parts.joined(separator: " ")
+        }
+    }
+
+    static func bmi(_ b: ProgressSummary.BMI) -> String {
+        let zone = ["under": t("underweight", "نقص وزن"), "normal": t("normal", "طبيعي"), "over": t("overweight", "زيادة وزن"), "obese": t("obesity", "سمنة")][b.zone] ?? b.zone
+        var s = t("Body mass index \(String(format: "%.1f", b.value)), \(zone).", "مؤشر كتلة الجسم \(String(format: "%.1f", b.value))، \(zone).")
+        if b.toNormal > 0 { s += " " + t("\(String(format: "%.1f", b.toNormal)) points to the normal range.", "باقي \(String(format: "%.1f", b.toNormal)) للمنطقة الطبيعية.") }
+        if let d = b.deltaMonth, d != 0 { s += " " + t("\(String(format: "%+.1f", d)) since last month.", "\(String(format: "%+.1f", d)) عن الشهر الماضي.") }
+        return s
+    }
+
+    static func week(_ w: ProgressSummary.Week) -> String {
+        let names = ["calories": t("calories", "السعرات"), "protein": t("protein", "البروتين"), "logged": t("meals", "الوجبات"), "water": t("water", "الماء"), "steps": t("steps", "الخطوات")]
+        var parts = [t("Week score \(w.score ?? 0) out of 100.", "التزام الأسبوع \(w.score ?? 0) من 100.")]
+        if let d = w.delta, d != 0 { parts.append(t("\(d > 0 ? "+" : "")\(d) versus last week.", "\(d > 0 ? "+" : "")\(d) عن الأسبوع اللي فات.")) }
+        for r in w.grid { parts.append("\(names[r.habit] ?? r.habit) \(r.hit) " + t("of \(w.daysSoFar) days.", "من \(w.daysSoFar) أيام.")) }
+        return parts.joined(separator: " ")
+    }
+
+    static func monitor(_ m: ProgressSummary.Monitor) -> String {
+        func lv(_ g: ProgressSummary.Gauge?) -> String { ["good": t("good", "جيد"), "ok": t("okay", "مقبول"), "high": t("high", "مرتفع"), "low": t("low", "منخفض")][g?.level ?? ""] ?? (g?.level ?? "") }
+        var parts = [t("Nutrition, 7-day average.", "مراقب التغذية، متوسط 7 أيام.")]
+        if let g = m.sugar { parts.append(t("Sugar \(Int(g.g ?? 0)) grams, \(lv(g)).", "السكر \(Int(g.g ?? 0)) غرام، \(lv(g)).")) }
+        if let g = m.sodium { parts.append(t("Sodium \(Int(g.mg ?? 0)) milligrams, \(lv(g)).", "الصوديوم \(Int(g.mg ?? 0)) ملغ، \(lv(g)).")) }
+        if let g = m.fiber { parts.append(t("Fibre \(Int(g.g ?? 0)) grams, \(lv(g)).", "الألياف \(Int(g.g ?? 0)) غرام، \(lv(g)).")) }
+        if let g = m.water { parts.append(t("Water \(Int(g.ml ?? 0)) millilitres, \(lv(g)).", "الماء \(Int(g.ml ?? 0)) مل، \(lv(g)).")) }
+        return parts.joined(separator: " ")
     }
 }

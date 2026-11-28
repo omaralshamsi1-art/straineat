@@ -1,4 +1,5 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { toArabic } from './error-i18n';
 
 /**
  * User-facing error messages are written in Arabic in the services; this filter returns the
@@ -45,19 +46,28 @@ export function wantsArabic(acceptLanguage: unknown): boolean {
   return typeof acceptLanguage === 'string' && /^\s*ar\b/i.test(acceptLanguage);
 }
 
-@Catch(HttpException)
+@Catch()
 export class LocalizedErrorFilter implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost) {
+  private readonly log = new Logger('Errors');
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const req = ctx.getRequest();
     const res = ctx.getResponse();
+    if (!res || typeof res.status !== 'function' || res.headersSent) return;
+    const ar = wantsArabic(req?.headers?.['accept-language']);
+    if (!(exception instanceof HttpException)) {
+      const st = Number((exception as any)?.status ?? (exception as any)?.statusCode);
+      if (st >= 400 && st < 500) return res.status(st).json({ statusCode: st, message: ar ? 'الطلب غير صحيح' : 'Bad request' });
+      // unexpected: log the details, show the person a plain sentence
+      this.log.error(`${req?.method} ${req?.url}: ${(exception as any)?.stack ?? exception}`);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ statusCode: 500, message: ar ? 'صار خطأ عندنا — حاول مرة ثانية بعد شوي' : 'Something went wrong on our side — please try again shortly' });
+    }
     const status = exception.getStatus();
     let body = exception.getResponse() as any;
-    if (!wantsArabic(req?.headers?.['accept-language'])) {
-      if (typeof body === 'string') body = toEnglish(body);
-      else if (body && typeof body.message === 'string') body = { ...body, message: toEnglish(body.message) };
-      else if (body && Array.isArray(body.message)) body = { ...body, message: body.message.map((m: unknown) => (typeof m === 'string' ? toEnglish(m) : m)) };
-    }
+    const tr = ar ? toArabic : toEnglish;
+    if (typeof body === 'string') body = tr(body);
+    else if (body && typeof body.message === 'string') body = { ...body, message: tr(body.message) };
+    else if (body && Array.isArray(body.message)) body = { ...body, message: body.message.map((m: unknown) => (typeof m === 'string' ? tr(m) : m)) };
     if (typeof body === 'string') body = { statusCode: status, message: body };
     res.status(status).json(body);
   }

@@ -54,7 +54,8 @@ export class ProgressService {
     return {
       today,
       journey: this.journey(p, plan, weights, current, today),
-      bmi: this.bmi(p, weights, current, today, plan.targetWeightKg),
+      // BMI from the smoothed trend weight — the same number My plan uses
+      bmi: this.bmi(p, weights, plan.currentWeightKg ?? current, today, plan.targetWeightKg),
       week: await this.week(userId, p, plan, today),
       monitor: await this.monitor(userId, today),
     };

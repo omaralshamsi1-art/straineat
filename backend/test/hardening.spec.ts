@@ -118,3 +118,26 @@ describe('week habits', () => {
     expect(s.week.delta).toBeNull();
   });
 });
+
+describe('next-phase fixes', () => {
+  it('open meal slots share what is left of the day', async () => {
+    const { rebalanceOpenSlots } = await import('../src/schedule/schedule');
+    const view: any[] = [
+      { id: 'breakfast', status: 'done', targetKcal: 500 },
+      { id: 'lunch', status: 'now', targetKcal: 700 },
+      { id: 'dinner', status: 'upcoming', targetKcal: 700 },
+    ];
+    rebalanceOpenSlots(view, 1900, 1500);
+    expect(view.map((s) => s.targetKcal)).toEqual([500, 200, 200]);
+    rebalanceOpenSlots(view, 1900, 2100);
+    expect(view[1].targetKcal).toBe(0);
+  });
+
+  it('error messages follow the app language', async () => {
+    const { toArabic } = await import('../src/common/error-i18n');
+    const { toEnglish } = await import('../src/common/i18n-errors');
+    expect(toArabic('kg must be between 20 and 400')).toBe('الوزن لازم يكون بين 20 و400 كغ');
+    expect(toArabic('No AI provider configured (set ANTHROPIC_API_KEY or GEMINI_API_KEY)')).toMatch(/غير متاح/);
+    expect(toEnglish('البريد أو كلمة المرور غير صحيحة')).toBe('Wrong email or password');
+  });
+});
