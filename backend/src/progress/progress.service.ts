@@ -166,7 +166,7 @@ export class ProgressService {
       };
     });
     // weakest = lowest hit rate on finished days (ties are all named), only when it's below 100%
-    const judged = grid.filter((g) => g.habit !== 'logged' && g.of > 0);
+    const judged = grid.filter((g) => g.of > 0);
     const minRate = judged.length ? Math.min(...judged.map((g) => g.hit / g.of)) : 1;
     const weakestAll = minRate < 1 ? judged.filter((g) => g.hit / g.of === minRate) : [];
     const now = score(thisWeek), prev = score(lastWeek);

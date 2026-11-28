@@ -9,6 +9,7 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "من": "of",
     "،": ",",
     "وجبة وحدة": "1 meal",
     "خطوة": "steps",

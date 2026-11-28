@@ -306,12 +306,14 @@ struct WeekHabitsCard: View {
         guard let v else { return "✓" }
         guard let n = v.v else { return v.text }
         let of = v.of ?? 0
+        // "48 من 170" in Arabic (a slash between two numbers reads ambiguously right-to-left)
+        func pair(_ a: String, _ b: String) -> String { appLang == .ar ? "\(a) من \(b)" : "\(a) / \(b)" }
         switch v.unit {
         case "meals": return n == 1 ? t("1 meal", "وجبة وحدة") : t("\(Int(n)) meals", "\(Int(n)) وجبات")
-        case "L": return "\(String(format: "%.1f", n)) / \(String(format: of.truncatingRemainder(dividingBy: 0.1) > 0.001 ? "%.2f" : "%.1f", of)) " + t("L", "لتر")
-        case "kcal": return "\(fmt(n)) / \(fmt(of)) " + t("kcal", "سعرة") + " · " + t("target range 70–105%", "النطاق 70–105%")
-        case "g": return "\(fmt(n)) / \(fmt(of)) " + t("g", "غ")
-        default: return "\(fmt(n)) / \(fmt(of))" + (v.unit == "steps" ? " " + t("steps", "خطوة") : "")
+        case "L": return pair(String(format: "%.1f", n), String(format: of.truncatingRemainder(dividingBy: 0.1) > 0.001 ? "%.2f" : "%.1f", of)) + " " + t("L", "لتر")
+        case "kcal": return pair(fmt(n), fmt(of)) + " " + t("kcal", "سعرة") + " · " + t("target range 70–105%", "النطاق 70–105%")
+        case "g": return pair(fmt(n), fmt(of)) + " " + t("g", "غ")
+        default: return pair(fmt(n), fmt(of)) + (v.unit == "steps" ? " " + t("steps", "خطوة") : "")
         }
     }
     private func dayName(_ i: Int) -> String {
@@ -450,7 +452,7 @@ struct ProgressHeader: View {
                 if let b = s.bmi {
                     BMICard(b: b).accessibilityElement(children: .ignore).accessibilityLabel(A11y.bmi(b))
                 }
-                if s.week.score != nil || s.week.lastWeekScore != nil || s.week.grid.contains(where: { ($0.vals ?? []).contains { $0 != nil } }) {
+                if s.week.score != nil || s.week.lastWeekScore != nil || s.week.grid.contains(where: { ($0.vals ?? []).contains { ($0?.pct ?? 0) > 0 } }) {
                     WeekHabitsCard(w: s.week).accessibilityElement(children: .ignore).accessibilityLabel(A11y.week(s.week))
                 }
                 if s.monitor.sugar != nil || s.monitor.water != nil || s.monitor.fiber != nil {
