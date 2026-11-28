@@ -57,6 +57,7 @@ extension UIColor {
 struct Card<Content: View>: View {
     var title: String? = nil
     var icon: String? = nil
+    var iconTint: Color? = nil
     var trailing: AnyView? = nil
     @ViewBuilder var content: Content
 
@@ -64,7 +65,14 @@ struct Card<Content: View>: View {
         VStack(alignment: .leading, spacing: 12) {
             if title != nil || trailing != nil {
                 HStack(spacing: 6) {
-                    if let icon { Image(systemName: icon).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.muted) }
+                    if let icon {
+                        if let iconTint {
+                            Image(systemName: icon).font(.subheadline.weight(.medium)).foregroundStyle(iconTint)
+                                .frame(width: 30, height: 30)
+                                .background(iconTint.opacity(0.2), in: RoundedRectangle(cornerRadius: 9))
+                                .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(iconTint.opacity(0.28), lineWidth: 1))
+                        } else { Image(systemName: icon).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.muted) }
+                    }
                     if let title { Text(appLang == .ar ? title : title.uppercased()).font(appLang == .ar ? .headline.weight(.heavy) : .subheadline.weight(.heavy)).tracking(appLang == .ar ? 0 : 1.6).foregroundStyle(Theme.ink) }
                     Spacer()
                     if let trailing { trailing }

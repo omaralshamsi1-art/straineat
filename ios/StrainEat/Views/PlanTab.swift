@@ -66,28 +66,28 @@ struct PlanTab: View {
                 }
                 groupHeader(t("Devices & connections", "الأجهزة والربط"))
                 NavigationLink { subPage(t("Burn source & devices", "مصدر الحرق والأجهزة")) { DevicesCard(profile: profile, onChange: { Task { await load() } }) } } label: {
-                    PlanLink(icon: "applewatch", title: t("Burn source & devices", "مصدر الحرق والأجهزة"), subtitle: store.whoopConnected ? t("WHOOP connected · Apple Health", "WHOOP مربوط · Apple Health") : t("WHOOP, Apple Health", "WHOOP و Apple Health"))
+                    PlanLink(icon: "applewatch", title: t("Burn source & devices", "مصدر الحرق والأجهزة"), subtitle: store.whoopConnected ? t("WHOOP connected · Apple Health", "WHOOP مربوط · Apple Health") : t("WHOOP, Apple Health", "WHOOP و Apple Health"), tint: SettingsTint.blue)
                 }
                 groupHeader(t("Reminders", "التذكيرات"))
                 if let profile {
                     NavigationLink { subPage(t("Notifications", "الإشعارات")) { DayAlertsCard(profile: profile) } } label: {
-                        PlanLink(icon: "bell.fill", title: t("Notifications", "الإشعارات"), subtitle: t("Activity, calories, protein, weekly", "النشاط، السعرات، البروتين، الأسبوع"))
+                        PlanLink(icon: "bell", title: t("Notifications", "الإشعارات"), subtitle: t("Activity, calories, protein, weekly", "النشاط، السعرات، البروتين، الأسبوع"), tint: SettingsTint.yellow)
                     }
                     NavigationLink { subPage(t("Water", "الماء")) { WaterSettingsCard(profile: profile) } } label: {
-                        PlanLink(icon: "drop.fill", title: t("Water", "الماء"), subtitle: t("Daily goal and reminders", "الهدف اليومي والتذكيرات"))
+                        PlanLink(icon: "drop", title: t("Water", "الماء"), subtitle: t("Daily goal and reminders", "الهدف اليومي والتذكيرات"), tint: SettingsTint.blue)
                     }
                     NavigationLink { subPage(t("Medicines & vitamins", "الأدوية والفيتامينات")) { MedRemindersCard(profile: profile) } } label: {
-                        PlanLink(icon: "pills.fill", title: t("Medicines & vitamins", "الأدوية والفيتامينات"), subtitle: t("Daily reminders", "تذكيرات يومية"))
+                        PlanLink(icon: "pills", title: t("Medicines & vitamins", "الأدوية والفيتامينات"), subtitle: t("Daily reminders", "تذكيرات يومية"), tint: SettingsTint.green)
                     }
                 }
                 groupHeader(t("App", "التطبيق"))
-                Card(title: t("Appearance", "المظهر"), icon: "circle.lefthalf.filled") { ThemePicker() }
-                Card(title: "Language · اللغة", icon: "globe") { LanguagePicker() }
-                Card(title: t("Display size", "حجم العرض"), icon: "textformat.size") { DisplaySizePicker() }
+                Card(title: t("Appearance", "المظهر"), icon: "circle.lefthalf.filled", iconTint: SettingsTint.grey) { ThemePicker() }
+                Card(title: "Language · اللغة", icon: "globe", iconTint: SettingsTint.blue) { LanguagePicker() }
+                Card(title: t("Display size", "حجم العرض"), icon: "textformat.size", iconTint: SettingsTint.orange) { DisplaySizePicker() }
                 ExtraAnalysesRow()
                 groupHeader(t("Privacy", "الخصوصية"))
                 NavigationLink { subPage(t("Privacy & data", "الخصوصية والبيانات")) { PrivacyCard(aiConsentAt: profile?.aiConsentAt) } } label: {
-                    PlanLink(icon: "lock.fill", title: t("Privacy & data", "الخصوصية والبيانات"), subtitle: t("AI consent · delete account", "موافقة التحليل · حذف الحساب"))
+                    PlanLink(icon: "lock", title: t("Privacy & data", "الخصوصية والبيانات"), subtitle: t("AI consent · delete account", "موافقة التحليل · حذف الحساب"), tint: SettingsTint.grey)
                 }
                 Text("StrainEat \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
                     .font(.caption2).foregroundStyle(Theme.muted).frame(maxWidth: .infinity).padding(.top, 8)
@@ -195,10 +195,21 @@ struct PlanLink: View {
     let title: String
     let subtitle: String
     var badge: String? = nil
+    /// Settings rows: line icon in its own colour on a soft tinted square (same as the web app).
+    var tint: Color? = nil
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: icon).font(.body.weight(.semibold)).foregroundStyle(Theme.ink)
-                .frame(width: 40, height: 40).background(Theme.card2, in: RoundedRectangle(cornerRadius: 12))
+            Group {
+                if let tint {
+                    Image(systemName: icon).font(.body.weight(.medium)).foregroundStyle(tint)
+                        .frame(width: 40, height: 40)
+                        .background(tint.opacity(0.2), in: RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(tint.opacity(0.28), lineWidth: 1))
+                } else {
+                    Image(systemName: icon).font(.body.weight(.semibold)).foregroundStyle(Theme.ink)
+                        .frame(width: 40, height: 40).background(Theme.card2, in: RoundedRectangle(cornerRadius: 12))
+                }
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink)
                 Text(subtitle).font(.caption).foregroundStyle(Theme.muted).lineLimit(1)
@@ -867,4 +878,14 @@ struct IntenseAdvice: View {
             .background(Theme.warn.opacity(0.18), in: RoundedRectangle(cornerRadius: 18))
         }
     }
+}
+
+/// Same colours as the web settings icons.
+enum SettingsTint {
+    static let blue = Color(red: 0.29, green: 0.66, blue: 1.0)
+    static let purple = Color(red: 0.65, green: 0.55, blue: 0.98)
+    static let yellow = Color(red: 0.96, green: 0.76, blue: 0.42)
+    static let green = Color(red: 0.27, green: 0.83, blue: 0.51)
+    static let orange = Color(red: 1.0, green: 0.62, blue: 0.30)
+    static let grey = Color(red: 0.60, green: 0.64, blue: 0.68)
 }
