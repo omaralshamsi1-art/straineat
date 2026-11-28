@@ -9,6 +9,7 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "💡 يحتاج شغل: {} — وصلت الهدف {} من {} أيام خلصت هالأسبوع. اضغط أي مربع تشوف الرقم.": "💡 Needs work: {} — target reached on {} of the {} finished days this week. Tap any square for the numbers.",
     "من": "of",
     "،": ",",
     "وجبة وحدة": "1 meal",

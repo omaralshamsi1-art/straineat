@@ -343,7 +343,7 @@ struct WeekHabitsCard: View {
         guard let wk = w.weakest else { return nil }
         let names = (wk.habits ?? [wk.habit]).map { meta($0).0 }
         let joined = names.count > 1 ? names.dropLast().joined(separator: t(", ", "، ")) + t(" and ", " و") + names.last! : names.first ?? ""
-        return t("💡 Weakest: \(joined) (\(wk.hit) of \(wk.of) days)", "💡 أضعف نقطة: \(joined) (\(wk.hit) من \(wk.of))")
+        return t("💡 Needs work: \(joined) — target reached on \(wk.hit) of the \(wk.of) finished days this week", "💡 يحتاج شغل: \(joined) — وصلت الهدف \(wk.hit) من \(wk.of) أيام خلصت هالأسبوع")
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -389,7 +389,7 @@ struct WeekHabitsCard: View {
                     Text(picked).font(.footnote.weight(.semibold)).foregroundStyle(Theme.ink)
                         .padding(.horizontal, 10).padding(.vertical, 6).background(Theme.card2, in: Capsule())
                 }
-                Text(weakText.map { $0 + t(" · tap any square for the numbers.", " · اضغط أي مربع تشوف الرقم.") } ?? t("💡 Tap any square to see that day's number.", "💡 اضغط على أي مربع تشوف رقم ذاك اليوم."))
+                Text(weakText.map { $0 + t(". Tap any square for the numbers.", ". اضغط أي مربع تشوف الرقم.") } ?? t("💡 Tap any square to see that day's number.", "💡 اضغط على أي مربع تشوف رقم ذاك اليوم."))
                     .font(.footnote).foregroundStyle(Theme.muted)
             }
             .padding(16).background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))

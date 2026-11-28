@@ -3197,7 +3197,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     const wk = w.weakest;
     const names = wk ? (wk.habits || [wk.habit]).map((h) => (H[h] || [h])[0]) : [];
     const joined = names.length > 1 ? names.slice(0, -1).join(T('،') + ' ') + ' ' + T('و') + names[names.length - 1] : names[0];
-    $('wkNote').textContent = wk ? L`💡 أضعف نقطة: ${joined} (${wk.hit} من ${wk.of}) · اضغط أي مربع تشوف الرقم.` : w.score != null && w.score >= 100 ? T('💡 أسبوع ممتاز — كمّل كذا.') : T('💡 اضغط على أي مربع تشوف رقم ذاك اليوم.');
+    $('wkNote').textContent = wk ? L`💡 يحتاج شغل: ${joined} — وصلت الهدف ${wk.hit} من ${wk.of} أيام خلصت هالأسبوع. اضغط أي مربع تشوف الرقم.` : w.score != null && w.score >= 100 ? T('💡 أسبوع ممتاز — كمّل كذا.') : T('💡 اضغط على أي مربع تشوف رقم ذاك اليوم.');
     $('wkGrid').querySelectorAll('.dot').forEach((d) => setTimeout(() => d.classList.add('on'), 200 + +d.dataset.d * 110 + +d.dataset.r * 40));
     const dayName = (i) => new Date(Date.parse(`${w.weekStart}T12:00:00`) + i * 86400000).toLocaleDateString(LOC, { weekday: 'long' });
     $('wkGrid').querySelectorAll('.dot[data-tip]').forEach((d) => (d.onclick = () => {
