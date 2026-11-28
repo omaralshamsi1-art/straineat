@@ -19,13 +19,15 @@ struct ProgressSummary: Decodable {
     }
     struct BMI: Decodable { let value: Double; let zone: String; let target: Double?; let deltaMonth: Double?; let toNormal: Double }
     struct Week: Decodable {
-        struct Val: Decodable { let pct: Double; let text: String }
+        struct Val: Decodable { let pct: Double; let text: String; let v: Double?; let of: Double?; let unit: String? }
         struct Row: Decodable { let habit: String; let days: [Bool?]; let hit: Int; let vals: [Val?]? }
-        struct Weak: Decodable { let habit: String; let hit: Int; let of: Int }
+        struct Weak: Decodable { let habit: String; let hit: Int; let of: Int; let habits: [String]? }
         let score: Int?
         let delta: Int?
         let daysSoFar: Int
         let todayIndex: Int?
+        let lastWeekScore: Int?
+        let firstDate: String?
         let weekStart: String?
         let grid: [Row]
         let weakest: Weak?
@@ -265,55 +267,94 @@ struct WeekHabitsCard: View {
     let w: ProgressSummary.Week
     @State private var shown = false
     @State private var picked: String?
+    @State private var pickedKey: String?
     private var todayIdx: Int { let t = w.todayIndex ?? 7; return t < 0 ? 7 : t }
+    private var firstIdx: Int {
+        guard let f = w.firstDate, let s = w.weekStart, let a = DateFormatter.isoDay.date(from: s), let b = DateFormatter.isoDay.date(from: f) else { return 0 }
+        return max(0, Calendar.current.dateComponents([.day], from: a, to: b).day ?? 0)
+    }
+    private let red = Color(red: 0.85, green: 0.33, blue: 0.31)
 
-    /// Reached = full colour; otherwise filled up to how close you got; calories over target in red; today outlined.
+    /// reached = full colour · partly there = fills like a level · calories over = red · missed = dark · nothing to judge / future = outline
     @ViewBuilder private func cell(_ row: ProgressSummary.Week.Row, _ i: Int, _ col: Color) -> some View {
-        let hit = row.days[safe: i].flatMap { $0 } == true
+        let state = row.days[safe: i].flatMap { $0 }
         let v = row.vals?[safe: i].flatMap { $0 }
-        let over = row.habit == "calories" && !hit && (v?.pct ?? 0) > 1
-        let pct = hit ? 1 : min(1, max(0, v?.pct ?? 0))
         let shape = RoundedRectangle(cornerRadius: 7)
+        let outside = i < firstIdx || i > todayIdx
+        let isToday = i == todayIdx
         ZStack(alignment: .bottom) {
-            shape.fill(Theme.card2)
-            if over { shape.fill(Color(red: 0.9, green: 0.33, blue: 0.29).opacity(0.55)) }
-            else if hit { shape.fill(col) }
-            else if pct > 0 {
-                GeometryReader { g in
-                    VStack(spacing: 0) { Spacer(minLength: 0); Rectangle().fill(col.opacity(0.55)).frame(height: g.size.height * pct) }
+            if outside || (state == nil && !(isToday && v != nil)) {
+                shape.strokeBorder(Theme.line, lineWidth: outside ? 1 : 1.5).opacity(outside ? 0.6 : 1)
+            } else if state == true {
+                shape.fill(col)
+            } else if row.habit == "calories", (v?.pct ?? 0) > 1 {
+                shape.fill(red)
+            } else {
+                shape.fill(Theme.card2)
+                let pct = min(1, max(0, v?.pct ?? 0))
+                if pct > 0 {
+                    GeometryReader { g in VStack(spacing: 0) { Spacer(minLength: 0); Rectangle().fill(col).frame(height: g.size.height * pct) } }
+                        .clipShape(shape)
                 }
-                .clipShape(shape)
             }
         }
-        .overlay(shape.strokeBorder(Theme.ink.opacity(i == todayIdx ? 0.35 : 0), lineWidth: 2))
-        .opacity(i > todayIdx ? 0.35 : 1)
+        .overlay(shape.strokeBorder(Theme.ink.opacity(isToday ? 0.45 : 0), lineWidth: 2))
     }
-    private func tip(_ row: ProgressSummary.Week.Row, _ i: Int) -> String? {
-        guard let v = row.vals?[safe: i].flatMap({ $0 }) else { return row.days[safe: i].flatMap { $0 } == true ? "✓" : nil }
-        let hit = row.days[safe: i].flatMap { $0 } == true
-        return v.text + (i == todayIdx && !hit ? t(" · today isn't over yet", " · اليوم ما خلص") : "")
+
+    /// The numbers of one cell, in the app's language.
+    private func valText(_ habit: String, _ v: ProgressSummary.Week.Val?) -> String {
+        guard let v else { return "✓" }
+        guard let n = v.v else { return v.text }
+        let of = v.of ?? 0
+        switch v.unit {
+        case "meals": return n == 1 ? t("1 meal", "وجبة وحدة") : t("\(Int(n)) meals", "\(Int(n)) وجبات")
+        case "L": return "\(String(format: "%.1f", n)) / \(String(format: of.truncatingRemainder(dividingBy: 0.1) > 0.001 ? "%.2f" : "%.1f", of)) " + t("L", "لتر")
+        case "kcal": return "\(fmt(n)) / \(fmt(of)) " + t("kcal", "سعرة") + " · " + t("target range 70–105%", "النطاق 70–105%")
+        case "g": return "\(fmt(n)) / \(fmt(of)) " + t("g", "غ")
+        default: return "\(fmt(n)) / \(fmt(of))" + (v.unit == "steps" ? " " + t("steps", "خطوة") : "")
+        }
     }
     private func dayName(_ i: Int) -> String {
         guard let s = w.weekStart, let d = DateFormatter.isoDay.date(from: s), let day = Calendar.current.date(byAdding: .day, value: i, to: d) else { return "" }
         let f = DateFormatter(); f.locale = Locale(identifier: appLang == .ar ? "ar" : "en"); f.dateFormat = "EEEE"
         return f.string(from: day)
     }
+    private func tap(_ row: ProgressSummary.Week.Row, _ i: Int, _ name: String) {
+        let key = "\(row.habit)-\(i)"
+        let state = row.days[safe: i].flatMap { $0 }
+        let v = row.vals?[safe: i].flatMap { $0 }
+        // no data (future, before you started, nothing to judge): clear; same cell again: close
+        guard i >= firstIdx, i <= todayIdx, v != nil || state == true, pickedKey != key else { picked = nil; pickedKey = nil; return }
+        pickedKey = key
+        picked = "\(dayName(i)) · \(name): \(valText(row.habit, v))" + (i == todayIdx && state != true ? t(" · today isn't over yet", " · اليوم ما خلص") : "")
+    }
     private func meta(_ h: String) -> (String, Color) {
         switch h {
         case "calories": return (t("Calories", "السعرات"), Color(red: 0.27, green: 0.83, blue: 0.51))
         case "protein": return (t("Protein", "البروتين"), Color(red: 0.96, green: 0.76, blue: 0.42))
-        case "logged": return (t("Meal", "وجبات"), Color(red: 0.27, green: 0.83, blue: 0.51))
+        case "logged": return (t("Meal", "وجبات"), Color(red: 0.65, green: 0.55, blue: 0.98))
         case "water": return (t("Water", "الماء"), Color(red: 0.29, green: 0.66, blue: 1))
         default: return (t("Steps", "الخطوات"), Color(red: 1, green: 0.62, blue: 0.3))
         }
+    }
+    private var weakText: String? {
+        guard let wk = w.weakest else { return nil }
+        let names = (wk.habits ?? [wk.habit]).map { meta($0).0 }
+        let joined = names.count > 1 ? names.dropLast().joined(separator: t(", ", "، ")) + t(" and ", " و") + names.last! : names.first ?? ""
+        return t("💡 Weakest: \(joined) (\(wk.hit) of \(wk.of) days)", "💡 أضعف نقطة: \(joined) (\(wk.hit) من \(wk.of))")
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             sectionHeader(t("This week's habits", "التزام الأسبوع"), w.delta.map { ($0 > 0 ? "+" : $0 < 0 ? "−" : "") + "\(abs($0))" + t(" vs last week", " عن الأسبوع الماضي") })
             VStack(alignment: .leading, spacing: 10) {
+                // finished days only; on a week's first day show last week's score instead of a misleading one
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("\(w.score ?? 0)").heroFont(40, weight: .heavy).monospacedDigit().contentTransition(.numericText())
-                    Text(t("of 100", "من 100")).font(.subheadline.weight(.bold)).foregroundStyle(Theme.muted)
+                    if let sc = w.score ?? w.lastWeekScore {
+                        Text("\(sc)").heroFont(40, weight: .heavy).monospacedDigit().contentTransition(.numericText())
+                        Text(w.score != nil ? t("of 100", "من 100") : t("of 100 · last week", "من 100 · الأسبوع الماضي")).font(.subheadline.weight(.bold)).foregroundStyle(Theme.muted)
+                    } else {
+                        Text(t("Score starts after your first full day", "نبدأ الحساب بعد أول يوم كامل")).font(.subheadline.weight(.bold)).foregroundStyle(Theme.muted)
+                    }
                 }
                 Grid(horizontalSpacing: 6, verticalSpacing: 6) {
                     GridRow {
@@ -327,26 +368,34 @@ struct WeekHabitsCard: View {
                             ForEach(0..<7, id: \.self) { i in
                                 cell(row, i, m.1)
                                     .aspectRatio(1, contentMode: .fit)
+                                    .contentShape(Rectangle())
                                     .scaleEffect(shown ? 1 : 0.4).opacity(shown ? 1 : 0)
                                     .animation(.spring(response: 0.45, dampingFraction: 0.55).delay(0.2 + Double(i) * 0.11 + Double(ri) * 0.04), value: shown)
-                                    .onTapGesture { if let txt = tip(row, i) { picked = "\(dayName(i)) · \(m.0): \(txt)" } }
+                                    .onTapGesture { tap(row, i, m.0) }
                             }
                         }
                     }
                 }
+                HStack(spacing: 12) {
+                    legend(AnyView(RoundedRectangle(cornerRadius: 3).fill(meta("calories").1)), t("Reached", "وصلت"))
+                    legend(AnyView(ZStack(alignment: .bottom) { RoundedRectangle(cornerRadius: 3).fill(Theme.card2); Rectangle().fill(meta("calories").1).frame(height: 5.5) }.clipShape(RoundedRectangle(cornerRadius: 3))), t("Close", "قرّبت"))
+                    legend(AnyView(RoundedRectangle(cornerRadius: 3).fill(red)), t("Over calories", "فوق السعرات"))
+                    legend(AnyView(RoundedRectangle(cornerRadius: 3).strokeBorder(Theme.ink.opacity(0.45), lineWidth: 2)), t("Today", "اليوم"))
+                }
+                .font(.caption2).foregroundStyle(Theme.muted)
                 if let picked {
                     Text(picked).font(.footnote.weight(.semibold)).foregroundStyle(Theme.ink)
                         .padding(.horizontal, 10).padding(.vertical, 6).background(Theme.card2, in: Capsule())
-                        .transition(.opacity)
                 }
-                if picked == nil { Text(t("Tap any square to see that day's number.", "اضغط على أي مربع تشوف رقم ذاك اليوم.")).font(.caption2).foregroundStyle(Theme.muted) }
-                if let wk = w.weakest, wk.hit < wk.of {
-                    Text(t("💡 \(meta(wk.habit).0) is your weakest habit — \(wk.hit) of \(wk.of) days this week.", "💡 \(meta(wk.habit).0) أضعف نقطة — \(wk.hit) من \(wk.of) أيام هالأسبوع.")).font(.footnote).foregroundStyle(Theme.muted)
-                }
+                Text(weakText.map { $0 + t(" · tap any square for the numbers.", " · اضغط أي مربع تشوف الرقم.") } ?? t("💡 Tap any square to see that day's number.", "💡 اضغط على أي مربع تشوف رقم ذاك اليوم."))
+                    .font(.footnote).foregroundStyle(Theme.muted)
             }
             .padding(16).background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         }
         .onAppear { shown = true }
+    }
+    private func legend(_ swatch: AnyView, _ label: String) -> some View {
+        HStack(spacing: 4) { swatch.frame(width: 11, height: 11); Text(label) }
     }
 }
 
@@ -401,7 +450,7 @@ struct ProgressHeader: View {
                 if let b = s.bmi {
                     BMICard(b: b).accessibilityElement(children: .ignore).accessibilityLabel(A11y.bmi(b))
                 }
-                if s.week.score != nil {
+                if s.week.score != nil || s.week.lastWeekScore != nil || s.week.grid.contains(where: { ($0.vals ?? []).contains { $0 != nil } }) {
                     WeekHabitsCard(w: s.week).accessibilityElement(children: .ignore).accessibilityLabel(A11y.week(s.week))
                 }
                 if s.monitor.sugar != nil || s.monitor.water != nil || s.monitor.fiber != nil {
@@ -444,9 +493,9 @@ enum A11y {
 
     static func week(_ w: ProgressSummary.Week) -> String {
         let names = ["calories": t("calories", "السعرات"), "protein": t("protein", "البروتين"), "logged": t("meals", "الوجبات"), "water": t("water", "الماء"), "steps": t("steps", "الخطوات")]
-        var parts = [t("Week score \(w.score ?? 0) out of 100.", "التزام الأسبوع \(w.score ?? 0) من 100.")]
+        var parts = [w.score != nil ? t("Week score \(w.score!) out of 100.", "التزام الأسبوع \(w.score!) من 100.") : t("This week's score starts after your first full day.", "نتيجة الأسبوع تبدأ بعد أول يوم كامل.")]
         if let d = w.delta, d != 0 { parts.append(t("\(d > 0 ? "+" : "")\(d) versus last week.", "\(d > 0 ? "+" : "")\(d) عن الأسبوع اللي فات.")) }
-        for r in w.grid { parts.append("\(names[r.habit] ?? r.habit) \(r.hit) " + t("of \(w.daysSoFar) days.", "من \(w.daysSoFar) أيام.")) }
+        for r in w.grid { let of = max(r.hit, (r.days.prefix(max(0, (w.todayIndex ?? 7))).filter { $0 != nil }.count)); parts.append("\(names[r.habit] ?? r.habit) \(r.hit) " + t("of \(of) days.", "من \(of) أيام.")) }
         return parts.joined(separator: " ")
     }
 

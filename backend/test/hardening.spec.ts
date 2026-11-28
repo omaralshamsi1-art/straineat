@@ -193,7 +193,41 @@ describe('week habits detail', () => {
     const protein = w.grid.find((r: any) => r.habit === 'protein');
     expect(protein.vals[ti].text).toMatch(/^20 \/ \d+ g$/);
     expect(protein.vals[ti].pct).toBeGreaterThan(0);
-    // only "logged" is reached today, and unfinished habits of today are not counted as misses
-    expect(w.score).toBe(100);
+    // first day: nothing finished yet, so no score (one meal must not read as 100)
+    expect(w.score).toBeNull();
+    expect(protein.vals[ti]).toMatchObject({ v: 20, unit: 'g' });
+  });
+});
+
+describe('week habits scoring rules', () => {
+  const build = async (setup: (repo: MemoryRepository, d: (n: number) => string) => Promise<void>, prof: any = {}) => {
+    const repo = new MemoryRepository();
+    const profiles = new ProfileService(repo);
+    const plans = new PlanService(repo, profiles);
+    const progress = new ProgressService(repo, profiles, plans, new WaterService(repo, profiles), new StepsService(repo, profiles));
+    await profiles.update('u', { sex: 'female', birthYear: 1995, heightCm: 165, weightKg: 70, goal: 'lose', onboarded: true, ...prof } as any);
+    const { localDate } = await import('../src/common/dates');
+    const { addDays } = await import('../src/plan/plan.service');
+    const today = localDate(new Date(), 'Asia/Dubai');
+    const d = (n: number) => addDays(today, n);
+    await setup(repo, d);
+    return { w: (await progress.summary('u')).week as any, today };
+  };
+  const meal = (repo: MemoryRepository, date: string, kcal: number, p: number) => repo.saveMeal({ id: `m-${date}-${kcal}`, userId: 'u', status: 'confirmed', eatenAt: `${date}T08:00:00Z`, date, createdAt: '', updatedAt: '', final: { meal_name: 'x', totals: { calories: kcal, protein_g: p, carbs_g: 1, fat_g: 1, fiber_g: 0, sugar_g: 0, sodium_mg: 0 }, items: [] } } as any);
+
+  it('a water-only day does not count calories/protein as misses', async () => {
+    const { w } = await build(async (repo, d) => {
+      await repo.upsertWater({ id: 'w1', userId: 'u', date: d(-1), ml: 500, at: `${d(-1)}T08:00:00Z`, source: 'manual' } as any);
+    });
+    if (w.todayIndex <= 0) return; // the day before today is in last week (Monday): nothing to check this week
+    const cal = w.grid.find((r: any) => r.habit === 'calories');
+    expect(cal.days[w.todayIndex - 1]).toBeNull();
+  });
+
+  it('weakest names every tied habit, by hit rate on finished days', async () => {
+    const { w } = await build(async (repo, d) => { await meal(repo, d(-1), 300, 5); });
+    if (w.todayIndex <= 0) return;
+    expect(w.weakest.habits).toEqual(expect.arrayContaining(['calories', 'protein']));
+    expect(w.weakest.of).toBe(1);
   });
 });

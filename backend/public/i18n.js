@@ -9,6 +9,18 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "،": ",",
+    "وجبة وحدة": "1 meal",
+    "خطوة": "steps",
+    "النطاق 95–115%": "target range 95–115%",
+    "النطاق 70–105%": "target range 70–105%",
+    "من 100 · الأسبوع الماضي": "of 100 · last week",
+    "نبدأ الحساب بعد أول يوم كامل": "Score starts after your first full day",
+    "وصلت": "Reached",
+    "قرّبت": "Close",
+    "فوق السعرات": "Over calories",
+    "و": "and ",
+    "💡 أضعف نقطة: {} ({} من {}) · اضغط أي مربع تشوف الرقم.": "💡 Weakest: {} ({} of {} days) · tap any square for the numbers.",
     "اليوم ما خلص": "today isn't over yet",
     "💡 اضغط على أي مربع تشوف رقم ذاك اليوم.": "💡 Tap any square to see that day's number.",
     "هذا مو ChatGPT ولا Claude ولا Gemini. لا توافق إلا إذا كنت تعرف هذا الموقع وأنت اللي بديت الربط.": "This is not ChatGPT, Claude or Gemini. Only approve if you know this site and you started the connection.",

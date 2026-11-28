@@ -966,9 +966,10 @@ html { scrollbar-width: none; } html::-webkit-scrollbar, body::-webkit-scrollbar
 #plNotices .notice.info::before { content: "ⓘ"; color: var(--p); }
 #v-plan { padding-bottom: 40px; }
 body { min-height: 100vh; }
-/* display size: whole UI scales together */
-html[data-size="sm"] { zoom: .9; }
-html[data-size="lg"] { zoom: 1.1; }
+/* display size: the content scales; never zoom an ancestor of a fixed element (iOS Safari then drifts the
+   bottom bar and sheets up as you scroll). Fixed bars/sheets scale their insides instead. */
+html[data-size="sm"] :is(.wrap > :not(#cam):not(#itSheet):not(#v-onb), nav > *, #det > *, #ask > *) { zoom: .9; }
+html[data-size="lg"] :is(.wrap > :not(#cam):not(#itSheet):not(#v-onb), nav > *, #det > *, #ask > *) { zoom: 1.1; }
 /* large: keep the header on one line by dropping the wordmark (the logo stays) */
 html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
 #tilesGrid > .ftile:last-child:nth-child(odd) { grid-column: 1 / -1; } /* a lone last tile spans the row */
@@ -1010,7 +1011,13 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
 .wkGrid .dot { aspect-ratio: 1; border-radius: 8px; background: var(--card-2); transform: scale(.4); opacity: 0; transition: transform .5s cubic-bezier(.3,1.6,.4,1), opacity .4s; }
 .wkGrid .dot.on { transform: scale(1); opacity: 1; } .wkGrid .dot.fut { opacity: .35; }
 .wkGrid button.dot { border: 0; padding: 0; font: inherit; cursor: pointer; }
-.wkGrid .dot.now { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 35%, transparent); }
+.wkGrid .dot.now { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 45%, transparent); }
+.wkGrid .dot.na { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line); }
+.wkGrid .dot.fut { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 60%, transparent); }
+.wkLeg { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; font-size: 11px; color: var(--muted); }
+.wkLeg span { display: inline-flex; align-items: center; gap: 5px; }
+.wkLeg i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.wkLeg i.o { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 45%, transparent); }
 .jars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .jar { position: relative; height: 96px; background: var(--card-2); border-radius: 16px; overflow: hidden; text-align: center; padding-top: 10px; }
 .jar .w { position: absolute; left: 0; right: 0; bottom: 0; height: 0; transition: height 2s cubic-bezier(.2,.8,.2,1); }
@@ -1218,8 +1225,9 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     <div id="wkWrap" class="hidden">
       <div class="jyHd"><span>التزام الأسبوع</span><span class="jyChip" id="wkChip"></span></div>
       <div class="card jyCard">
-        <div class="jyBig"><b class="num" id="wkScore">0</b> <small>من 100</small></div>
+        <div class="jyBig" id="wkBig"><b class="num" id="wkScore">0</b> <small id="wkOf">من 100</small></div>
         <div class="wkGrid" id="wkGrid"></div>
+        <div class="wkLeg" id="wkLeg"></div>
         <p class="jyNote" id="wkNote"></p>
       </div>
     </div>
@@ -3138,34 +3146,58 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       countUp($('bmiV'), b.value, 2200, 1);
     }, 150));
   }
-  const HABIT = () => ({ calories: [T('السعرات'), '#45d483'], protein: [T('البروتين'), '#f5c26b'], logged: [T('وجبات'), '#45d483'], water: [T('الماء'), '#4aa8ff'], steps: [T('الخطوات'), '#ff9e4d'] });
+  const HABIT = () => ({ calories: [T('السعرات'), '#45d483'], protein: [T('البروتين'), '#f5c26b'], logged: [T('وجبات'), '#a78bfa'], water: [T('الماء'), '#4aa8ff'], steps: [T('الخطوات'), '#ff9e4d'] });
+  // numbers of one cell, in the app's language and number format (kept left-to-right inside Arabic text)
+  function habitValText(habit, x) {
+    if (!x) return '✓';
+    const ltr = (t) => `⁦${t}⁩`;
+    const v = x.v != null ? x.v : null, of = x.of;
+    if (v == null) return x.text || '';
+    if (x.unit === 'meals') return v === 1 ? T('وجبة وحدة') : L`${fmt(v)} وجبات`;
+    if (x.unit === 'L') return `${ltr(`${fmt1(v)} / ${of != null && of % 0.1 > 0.001 ? of.toFixed(2) : fmt1(of)}`)} ${T('لتر')}`;
+    if (x.unit === 'kcal') return `${ltr(`${fmt(v)} / ${fmt(of)}`)} ${T('سعرة')} · ${planGoal === 'gain' ? T('النطاق 95–115%') : T('النطاق 70–105%')}`;
+    if (x.unit === 'g') return `${ltr(`${fmt(v)} / ${fmt(of)}`)} ${T('غ')}`;
+    return `${ltr(`${fmt(v)} / ${fmt(of)}`)}${x.unit === 'steps' ? ' ' + T('خطوة') : ''}`;
+  }
   function renderWeek(w) {
-    $('wkWrap').classList.toggle('hidden', !w || w.score == null); if (!w || w.score == null) return;
+    const any = w && (w.score != null || w.lastWeekScore != null || (w.grid || []).some((r) => (r.vals || []).some(Boolean)));
+    $('wkWrap').classList.toggle('hidden', !any); if (!any) return;
     $('wkChip').innerHTML = w.delta == null ? `<i></i>${T('هذا الأسبوع')}` : `<i style="background:${w.delta >= 0 ? 'var(--good)' : 'var(--warn)'}"></i><bdi dir="ltr">${w.delta > 0 ? '+' : w.delta < 0 ? '−' : ''}${Math.abs(w.delta)}</bdi> ${T('عن الأسبوع الماضي')}`;
     const H = HABIT(), days = [T('ن'), T('ث'), T('ر'), T('خ'), T('ج'), T('س'), T('ح')];
+    const ti = w.todayIndex == null || w.todayIndex < 0 ? 7 : w.todayIndex;
+    const firstIdx = w.firstDate && w.weekStart ? Math.round((Date.parse(`${w.firstDate}T12:00:00Z`) - Date.parse(`${w.weekStart}T12:00:00Z`)) / 86400000) : 0;
     let html = '<span></span>' + days.map((d) => `<span class="dh">${d}</span>`).join('');
     w.grid.forEach((row, ri) => {
       const [name, col] = H[row.habit] || [row.habit, '#45d483'];
-      // reached = full colour; otherwise the cell fills up to how close you got; today is outlined while in progress
       html += `<span class="rl">${esc(name)}</span>` + row.days.map((v, i) => {
-        const ti = w.todayIndex == null || w.todayIndex < 0 ? 7 : w.todayIndex;
-        const x = row.vals && row.vals[i], fut = i > ti, isToday = i === w.todayIndex;
-        const pct = v ? 1 : x ? Math.max(0, Math.min(1, x.pct)) : 0;
-        // calories over target: shown full in red (it isn't "almost there")
-        const over = row.habit === 'calories' && !v && x && x.pct > 1;
-        const fill = over ? 'background:color-mix(in srgb, #e5534b 55%, transparent)' : !v && pct > 0 ? `background:linear-gradient(to top, color-mix(in srgb, ${col} 55%, transparent) ${Math.round(pct * 100)}%, var(--card-2) ${Math.round(pct * 100)}%)` : v ? `background:${col}` : '';
-        return `<button class="dot ${fut ? 'fut' : ''} ${isToday ? 'now' : ''}" data-d="${i}" data-r="${ri}" style="${fill}" ${x || v ? `data-tip="${esc(x ? x.text : '✓')}"` : ''} aria-label="${esc(name)}"></button>`;
+        const x = row.vals && row.vals[i];
+        const before = i < firstIdx, fut = i > ti, isToday = i === ti;
+        // states: reached (full colour) · partly there (fills like a level) · calories over target (red) · missed (dark) · nothing to judge (outline only)
+        let cls = 'dot', style = '';
+        if (before || fut) cls += ' fut';
+        else if (v === true) style = `background:${col}`;
+        else if (row.habit === 'calories' && x && x.pct > 1) style = 'background:#d9534f';
+        else if (v === false || (isToday && x)) { const pct = x ? Math.max(0, Math.min(1, x.pct)) : 0; if (pct > 0) style = `background:linear-gradient(to top, ${col} ${Math.round(pct * 100)}%, var(--card-2) ${Math.round(pct * 100)}%)`; }
+        else cls += ' na';
+        if (isToday) cls += ' now';
+        return `<button class="${cls}" data-d="${i}" data-r="${ri}" style="${style}" ${!before && !fut && (x || v === true) ? 'data-tip="1"' : ''} aria-label="${esc(name)}"></button>`;
       }).join('');
     });
     $('wkGrid').innerHTML = html;
-    const wk = w.weakest; const wn = wk && H[wk.habit] ? H[wk.habit][0] : '';
-    $('wkNote').textContent = !wk ? T('💡 اضغط على أي مربع تشوف رقم ذاك اليوم.') : wk.hit < wk.of ? L`💡 ${wn} أضعف نقطة — ${wk.hit} من ${wk.of} أيام هالأسبوع.` : T('💡 أسبوع ممتاز — كمّل كذا.');
-    countUp($('wkScore'), w.score, 1800, 0);
+    // the score covers finished days; on a week's first day show last week's instead of a misleading number
+    if (w.score != null) { $('wkOf').textContent = T('من 100'); countUp($('wkScore'), w.score, 1800, 0); }
+    else if (w.lastWeekScore != null) { $('wkOf').textContent = T('من 100 · الأسبوع الماضي'); countUp($('wkScore'), w.lastWeekScore, 1200, 0); }
+    else { $('wkScore').textContent = ''; $('wkOf').textContent = T('نبدأ الحساب بعد أول يوم كامل'); }
+    $('wkLeg').innerHTML = `<span><i style="background:#45d483"></i>${T('وصلت')}</span><span><i style="background:linear-gradient(to top,#45d483 50%,var(--card-2) 50%)"></i>${T('قرّبت')}</span><span><i style="background:#d9534f"></i>${T('فوق السعرات')}</span><span><i class="o"></i>${T('اليوم')}</span>`;
+    const wk = w.weakest;
+    const names = wk ? (wk.habits || [wk.habit]).map((h) => (H[h] || [h])[0]) : [];
+    const joined = names.length > 1 ? names.slice(0, -1).join(T('،') + ' ') + ' ' + T('و') + names[names.length - 1] : names[0];
+    $('wkNote').textContent = wk ? L`💡 أضعف نقطة: ${joined} (${wk.hit} من ${wk.of}) · اضغط أي مربع تشوف الرقم.` : w.score != null && w.score >= 100 ? T('💡 أسبوع ممتاز — كمّل كذا.') : T('💡 اضغط على أي مربع تشوف رقم ذاك اليوم.');
     $('wkGrid').querySelectorAll('.dot').forEach((d) => setTimeout(() => d.classList.add('on'), 200 + +d.dataset.d * 110 + +d.dataset.r * 40));
     const dayName = (i) => new Date(Date.parse(`${w.weekStart}T12:00:00`) + i * 86400000).toLocaleDateString(LOC, { weekday: 'long' });
     $('wkGrid').querySelectorAll('.dot[data-tip]').forEach((d) => (d.onclick = () => {
-      const row = w.grid[+d.dataset.r]; const nm = (H[row.habit] || [row.habit])[0];
-      toast(`${dayName(+d.dataset.d)} · ${nm}: ${d.dataset.tip}${+d.dataset.d === w.todayIndex && !row.days[+d.dataset.d] ? ' · ' + T('اليوم ما خلص') : ''}`);
+      const row = w.grid[+d.dataset.r], i = +d.dataset.d; const nm = (H[row.habit] || [row.habit])[0];
+      toast(`${dayName(i)} · ${nm}: ${habitValText(row.habit, row.vals && row.vals[i])}${i === ti && row.days[i] !== true ? ' · ' + T('اليوم ما خلص') : ''}`);
     }));
   }
   function renderMonitor(m) {

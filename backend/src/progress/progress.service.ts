@@ -110,52 +110,72 @@ export class ProgressService {
     const hist = await this.plans.history(userId, n);
     const goal = plan.effectiveGoal ?? p.goal;
     const proteinT = plan.proteinG || 0;
-    type Row = { date: string; calories: boolean; protein: boolean; logged: boolean; water: boolean; steps: boolean | null; active: boolean; val: Record<string, { pct: number; text: string } | null> };
+    type Val = { pct: number; v: number; of: number | null; unit: 'kcal' | 'g' | 'L' | 'steps' | 'meals' };
+    // a cell is true (reached), false (missed) or null (nothing to judge: no meals that day, no step data, no target)
+    type Row = { date: string; calories: boolean | null; protein: boolean | null; logged: boolean; water: boolean | null; steps: boolean | null; active: boolean; val: Record<string, Val | null> };
     const rows: Row[] = [];
     for (const d of hist.days) {
       const [w, s] = await Promise.all([this.water.day(userId, d.date).catch(() => null), this.steps.day(userId, d.date).catch(() => null)]);
+      const ate = d.meals > 0;
       rows.push({
         date: d.date,
-        logged: d.meals > 0,
-        calories: d.meals > 0 && caloriesHit(goal, d.intakeKcal, d.targetKcal),
-        protein: d.meals > 0 && !!proteinT && d.proteinG >= proteinT * PROTEIN_HIT,
-        water: !!w?.targetMl && w.intakeMl >= w.targetMl,
+        logged: ate,
+        // calories and protein are judged only on days with logged food (a day without food is the "meals" miss)
+        calories: ate ? caloriesHit(goal, d.intakeKcal, d.targetKcal) : null,
+        protein: ate && proteinT ? d.proteinG >= proteinT * PROTEIN_HIT : null,
+        water: w?.targetMl ? w.intakeMl >= w.targetMl : null,
         steps: s?.steps == null ? null : s.steps >= s.goal,
-        active: d.meals > 0 || (w?.intakeMl ?? 0) > 0,
+        active: ate || (w?.intakeMl ?? 0) > 0,
         // how close each habit got (fills the cell) and the numbers behind it (shown on tap)
         val: {
-          calories: d.targetKcal ? { pct: d.intakeKcal / d.targetKcal, text: `${Math.round(d.intakeKcal)} / ${Math.round(d.targetKcal)} kcal` } : null,
-          protein: proteinT ? { pct: d.proteinG / proteinT, text: `${Math.round(d.proteinG)} / ${Math.round(proteinT)} g` } : null,
-          logged: { pct: d.meals > 0 ? 1 : 0, text: `${d.meals}` },
-          water: w?.targetMl ? { pct: w.intakeMl / w.targetMl, text: `${(w.intakeMl / 1000).toFixed(1)} / ${(w.targetMl / 1000).toFixed(1)} L` } : null,
-          steps: s?.steps != null && s.goal ? { pct: s.steps / s.goal, text: `${s.steps} / ${s.goal}` } : null,
+          calories: ate && d.targetKcal ? { pct: d.intakeKcal / d.targetKcal, v: Math.round(d.intakeKcal), of: Math.round(d.targetKcal), unit: 'kcal' } : null,
+          protein: ate && proteinT ? { pct: d.proteinG / proteinT, v: Math.round(d.proteinG), of: Math.round(proteinT), unit: 'g' } : null,
+          logged: { pct: ate ? 1 : 0, v: d.meals, of: null, unit: 'meals' },
+          water: w?.targetMl ? { pct: w.intakeMl / w.targetMl, v: Math.round(w.intakeMl / 10) / 100, of: Math.round(w.targetMl / 10) / 100, unit: 'L' } : null,
+          steps: s?.steps != null && s.goal ? { pct: s.steps / s.goal, v: s.steps, of: s.goal, unit: 'steps' } : null,
         },
       });
     }
-    // days before the user started tracking (signup, or no data at all yet) aren't counted as misses
+    // days before the user started tracking (signup, or no data at all yet) aren't shown or counted
     const firstActive = rows.find((r) => r.active)?.date ?? today;
     rows.splice(0, rows.length, ...rows.filter((r) => r.date >= firstActive));
     const hasSteps = rows.some((r) => r.steps != null);
-    const habits = ['calories', 'protein', 'logged', 'water', ...(hasSteps ? ['steps'] : [])] as (keyof Row)[];
+    const habits = ['calories', ...(proteinT ? ['protein'] : []), 'logged', 'water', ...(hasSteps ? ['steps'] : [])] as (keyof Row)[];
+    // the score is for finished days only: today shows live in the grid, and counts from tomorrow
     const score = (list: Row[]) => {
-      if (!list.length) return null;
       let hit = 0, of = 0;
-      // today is still in progress: it only counts once a habit is reached
-      for (const r of list) for (const h of habits) { if (r.date === today && r[h] !== true) continue; of++; if (r[h] === true) hit++; }
+      for (const r of list) for (const h of habits) { if (r.date >= today || r[h] == null) continue; of++; if (r[h] === true) hit++; }
       return of ? Math.round((hit / of) * 100) : null;
     };
     const thisWeek = rows.filter((r) => r.date >= start), lastWeek = rows.filter((r) => r.date < start && r.date >= prevStart);
     const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
-    const grid = habits.map((h) => ({
-      habit: h,
-      days: days.map((d) => { const r = thisWeek.find((x) => x.date === d); return r ? (r[h] === null ? null : !!r[h]) : null; }),
-      vals: days.map((d) => { const r = thisWeek.find((x) => x.date === d); const v = r?.val[h as string]; return v ? { pct: Math.round(v.pct * 100) / 100, text: v.text } : null; }),
-      hit: thisWeek.filter((r) => r[h] === true).length,
-      of: thisWeek.filter((r) => r.date !== today || r[h] === true).length, // finished days (today only once reached)
-    }));
-    const weakest = [...grid].filter((g) => g.habit !== 'logged').sort((a, b) => a.hit - b.hit)[0];
+    const r2 = (x: number) => Math.round(x * 100) / 100;
+    const grid = habits.map((h) => {
+      const done = thisWeek.filter((r) => r.date < today && r[h] != null);
+      return {
+        habit: h,
+        days: days.map((d) => { const r = thisWeek.find((x) => x.date === d); return r ? (r[h] == null ? null : !!r[h]) : null; }),
+        vals: days.map((d) => {
+          const r = thisWeek.find((x) => x.date === d); const v = r?.val[h as string];
+          if (!v) return null;
+          const unitText = { kcal: 'kcal', g: 'g', L: 'L', steps: '', meals: 'meals' }[v.unit];
+          return { pct: r2(v.pct), v: v.v, of: v.of, unit: v.unit, text: v.of != null ? `${v.v} / ${v.of} ${unitText}`.trim() : `${v.v} ${unitText}`.trim() };
+        }),
+        hit: done.filter((r) => r[h] === true).length,
+        of: done.length, // finished days that could be judged
+      };
+    });
+    // weakest = lowest hit rate on finished days (ties are all named), only when it's below 100%
+    const judged = grid.filter((g) => g.habit !== 'logged' && g.of > 0);
+    const minRate = judged.length ? Math.min(...judged.map((g) => g.hit / g.of)) : 1;
+    const weakestAll = minRate < 1 ? judged.filter((g) => g.hit / g.of === minRate) : [];
     const now = score(thisWeek), prev = score(lastWeek);
-    return { weekStart: start, todayIndex: days.indexOf(today), score: now, lastWeekScore: prev, delta: now != null && prev != null ? now - prev : null, daysSoFar: thisWeek.length, grid, weakest: weakest && weakest.of > 0 ? { habit: weakest.habit, hit: weakest.hit, of: weakest.of } : null };
+    return {
+      weekStart: start, todayIndex: days.indexOf(today), firstDate: rows[0]?.date ?? today,
+      score: now, lastWeekScore: prev, delta: now != null && prev != null ? now - prev : null,
+      daysSoFar: thisWeek.length, finishedDays: thisWeek.filter((r) => r.date < today).length, grid,
+      weakest: weakestAll.length ? { habit: weakestAll[0].habit, habits: weakestAll.map((g) => g.habit), hit: weakestAll[0].hit, of: weakestAll[0].of } : null,
+    };
   }
 
   private async monitor(userId: string, today: string) {
