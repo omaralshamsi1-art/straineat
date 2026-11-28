@@ -394,7 +394,7 @@ struct Invite: Codable, Identifiable { let code: String; let usedBy: String?; le
 /// Only the fields the app reads; writes go through `APIClient.updateProfile(_:)` as partial patches.
 struct Profile: Codable {
     struct Ramadan: Codable { var enabled: Bool?; var suhoorTime: String; var iftarTime: String; var fastDays: [Int]?; var whiteDays: Bool? }
-    struct Reminders: Codable { var meals: Bool; var weight: Bool; var water: Bool? }
+    struct Reminders: Codable { var meals: Bool; var weight: Bool; var water: Bool?; var activity: Bool?; var calories: Bool?; var protein: Bool?; var weekly: Bool?; var milestones: Bool? }
     var hotEnvironment: Bool?
     var aiConsentAt: String?
     struct TodayLayout: Codable, Equatable { var hero: String; var tiles: [String] }

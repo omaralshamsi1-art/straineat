@@ -99,7 +99,7 @@ describe('insight notifications', () => {
     sent.length = 0;
     await svc.tick(new Date('2026-11-22T09:30:00Z'));
     await svc.tick(new Date('2026-11-22T09:31:00Z'));
-    expect(sent).toEqual(['خلصت دراجة · 70 د · 800 سعرة']);
+    expect(sent).toEqual(['دراجة · 800 سعرة 🔥']); // one note per activity, with what's left today
   });
 });
 

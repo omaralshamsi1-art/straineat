@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct StrainEatApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @AppStorage("displaySize") private var displaySize = "md"
     @State private var store = AppStore()
     @Environment(\.scenePhase) private var phase
@@ -64,6 +65,7 @@ struct RootView: View {
                         HealthKitManager.shared.enableBackgroundSync()
                     }
                     await store.refresh()
+                    await PushRegistration.registerIfAllowed()
                 }
                 .overlay(alignment: .bottomTrailing) {
                     AskFab { showAssistant = true }

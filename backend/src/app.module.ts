@@ -44,6 +44,7 @@ import { CoachService } from './coach/coach.service';
 import { FoodsService } from './foods/foods.service';
 import { MotivationService } from './coach/motivation.service';
 import { RemindersService } from './coach/reminders.service';
+import { ApnsService, APNS_SENDER } from './push/apns';
 import { MemoryRepository } from './storage/memory.repository';
 import { PostgresRepository } from './storage/postgres.repository';
 import { REPOSITORY } from './storage/repository';
@@ -77,6 +78,8 @@ import { REPOSITORY } from './storage/repository';
     FoodsService,
     MotivationService,
     RemindersService,
+    ApnsService,
+    { provide: APNS_SENDER, useExisting: ApnsService },
     MealsService,
     EnergyService,
     WhoopService,

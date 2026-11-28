@@ -134,7 +134,7 @@ export interface Profile {
    * whiteDays: also fast 13–15 of each Hijri month.
    */
   ramadan: { enabled: boolean | null; suhoorTime: string; iftarTime: string; fastDays?: number[]; whiteDays?: boolean };
-  reminders: { meals: boolean; weight: boolean; water?: boolean };
+  reminders: { meals: boolean; weight: boolean; water?: boolean; activity?: boolean; calories?: boolean; protein?: boolean; weekly?: boolean; milestones?: boolean };
   /** works or trains outdoors / in the heat most days — raises the water target */
   hotEnvironment?: boolean;
   /** when the user agreed to send meal photos/descriptions to the AI provider (null = not yet / withdrawn) */

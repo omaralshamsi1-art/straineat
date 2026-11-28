@@ -70,6 +70,9 @@ struct PlanTab: View {
                 }
                 groupHeader(t("Reminders", "التذكيرات"))
                 if let profile {
+                    NavigationLink { subPage(t("Notifications", "الإشعارات")) { DayAlertsCard(profile: profile) } } label: {
+                        PlanLink(icon: "bell.fill", title: t("Notifications", "الإشعارات"), subtitle: t("Activity, calories, protein, weekly", "النشاط، السعرات، البروتين، الأسبوع"))
+                    }
                     NavigationLink { subPage(t("Water", "الماء")) { WaterSettingsCard(profile: profile) } } label: {
                         PlanLink(icon: "drop.fill", title: t("Water", "الماء"), subtitle: t("Daily goal and reminders", "الهدف اليومي والتذكيرات"))
                     }

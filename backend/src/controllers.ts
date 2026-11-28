@@ -391,6 +391,12 @@ export class PushController {
     return this.reminders.subscribe(userId, body);
   }
 
+  /** iOS app: APNs device token. */
+  @Post('apns')
+  apns(@UserId() userId: string, @Body() body: { token: string }) {
+    return this.reminders.subscribeApns(userId, body?.token);
+  }
+
   @Post('unsubscribe')
   unsubscribe(@UserId() userId: string, @Body() body: { endpoint: string }) {
     return this.reminders.unsubscribe(userId, body?.endpoint);

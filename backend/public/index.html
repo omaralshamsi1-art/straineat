@@ -1606,6 +1606,13 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       <label class="check"><input type="checkbox" id="rmMeals" checked> تذكير الوجبات</label>
       <label class="check"><input type="checkbox" id="rmWeight" checked> تذكير الوزن الصباحي</label>
       <label class="check"><input type="checkbox" id="rmWater" checked> تذكير شرب الماء (إذا تأخرت عن هدفك)</label>
+      <h3 style="margin-top:14px">تنبيهات يومك</h3>
+      <label class="check"><input type="checkbox" id="rmActivity" checked> بعد كل نشاط (10 دقائق أو أكثر) مع السعرات الباقية</label>
+      <label class="check"><input type="checkbox" id="rmCalories" checked> السعرات: عند 90% و100% من هدفك</label>
+      <label class="check"><input type="checkbox" id="rmProtein" checked> البروتين مساءً إذا كان ناقصاً</label>
+      <label class="check"><input type="checkbox" id="rmWeekly" checked> ملخص الأسبوع (الأحد مساءً)</label>
+      <label class="check"><input type="checkbox" id="rmMilestones" checked> محطات رحلتك للوزن المستهدف</label>
+      <p class="small muted" style="margin:6px 0 0">لا نرسل شيئاً بين 11 مساءً و7 صباحاً، ولا تنبيهات أكل وأنت صائم، وبحد أقصى 6 تنبيهات في اليوم (تذكير الأدوية لا يُحسب).</p>
       <label class="check"><input type="checkbox" id="hotEnv"> أشتغل أو أتمرن في الحر أغلب الأيام (+750 مل لهدف الماء)</label>
       <button class="btn ghost" id="pushBtn">تفعيل التنبيهات على هذا الجهاز</button>
       <button class="btn ghost hidden" id="pushTest">إرسال تنبيه تجريبي</button>
@@ -3311,7 +3318,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     try {
       const prof = await api('profile');
       const rm = prof.reminders || { meals: true, weight: true };
-      $('rmMeals').checked = rm.meals; $('rmWeight').checked = rm.weight; $('rmWater').checked = rm.water !== false; $('hotEnv').checked = !!prof.hotEnvironment;
+      $('rmMeals').checked = rm.meals; $('rmWeight').checked = rm.weight; $('rmWater').checked = rm.water !== false; for (const k of ['Activity', 'Calories', 'Protein', 'Weekly', 'Milestones']) $('rm' + k).checked = rm[k.toLowerCase()] !== false; $('hotEnv').checked = !!prof.hotEnvironment;
       meds = prof.medReminders || []; renderMeds();
       const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
       if (!supported) { $('pushState').textContent = T('غير مدعوم هنا'); $('pushBtn').disabled = true; $('medPush').textContent = T('هذا المتصفح لا يدعم التنبيهات. على الآيفون: أضف التطبيق للشاشة الرئيسية وافتحه منها.'); return; }
@@ -3343,8 +3350,10 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     } catch (e) { toast(e.message || T('تعذّر تفعيل التنبيهات'), 3500); }
   };
   $('pushTest').onclick = async () => { try { const r = await api('push/test', { method: 'POST' }); toast(r.sent ? T('أرسلنا تنبيهاً تجريبياً') : T('لم يُرسل — أعد التفعيل')); } catch (e) { toast(e.message); } };
-  for (const id of ['rmMeals', 'rmWeight', 'rmWater']) $(id).onchange = async () => {
-    try { await api('profile', { method: 'PUT', json: { reminders: { meals: $('rmMeals').checked, weight: $('rmWeight').checked, water: $('rmWater').checked } } }); toast(T('تم الحفظ ✓')); } catch (e) { toast(e.message); }
+  for (const id of ['rmMeals', 'rmWeight', 'rmWater', 'rmActivity', 'rmCalories', 'rmProtein', 'rmWeekly', 'rmMilestones']) $(id).onchange = async () => {
+    const reminders = { meals: $('rmMeals').checked, weight: $('rmWeight').checked, water: $('rmWater').checked };
+    for (const k of ['Activity', 'Calories', 'Protein', 'Weekly', 'Milestones']) reminders[k.toLowerCase()] = $('rm' + k).checked;
+    try { await api('profile', { method: 'PUT', json: { reminders } }); toast(T('تم الحفظ ✓')); } catch (e) { toast(e.message); }
   };
   /** first tap arms the button, second tap within 4 s confirms (no blocking dialogs) */
   function confirmTap(btn) {

@@ -29,7 +29,7 @@ export const DEFAULT_PROFILE = (userId: string): Profile => ({
   screening: {},
   onboarded: false,
   ramadan: { enabled: null, suhoorTime: '04:45', iftarTime: '18:00' },
-  reminders: { meals: true, weight: true, water: true },
+  reminders: { meals: true, weight: true, water: true, activity: true, calories: true, protein: true, weekly: true, milestones: true },
   language: 'en',
   activityCalibration: null,
 });
@@ -61,6 +61,7 @@ export class ProfileService {
       next.goalDeltaKcal = patch.goal === 'lose' ? -500 : patch.goal === 'gain' ? 300 : 0;
     }
     if (patch.screening) next.screening = { ...current.screening, ...patch.screening };
+    if (patch.reminders) next.reminders = { ...current.reminders, ...stripUndefined(patch.reminders) } as Profile['reminders'];
     if (patch.ramadan) next.ramadan = { ...current.ramadan, ...stripUndefined(patch.ramadan) } as Profile['ramadan'];
     await this.repo.saveProfile(next);
     return next;
@@ -150,7 +151,8 @@ export function validateProfilePatch(patch: Partial<Profile>): Partial<Profile> 
       };
     } else if (k === 'reminders') {
       const r = (v ?? {}) as Record<string, unknown>;
-      out.reminders = { meals: r.meals !== false, weight: r.weight !== false, water: r.water !== false };
+      const opt = (x: unknown) => (x === undefined ? undefined : x !== false); // omitted → kept (merged in update)
+      out.reminders = { meals: r.meals !== false, weight: r.weight !== false, water: r.water !== false, activity: opt(r.activity), calories: opt(r.calories), protein: opt(r.protein), weekly: opt(r.weekly), milestones: opt(r.milestones) } as Profile['reminders'];
     } else if (k === 'birthDate') {
       if (v === null || v === '') { out.birthDate = null; continue; }
       const s = String(v);

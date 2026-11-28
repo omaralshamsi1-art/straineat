@@ -12,9 +12,11 @@ import { dueSlotReminders, toMin } from '../schedule/schedule';
 import { dueMedReminders } from '../meds/meds';
 import { EnergyService } from '../energy/energy.service';
 import { WhoopService } from '../integrations/whoop/whoop.service';
-import { isNotableWorkout } from '../insights/insights';
 import { WaterService } from '../water/water.service';
 import { dueWaterReminder } from '../water/water';
+import { ProgressService } from '../progress/progress.service';
+import { activityNudges, calorieNudge, DAILY_CAP, isLocalOnIos, isUncapped, journeyLevel, KCAL_STAGES, milestoneNudge, proteinNudge, weeklyNudge } from './nudges';
+import { ApnsSender, APNS_SENDER, isApnsEndpoint } from '../push/apns';
 
 export const PUSH_SENDER = Symbol('PUSH_SENDER');
 export type PushSender = (sub: PushSub, payload: string) => Promise<void>;
@@ -80,6 +82,7 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
   private readonly enabled: boolean;
   private readonly pollMs: number;
   private readonly send: PushSender;
+  private readonly sendDisabled: boolean;
 
   constructor(
     @Inject(REPOSITORY) private readonly repo: Repository,
@@ -90,6 +93,8 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly energy?: EnergyService,
     @Optional() private readonly whoop?: WhoopService,
     @Optional() private readonly water?: WaterService,
+    @Optional() private readonly progress?: ProgressService,
+    @Optional() @Inject(APNS_SENDER) private readonly apns?: ApnsSender,
   ) {
     this.pollMs = Math.max(5, Number(config.get('WHOOP_POLL_MINUTES') ?? 20) || 20) * 60_000;
     const pub = config.get<string>('VAPID_PUBLIC_KEY');
@@ -106,7 +111,8 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
         this.log.error(`Push disabled — invalid VAPID settings: ${e?.message ?? e}`);
       }
     }
-    this.enabled = ok || !!sender;
+    this.enabled = ok || !!sender || !!apns?.configured;
+    this.sendDisabled = !ok && !sender;
     this.send = sender ?? (async (sub, payload) => {
       await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload, { TTL: 3600 });
     });
@@ -131,6 +137,14 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
     return { subscribed: true };
   }
 
+  /** iOS app: register its APNs device token (stored as a push subscription "apns:<token>"). */
+  async subscribeApns(userId: string, token: string) {
+    const t = String(token ?? '').trim().toLowerCase();
+    if (!/^[0-9a-f]{32,200}$/.test(t)) throw new BadRequestException('invalid device token');
+    await this.repo.savePushSub({ userId, endpoint: `apns:${t}`, keys: { p256dh: '', auth: '' }, createdAt: new Date().toISOString() });
+    return { subscribed: true, apnsConfigured: !!this.apns?.configured };
+  }
+
   async unsubscribe(userId: string, endpoint: string) {
     const mine = (await this.repo.listPushSubs(userId)).some((s) => s.endpoint === endpoint);
     if (mine) await this.repo.deletePushSub(endpoint);
@@ -146,11 +160,19 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
     return { sent: n };
   }
 
-  private async notify(userId: string, msg: { title: string; body: string }) {
+  private async notify(userId: string, msg: { title: string; body: string; key?: string }) {
     let n = 0;
     for (const s of await this.repo.listPushSubs(userId)) {
+      if (isApnsEndpoint(s.endpoint)) {
+        if (!this.apns?.configured || (msg.key && isLocalOnIos(msg.key))) continue; // the iOS app schedules these itself
+        const r = await this.apns.send(s.endpoint.slice(5), { title: msg.title, body: msg.body });
+        if (r === 'ok') n++;
+        else if (r === 'gone') await this.repo.deletePushSub(s.endpoint);
+        continue;
+      }
+      if (this.sendDisabled) continue;
       try {
-        await this.send(s, JSON.stringify({ ...msg, url: '/app/' }));
+        await this.send(s, JSON.stringify({ title: msg.title, body: msg.body, url: '/app/' }));
         n++;
       } catch (e: any) {
         if (e?.statusCode === 404 || e?.statusCode === 410) await this.repo.deletePushSub(s.endpoint); // expired
@@ -197,21 +219,69 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
     const doneKey = (k: string) => this.repo.getCache(userId, `reminder:${today}:${k}`);
     const well = (await this.repo.getCache(userId, `whoop-day:${today}`))?.payload as { recovery?: number | null } | undefined;
     const wantMorning = nowMin >= 5 * 60 && nowMin < 12 * 60 && well?.recovery != null && !(await doneKey('am'));
-    const t = now.getTime();
-    const fresh = (await this.repo.listWorkouts(userId, today, today)).filter((w) => {
-      const end = Date.parse(w.end);
-      return end <= t && t - end <= 180 * 60000 && isNotableWorkout(w);
-    });
-    const pending: string[] = [];
-    for (const w of fresh) if (!(await doneKey(`wo:${w.id}`))) pending.push(w.id);
-    if (!wantMorning && !pending.length) return [];
+    if (!wantMorning) return [];
     const b = await this.energy.balance(userId, today, now);
     const out: { key: string; title: string; body: string }[] = [];
     for (const c of b.cards ?? []) {
       const title = lang === 'ar' ? c.title_ar : c.title_en;
       const body = (lang === 'ar' ? c.lines_ar : c.lines_en).slice(0, 2).join(' ');
-      if (c.kind === 'morning' && wantMorning) out.push({ key: 'am', title, body });
-      if (c.kind === 'workout' && pending.includes(c.id.slice(3))) out.push({ key: c.id, title, body });
+      if (c.kind === 'morning') out.push({ key: 'am', title, body });
+    }
+    return out;
+  }
+
+  /** Activity, calories, protein, weekly summary, goal milestones (each can be switched off in Settings → Notifications). */
+  private async essentials(userId: string, today: string, nowMin: number, now: Date, lang: string, fasting: boolean, prefs: Record<string, boolean | undefined>) {
+    const out: { key: string; title: string; body: string }[] = [];
+    const on = (k: string) => prefs[k] !== false;
+    if (this.energy && (on('activity') || on('calories') || on('protein'))) {
+      const b: any = await this.energy.balance(userId, today, now);
+      const remaining = b.targetIntakeKcal > 0 ? Math.round(b.remainingKcal) : null;
+      if (on('activity')) {
+        const raw = await this.repo.listWorkouts(userId, today, today);
+        const named = new Map<string, any>((b.activity?.workouts ?? []).map((w: any) => [w.id, w]));
+        const list = raw.map((w) => ({ ...w, sportAr: named.get(w.id)?.sportAr, sportEn: named.get(w.id)?.sportEn }));
+        for (const n of activityNudges({ now, workouts: list, remainingKcal: remaining, fasting, lang })) {
+          const card = (b.cards ?? []).find((c: any) => c.id === n.key);
+          const extra = card ? (lang === 'ar' ? card.lines_ar : card.lines_en)?.[0] : null;
+          out.push(extra ? { ...n, body: `${n.body} ${extra}` } : n);
+        }
+      }
+      if (on('calories')) {
+        const c = calorieNudge({ eatenKcal: b.intake?.calories ?? 0, targetKcal: b.targetIntakeKcal, goal: b.goal, fasting, lang });
+        if (c) out.push(c);
+      }
+      if (on('protein')) {
+        const meals = (b.meals ?? []).filter((m: any) => m.status === 'confirmed').length;
+        const p = proteinNudge({ nowMin, proteinG: b.intake?.protein_g ?? 0, targetG: b.macroTargets?.protein_g ?? 0, mealsToday: meals, fasting, lang });
+        if (p) out.push(p);
+      }
+    }
+    if (this.progress && (on('weekly') || on('milestones'))) {
+      const tz = (await this.profiles.get(userId)).timezone;
+      const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short' }).format(now));
+      const wantWeek = on('weekly') && weekday === 0 && nowMin >= 20 * 60 && nowMin <= 21 * 60 + 30;
+      // journey milestones are checked at most every 30 min
+      const jKey = 'nudge-journey';
+      const jPrev = (await this.repo.getCache(userId, jKey))?.payload as { target?: number; level?: number; at?: string } | undefined;
+      const wantJourney = on('milestones') && (!jPrev?.at || now.getTime() - Date.parse(jPrev.at) >= 30 * 60000);
+      if (wantWeek || wantJourney) {
+        const sum: any = await this.progress.summary(userId);
+        if (wantWeek) {
+          const w = weeklyNudge({ weekday, nowMin, week: sum.week, lang });
+          if (w) out.push(w);
+        }
+        if (wantJourney) {
+          const j = sum.journey;
+          if (j?.targetKg != null && j.frac != null) {
+            const level = journeyLevel(j.frac);
+            const prev = jPrev?.target === j.targetKg && jPrev?.level != null ? jPrev.level : null;
+            const m = milestoneNudge({ level, prevLevel: prev, targetKg: j.targetKg, currentKg: j.currentKg, lang });
+            if (m) out.push(m);
+            await this.repo.setCache({ userId, key: jKey, payload: { target: j.targetKg, level: Math.max(level, prev ?? 0), at: now.toISOString() }, createdAt: now.toISOString() });
+          } else await this.repo.setCache({ userId, key: jKey, payload: { at: now.toISOString() }, createdAt: now.toISOString() });
+        }
+      }
     }
     return out;
   }
@@ -251,10 +321,23 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
         const r = dueWaterReminder({ nowMin, intakeMl: wd.intakeMl, expectedMl: wd.expectedByNowMl, targetMl: wd.targetMl, fasting, fastDay: rv.active, iftarMin: rv.active ? toMin(rv.iftarTime) : null, lang });
         if (r) due.push(r);
       }
+      if (nowMin >= 7 * 60 && nowMin < 23 * 60) due.push(...(await this.essentials(userId, today, nowMin, now, lang, fasting, prefs as Record<string, boolean | undefined>)));
+      const capKey = `reminder:${today}:_count`;
+      let count = Number(((await this.repo.getCache(userId, capKey))?.payload as { n?: number } | undefined)?.n ?? 0);
       for (const r of due) {
         const key = `reminder:${today}:${r.key}`;
         if (await this.repo.getCache(userId, key)) continue;
+        const capped = !isUncapped(r.key);
+        if (capped && count >= DAILY_CAP) continue;
         await this.repo.setCache({ userId, key, payload: { at: now.toISOString() }, createdAt: now.toISOString() });
+        // the highest calorie stage replaces the lower ones
+        if (r.key.startsWith('kcal:'))
+          for (const k of KCAL_STAGES.slice(0, KCAL_STAGES.indexOf(r.key as any)))
+            await this.repo.setCache({ userId, key: `reminder:${today}:${k}`, payload: { at: now.toISOString(), skipped: true }, createdAt: now.toISOString() });
+        if (capped) {
+          count++;
+          await this.repo.setCache({ userId, key: capKey, payload: { n: count }, createdAt: now.toISOString() });
+        }
         sent += await this.notify(userId, r);
       }
     }

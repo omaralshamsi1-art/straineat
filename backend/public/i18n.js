@@ -9,6 +9,13 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "تنبيهات يومك": "Your day alerts",
+    "بعد كل نشاط (10 دقائق أو أكثر) مع السعرات الباقية": "After each activity (10+ min), with calories left",
+    "السعرات: عند 90% و100% من هدفك": "Calories: at 90% and 100% of your target",
+    "البروتين مساءً إذا كان ناقصاً": "Protein in the evening if you're short",
+    "ملخص الأسبوع (الأحد مساءً)": "Weekly summary (Sunday evening)",
+    "محطات رحلتك للوزن المستهدف": "Milestones on your goal-weight journey",
+    "لا نرسل شيئاً بين 11 مساءً و7 صباحاً، ولا تنبيهات أكل وأنت صائم، وبحد أقصى 6 تنبيهات في اليوم (تذكير الأدوية لا يُحسب).": "Nothing between 11 pm and 7 am, no food alerts while you fast, and at most 6 a day (medicine reminders don't count).",
     "وجبات": "Meal",
     "التزام الأسبوع": "This week's habits",
     "من 100": "of 100",
