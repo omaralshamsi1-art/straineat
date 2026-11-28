@@ -176,3 +176,24 @@ describe('alert taps', () => {
     expect(tabFor('wo:whoop:1')).toBe('today');
   });
 });
+
+describe('week habits detail', () => {
+  it('cells carry how close each day got; today only counts once reached', async () => {
+    const repo = new MemoryRepository();
+    const profiles = new ProfileService(repo);
+    const plans = new PlanService(repo, profiles);
+    const progress = new ProgressService(repo, profiles, plans, new WaterService(repo, profiles), new StepsService(repo, profiles));
+    await profiles.update('u', { sex: 'female', birthYear: 1995, heightCm: 165, weightKg: 70, goal: 'lose', onboarded: true } as any);
+    const { localDate } = await import('../src/common/dates');
+    const today = localDate(new Date(), 'Asia/Dubai');
+    await repo.saveMeal({ id: 'm', userId: 'u', status: 'confirmed', eatenAt: new Date().toISOString(), date: today, createdAt: '', updatedAt: '', final: { meal_name: 'x', totals: { calories: 300, protein_g: 20, carbs_g: 30, fat_g: 10, fiber_g: 0, sugar_g: 0, sodium_mg: 0 }, items: [] } } as any);
+    const w: any = (await progress.summary('u')).week;
+    const ti = w.todayIndex;
+    expect(ti).toBeGreaterThanOrEqual(0);
+    const protein = w.grid.find((r: any) => r.habit === 'protein');
+    expect(protein.vals[ti].text).toMatch(/^20 \/ \d+ g$/);
+    expect(protein.vals[ti].pct).toBeGreaterThan(0);
+    // only "logged" is reached today, and unfinished habits of today are not counted as misses
+    expect(w.score).toBe(100);
+  });
+});

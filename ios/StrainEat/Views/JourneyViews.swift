@@ -19,11 +19,14 @@ struct ProgressSummary: Decodable {
     }
     struct BMI: Decodable { let value: Double; let zone: String; let target: Double?; let deltaMonth: Double?; let toNormal: Double }
     struct Week: Decodable {
-        struct Row: Decodable { let habit: String; let days: [Bool?]; let hit: Int }
+        struct Val: Decodable { let pct: Double; let text: String }
+        struct Row: Decodable { let habit: String; let days: [Bool?]; let hit: Int; let vals: [Val?]? }
         struct Weak: Decodable { let habit: String; let hit: Int; let of: Int }
         let score: Int?
         let delta: Int?
         let daysSoFar: Int
+        let todayIndex: Int?
+        let weekStart: String?
         let grid: [Row]
         let weakest: Weak?
     }
@@ -261,6 +264,40 @@ struct BMICard: View {
 struct WeekHabitsCard: View {
     let w: ProgressSummary.Week
     @State private var shown = false
+    @State private var picked: String?
+    private var todayIdx: Int { let t = w.todayIndex ?? 7; return t < 0 ? 7 : t }
+
+    /// Reached = full colour; otherwise filled up to how close you got; calories over target in red; today outlined.
+    @ViewBuilder private func cell(_ row: ProgressSummary.Week.Row, _ i: Int, _ col: Color) -> some View {
+        let hit = row.days[safe: i].flatMap { $0 } == true
+        let v = row.vals?[safe: i].flatMap { $0 }
+        let over = row.habit == "calories" && !hit && (v?.pct ?? 0) > 1
+        let pct = hit ? 1 : min(1, max(0, v?.pct ?? 0))
+        let shape = RoundedRectangle(cornerRadius: 7)
+        ZStack(alignment: .bottom) {
+            shape.fill(Theme.card2)
+            if over { shape.fill(Color(red: 0.9, green: 0.33, blue: 0.29).opacity(0.55)) }
+            else if hit { shape.fill(col) }
+            else if pct > 0 {
+                GeometryReader { g in
+                    VStack(spacing: 0) { Spacer(minLength: 0); Rectangle().fill(col.opacity(0.55)).frame(height: g.size.height * pct) }
+                }
+                .clipShape(shape)
+            }
+        }
+        .overlay(shape.strokeBorder(Theme.ink.opacity(i == todayIdx ? 0.35 : 0), lineWidth: 2))
+        .opacity(i > todayIdx ? 0.35 : 1)
+    }
+    private func tip(_ row: ProgressSummary.Week.Row, _ i: Int) -> String? {
+        guard let v = row.vals?[safe: i].flatMap({ $0 }) else { return row.days[safe: i].flatMap { $0 } == true ? "✓" : nil }
+        let hit = row.days[safe: i].flatMap { $0 } == true
+        return v.text + (i == todayIdx && !hit ? t(" · today isn't over yet", " · اليوم ما خلص") : "")
+    }
+    private func dayName(_ i: Int) -> String {
+        guard let s = w.weekStart, let d = DateFormatter.isoDay.date(from: s), let day = Calendar.current.date(byAdding: .day, value: i, to: d) else { return "" }
+        let f = DateFormatter(); f.locale = Locale(identifier: appLang == .ar ? "ar" : "en"); f.dateFormat = "EEEE"
+        return f.string(from: day)
+    }
     private func meta(_ h: String) -> (String, Color) {
         switch h {
         case "calories": return (t("Calories", "السعرات"), Color(red: 0.27, green: 0.83, blue: 0.51))
@@ -288,16 +325,21 @@ struct WeekHabitsCard: View {
                         GridRow {
                             Text(m.0).font(.caption.weight(.semibold)).foregroundStyle(Theme.muted).gridColumnAlignment(.leading)
                             ForEach(0..<7, id: \.self) { i in
-                                RoundedRectangle(cornerRadius: 7)
-                                    .fill(row.days[safe: i].flatMap { $0 } == true ? m.1 : Theme.card2)
-                                    .opacity(i >= w.daysSoFar ? 0.35 : 1)
+                                cell(row, i, m.1)
                                     .aspectRatio(1, contentMode: .fit)
                                     .scaleEffect(shown ? 1 : 0.4).opacity(shown ? 1 : 0)
                                     .animation(.spring(response: 0.45, dampingFraction: 0.55).delay(0.2 + Double(i) * 0.11 + Double(ri) * 0.04), value: shown)
+                                    .onTapGesture { if let txt = tip(row, i) { picked = "\(dayName(i)) · \(m.0): \(txt)" } }
                             }
                         }
                     }
                 }
+                if let picked {
+                    Text(picked).font(.footnote.weight(.semibold)).foregroundStyle(Theme.ink)
+                        .padding(.horizontal, 10).padding(.vertical, 6).background(Theme.card2, in: Capsule())
+                        .transition(.opacity)
+                }
+                if picked == nil { Text(t("Tap any square to see that day's number.", "اضغط على أي مربع تشوف رقم ذاك اليوم.")).font(.caption2).foregroundStyle(Theme.muted) }
                 if let wk = w.weakest, wk.hit < wk.of {
                     Text(t("💡 \(meta(wk.habit).0) is your weakest habit — \(wk.hit) of \(wk.of) days this week.", "💡 \(meta(wk.habit).0) أضعف نقطة — \(wk.hit) من \(wk.of) أيام هالأسبوع.")).font(.footnote).foregroundStyle(Theme.muted)
                 }

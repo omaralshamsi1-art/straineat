@@ -9,6 +9,8 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "اليوم ما خلص": "today isn't over yet",
+    "💡 اضغط على أي مربع تشوف رقم ذاك اليوم.": "💡 Tap any square to see that day's number.",
     "هذا مو ChatGPT ولا Claude ولا Gemini. لا توافق إلا إذا كنت تعرف هذا الموقع وأنت اللي بديت الربط.": "This is not ChatGPT, Claude or Gemini. Only approve if you know this site and you started the connection.",
     "وصلت هدفك اليوم — خلّها خفيفة": "Target reached today — keep it light",
     "ما في اتصال بالإنترنت — حاول مرة ثانية": "No internet connection — please try again",

@@ -1009,6 +1009,8 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
 .wkGrid .dh { color: var(--muted); font-size: 11px; text-align: center; font-weight: 700; }
 .wkGrid .dot { aspect-ratio: 1; border-radius: 8px; background: var(--card-2); transform: scale(.4); opacity: 0; transition: transform .5s cubic-bezier(.3,1.6,.4,1), opacity .4s; }
 .wkGrid .dot.on { transform: scale(1); opacity: 1; } .wkGrid .dot.fut { opacity: .35; }
+.wkGrid button.dot { border: 0; padding: 0; font: inherit; cursor: pointer; }
+.wkGrid .dot.now { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 35%, transparent); }
 .jars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .jar { position: relative; height: 96px; background: var(--card-2); border-radius: 16px; overflow: hidden; text-align: center; padding-top: 10px; }
 .jar .w { position: absolute; left: 0; right: 0; bottom: 0; height: 0; transition: height 2s cubic-bezier(.2,.8,.2,1); }
@@ -3144,13 +3146,27 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     let html = '<span></span>' + days.map((d) => `<span class="dh">${d}</span>`).join('');
     w.grid.forEach((row, ri) => {
       const [name, col] = H[row.habit] || [row.habit, '#45d483'];
-      html += `<span class="rl">${esc(name)}</span>` + row.days.map((v, i) => `<span class="dot ${i >= w.daysSoFar ? 'fut' : ''}" data-d="${i}" data-r="${ri}" style="${v ? `background:${col}` : ''}"></span>`).join('');
+      // reached = full colour; otherwise the cell fills up to how close you got; today is outlined while in progress
+      html += `<span class="rl">${esc(name)}</span>` + row.days.map((v, i) => {
+        const ti = w.todayIndex == null || w.todayIndex < 0 ? 7 : w.todayIndex;
+        const x = row.vals && row.vals[i], fut = i > ti, isToday = i === w.todayIndex;
+        const pct = v ? 1 : x ? Math.max(0, Math.min(1, x.pct)) : 0;
+        // calories over target: shown full in red (it isn't "almost there")
+        const over = row.habit === 'calories' && !v && x && x.pct > 1;
+        const fill = over ? 'background:color-mix(in srgb, #e5534b 55%, transparent)' : !v && pct > 0 ? `background:linear-gradient(to top, color-mix(in srgb, ${col} 55%, transparent) ${Math.round(pct * 100)}%, var(--card-2) ${Math.round(pct * 100)}%)` : v ? `background:${col}` : '';
+        return `<button class="dot ${fut ? 'fut' : ''} ${isToday ? 'now' : ''}" data-d="${i}" data-r="${ri}" style="${fill}" ${x || v ? `data-tip="${esc(x ? x.text : '✓')}"` : ''} aria-label="${esc(name)}"></button>`;
+      }).join('');
     });
     $('wkGrid').innerHTML = html;
     const wk = w.weakest; const wn = wk && H[wk.habit] ? H[wk.habit][0] : '';
-    $('wkNote').textContent = wk && wk.hit < wk.of ? L`💡 ${wn} أضعف نقطة — ${wk.hit} من ${wk.of} أيام هالأسبوع.` : T('💡 أسبوع ممتاز — كمّل كذا.');
+    $('wkNote').textContent = !wk ? T('💡 اضغط على أي مربع تشوف رقم ذاك اليوم.') : wk.hit < wk.of ? L`💡 ${wn} أضعف نقطة — ${wk.hit} من ${wk.of} أيام هالأسبوع.` : T('💡 أسبوع ممتاز — كمّل كذا.');
     countUp($('wkScore'), w.score, 1800, 0);
     $('wkGrid').querySelectorAll('.dot').forEach((d) => setTimeout(() => d.classList.add('on'), 200 + +d.dataset.d * 110 + +d.dataset.r * 40));
+    const dayName = (i) => new Date(Date.parse(`${w.weekStart}T12:00:00`) + i * 86400000).toLocaleDateString(LOC, { weekday: 'long' });
+    $('wkGrid').querySelectorAll('.dot[data-tip]').forEach((d) => (d.onclick = () => {
+      const row = w.grid[+d.dataset.r]; const nm = (H[row.habit] || [row.habit])[0];
+      toast(`${dayName(+d.dataset.d)} · ${nm}: ${d.dataset.tip}${+d.dataset.d === w.todayIndex && !row.days[+d.dataset.d] ? ' · ' + T('اليوم ما خلص') : ''}`);
+    }));
   }
   function renderMonitor(m) {
     const has = m && (m.sugar || m.sodium || m.fiber || m.water);

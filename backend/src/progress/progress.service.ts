@@ -110,7 +110,7 @@ export class ProgressService {
     const hist = await this.plans.history(userId, n);
     const goal = plan.effectiveGoal ?? p.goal;
     const proteinT = plan.proteinG || 0;
-    type Row = { date: string; calories: boolean; protein: boolean; logged: boolean; water: boolean; steps: boolean | null; active: boolean };
+    type Row = { date: string; calories: boolean; protein: boolean; logged: boolean; water: boolean; steps: boolean | null; active: boolean; val: Record<string, { pct: number; text: string } | null> };
     const rows: Row[] = [];
     for (const d of hist.days) {
       const [w, s] = await Promise.all([this.water.day(userId, d.date).catch(() => null), this.steps.day(userId, d.date).catch(() => null)]);
@@ -122,6 +122,14 @@ export class ProgressService {
         water: !!w?.targetMl && w.intakeMl >= w.targetMl,
         steps: s?.steps == null ? null : s.steps >= s.goal,
         active: d.meals > 0 || (w?.intakeMl ?? 0) > 0,
+        // how close each habit got (fills the cell) and the numbers behind it (shown on tap)
+        val: {
+          calories: d.targetKcal ? { pct: d.intakeKcal / d.targetKcal, text: `${Math.round(d.intakeKcal)} / ${Math.round(d.targetKcal)} kcal` } : null,
+          protein: proteinT ? { pct: d.proteinG / proteinT, text: `${Math.round(d.proteinG)} / ${Math.round(proteinT)} g` } : null,
+          logged: { pct: d.meals > 0 ? 1 : 0, text: `${d.meals}` },
+          water: w?.targetMl ? { pct: w.intakeMl / w.targetMl, text: `${(w.intakeMl / 1000).toFixed(1)} / ${(w.targetMl / 1000).toFixed(1)} L` } : null,
+          steps: s?.steps != null && s.goal ? { pct: s.steps / s.goal, text: `${s.steps} / ${s.goal}` } : null,
+        },
       });
     }
     // days before the user started tracking (signup, or no data at all yet) aren't counted as misses
@@ -132,7 +140,8 @@ export class ProgressService {
     const score = (list: Row[]) => {
       if (!list.length) return null;
       let hit = 0, of = 0;
-      for (const r of list) for (const h of habits) { of++; if (r[h] === true) hit++; }
+      // today is still in progress: it only counts once a habit is reached
+      for (const r of list) for (const h of habits) { if (r.date === today && r[h] !== true) continue; of++; if (r[h] === true) hit++; }
       return of ? Math.round((hit / of) * 100) : null;
     };
     const thisWeek = rows.filter((r) => r.date >= start), lastWeek = rows.filter((r) => r.date < start && r.date >= prevStart);
@@ -140,11 +149,13 @@ export class ProgressService {
     const grid = habits.map((h) => ({
       habit: h,
       days: days.map((d) => { const r = thisWeek.find((x) => x.date === d); return r ? (r[h] === null ? null : !!r[h]) : null; }),
+      vals: days.map((d) => { const r = thisWeek.find((x) => x.date === d); const v = r?.val[h as string]; return v ? { pct: Math.round(v.pct * 100) / 100, text: v.text } : null; }),
       hit: thisWeek.filter((r) => r[h] === true).length,
+      of: thisWeek.filter((r) => r.date !== today || r[h] === true).length, // finished days (today only once reached)
     }));
     const weakest = [...grid].filter((g) => g.habit !== 'logged').sort((a, b) => a.hit - b.hit)[0];
     const now = score(thisWeek), prev = score(lastWeek);
-    return { weekStart: start, score: now, lastWeekScore: prev, delta: now != null && prev != null ? now - prev : null, daysSoFar: thisWeek.length, grid, weakest: weakest ? { habit: weakest.habit, hit: weakest.hit, of: thisWeek.length } : null };
+    return { weekStart: start, todayIndex: days.indexOf(today), score: now, lastWeekScore: prev, delta: now != null && prev != null ? now - prev : null, daysSoFar: thisWeek.length, grid, weakest: weakest && weakest.of > 0 ? { habit: weakest.habit, hit: weakest.hit, of: weakest.of } : null };
   }
 
   private async monitor(userId: string, today: string) {
