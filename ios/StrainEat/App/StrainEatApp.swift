@@ -39,6 +39,7 @@ struct RootView: View {
     @State private var showAssistant = UserDefaults.standard.bool(forKey: "openAssistant")
     @State private var aiConsentModel = AIConsent.shared
     @State private var extraModel = ExtraAnalyses.shared
+    @State private var fab = FabState.shared
     private var screenName: String { ["today", "progress", "snap", "plan"][min(max(tab, 0), 3)] }
 
     var body: some View {
@@ -51,12 +52,13 @@ struct RootView: View {
             } else {
                 TabView(selection: $tab) {
                     TodayView(onLog: { tab = 2 }, onFavourites: { UserDefaults.standard.set("favorites", forKey: "logMode"); tab = 2 })
+                        .hidesAskFabWhileScrolling()
                         .tag(0).tabItem { Label(t("Today", "اليوم"), systemImage: "sun.max.fill") }
-                    ProgressTab()
+                    ProgressTab().hidesAskFabWhileScrolling()
                         .tag(1).tabItem { Label(t("Progress", "التقدم"), systemImage: "chart.line.uptrend.xyaxis") }
                     LogView(active: tab == 2, onLogged: { tab = 0 }, onClose: { tab = tabBeforeSnap })
                         .tag(2).tabItem { Label(t("Log meal", "سجّل وجبة"), systemImage: "plus.circle.fill") }
-                    PlanTab()
+                    PlanTab().hidesAskFabWhileScrolling()
                         .tag(3).tabItem { Label(t("My plan", "خطتي"), systemImage: "target") }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .openTab)) { n in
@@ -80,6 +82,9 @@ struct RootView: View {
                     AskFab { showAssistant = true }
                         .padding(.trailing, 16)
                         .padding(.bottom, 64)
+                        .offset(x: fab.away ? (appLayoutDirection == .rightToLeft ? -90 : 90) : 0)
+                        .opacity(fab.away ? 0 : 1)
+                        .animation(.easeOut(duration: 0.25), value: fab.away)
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .openAssistant)) { _ in showAssistant = true }
                 .onChange(of: tab) { old, _ in if old != 2 { tabBeforeSnap = old } }

@@ -290,3 +290,32 @@ struct AssistantView: View {
         }
     }
 }
+
+/// The ask button steps aside while you scroll, so it never sits on top of what you're reading.
+@Observable final class FabState {
+    static let shared = FabState()
+    var away = false
+    private var settle: Task<Void, Never>?
+    func scrolling(_ on: Bool) {
+        settle?.cancel()
+        if on { away = true; return }
+        settle = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
+            if !Task.isCancelled { away = false }
+        }
+    }
+}
+
+private struct FabScrollHider: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.onScrollPhaseChange { _, phase in FabState.shared.scrolling(phase.isScrolling) }
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    func hidesAskFabWhileScrolling() -> some View { modifier(FabScrollHider()) }
+}
