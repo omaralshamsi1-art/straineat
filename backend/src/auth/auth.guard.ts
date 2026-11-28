@@ -46,7 +46,7 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest();
-    const mode = this.config.get<string>('AUTH_MODE') ?? 'dev';
+    const mode = resolveAuthMode(this.config.get<string>('AUTH_MODE'));
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC, [ctx.getHandler(), ctx.getClass()]);
 
     if (mode === 'hybrid' || mode === 'accounts') {
@@ -119,4 +119,18 @@ function safeEqual(a: string, b: string): boolean {
   const x = Buffer.from(a);
   const y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
+}
+
+/**
+ * AUTH_MODE, failing closed: dev mode (X-User-Id impersonation) is only the default for local/test runs.
+ * With a database or NODE_ENV=production, a missing or unknown mode stops the server instead of opening it.
+ */
+export function resolveAuthMode(raw: string | undefined, env: NodeJS.ProcessEnv = process.env): string {
+  const mode = (raw ?? '').trim().toLowerCase();
+  const prod = env.NODE_ENV === 'production' || !!env.DATABASE_URL;
+  if (['hybrid', 'accounts', 'supabase', 'apikey'].includes(mode)) return mode;
+  if (mode === 'dev' && !prod) return 'dev';
+  if (!mode && !prod) return 'dev';
+  if (mode === 'dev' && env.ALLOW_DEV_AUTH === 'true') return 'dev'; // explicit escape hatch for a throwaway database
+  throw new Error(`Refusing to start: AUTH_MODE="${raw ?? ''}" is not allowed with a database/production (use hybrid, accounts or supabase).`);
 }

@@ -1,3 +1,4 @@
+import { isIsoDate } from '../common/dates';
 import { validateMeds } from '../meds/meds';
 import { validateSchedule } from '../schedule/schedule';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
@@ -49,7 +50,9 @@ export class ProfileService {
   async get(userId: string): Promise<Profile> {
     const stored = await this.repo.getProfile(userId);
     // merge with defaults so profiles saved before newer fields existed stay valid
-    return { ...DEFAULT_PROFILE(userId), ...(stored ?? {}), userId };
+    const p = { ...DEFAULT_PROFILE(userId), ...(stored ?? {}), userId };
+    if (!validTz(p.timezone)) p.timezone = DEFAULT_PROFILE(userId).timezone; // a bad stored zone must not break every screen
+    return p;
   }
 
   async update(userId: string, patch: Partial<Profile>, opts: { system?: boolean } = {}): Promise<Profile> {
@@ -198,9 +201,23 @@ export function validateProfilePatch(patch: Partial<Profile>): Partial<Profile> 
       out.aiConsentAt = v ? new Date().toISOString() : null;
     } else if (k === 'onboarded') {
       out.onboarded = !!v;
-    } else if (['timezone', 'city', 'area', 'country', 'startDate'].includes(k)) {
+    } else if (k === 'timezone') {
+      // A bad zone would make every date calculation for this user throw.
+      if (v === null || v === undefined || v === '') continue;
+      const tz = String(v).slice(0, 64);
+      try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); } catch { throw new BadRequestException('Invalid timezone'); }
+      out.timezone = tz;
+    } else if (k === 'startDate') {
+      if (v !== null && !isIsoDate(v)) throw new BadRequestException('startDate must be YYYY-MM-DD');
+      out.startDate = v;
+    } else if (['city', 'area', 'country'].includes(k)) {
       out[k] = v === null ? null : String(v).slice(0, 64);
     }
   }
   return out;
+}
+
+function validTz(tz: unknown): tz is string {
+  if (typeof tz !== 'string' || !tz) return false;
+  try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch { return false; }
 }

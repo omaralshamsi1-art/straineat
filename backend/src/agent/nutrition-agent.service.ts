@@ -41,6 +41,9 @@ const MAX_TURNS = 8;
 export interface ChatTurn { role: 'user' | 'assistant'; text: string }
 export interface ChatTool { name: string; description: string; parameters: Record<string, unknown> }
 
+/** Per Gemini call (photo analysis with search grounding can take ~20–40 s). */
+const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS) || 75_000;
+
 @Injectable()
 export class NutritionAgentService {
   private readonly log = new Logger(NutritionAgentService.name);
@@ -208,6 +211,7 @@ export class NutritionAgentService {
       this.fetchFn(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': this.geminiKey! },
+        signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS), // a hung call must not hold the request open
         body: JSON.stringify(body),
       });
     const res = await post(this.model);
@@ -286,6 +290,7 @@ export class NutritionAgentService {
         this.fetchFn(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-goog-api-key': this.geminiKey! },
+        signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS), // a hung call must not hold the request open
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: system }] },
             contents,

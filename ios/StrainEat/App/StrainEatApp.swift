@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 @main
 struct StrainEatApp: App {
@@ -182,11 +183,16 @@ final class AppStore {
     }
 
     func signOut() {
-        let d = UserDefaults.standard
-        d.set("", forKey: "accessToken")
-        d.set("", forKey: "apiKey")
         balance = nil; motivation = nil; me = nil
         signedIn = false
+        // this device stops receiving the previous account's alerts and reminders
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+        Task {
+            await PushRegistration.unregister() // needs the old token, so it runs before the token is cleared
+            let d = UserDefaults.standard
+            d.set("", forKey: "accessToken")
+            d.set("", forKey: "apiKey")
+        }
     }
 
     func handleUnauthorized() {

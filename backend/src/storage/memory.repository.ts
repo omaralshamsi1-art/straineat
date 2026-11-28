@@ -110,6 +110,18 @@ export class MemoryRepository implements Repository {
     this.cache.set(`${e.userId}|${e.key}`, structuredClone(e));
   }
 
+  async incrCache(userId: string, key: string, delta: number) {
+    const k = `${userId}|${key}`;
+    const n = Number((this.cache.get(k)?.payload as { n?: number } | undefined)?.n ?? 0) + delta;
+    this.cache.set(k, { userId, key, payload: { n }, createdAt: new Date().toISOString() });
+    return n;
+  }
+  async purgeCache(prefixes: string[], before: string) {
+    let n = 0;
+    for (const [k, e] of this.cache) if (e.createdAt < before && prefixes.some((p) => e.key.startsWith(p))) { this.cache.delete(k); n++; }
+    return n;
+  }
+
   async createUser(u: User) {
     if ([...this.users.values()].some((x) => x.email === u.email) || this.users.has(u.id)) throw new Error('duplicate');
     this.users.set(u.id, { ...u });
@@ -177,7 +189,7 @@ export class MemoryRepository implements Repository {
     purge('water_logs', this.water, (v) => v.userId === userId);
     purge('push_subs', this.pushSubs, (v) => v.userId === userId);
     purge('oauth_tokens', this.tokens, (v) => v.userId === userId);
-    purge('coach_cache', this.cache, (v) => v.userId === userId || (v.userId === '__lookup__' && (v.payload as any)?.userId === userId));
+    purge('coach_cache', this.cache, (v) => v.userId === userId || ((v.userId === '__lookup__' || v.userId === '__shortcut__') && (v.payload as any)?.userId === userId));
     purge('profiles', this.profiles, (v) => v.userId === userId);
     purge('invites', this.invites, (v) => v.createdBy === userId && !v.usedBy);
     purge('users', this.users, (v) => v.id === userId);

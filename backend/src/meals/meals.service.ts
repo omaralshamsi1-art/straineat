@@ -159,12 +159,13 @@ export class MealsService {
       meal_name: body.meal_name,
       meal_name_ar: body.meal_name_ar ?? body.meal_name,
       restaurant: body.restaurant ?? null,
-      source: body.source ?? 'estimate',
-      confidence: body.confidence ?? 1,
+      // A client can't claim "restaurant published": only server-side analysis may, and only those reach the shared list.
+      source: body.source === 'known_meal' ? 'known_meal' : 'estimate',
+      confidence: Math.max(0, Math.min(1, Number(body.confidence ?? 1) || 0)),
       serving_description: body.serving_description ?? '',
       items: body.items,
       totals: { ...EMPTY_NUTRIENTS },
-      sources: body.sources ?? [],
+      sources: [],
       assumptions: [],
       warnings: [],
     });

@@ -39,8 +39,19 @@ enum PushRegistration {
         await registerIfAllowed()
     }
 
+    /// On sign-out: detach this device from the account (best effort, at most ~5 s).
+    static func unregister() async {
+        guard let token = UserDefaults.standard.string(forKey: "apnsToken"), !token.isEmpty else { return }
+        await withTaskGroup(of: Void.self) { g in
+            g.addTask { let _: Reply? = try? await APIClient.shared.post("push/unsubscribe", ["endpoint": "apns:\(token)"]) }
+            g.addTask { try? await Task.sleep(for: .seconds(5)) }
+            await g.next(); g.cancelAll()
+        }
+    }
+
     static func upload(_ token: String) async {
         // one small request per launch: keeps the token tied to whoever is signed in now
+        UserDefaults.standard.set(token, forKey: "apnsToken")
         let _: Reply? = try? await APIClient.shared.post("push/apns", ["token": token])
     }
 }

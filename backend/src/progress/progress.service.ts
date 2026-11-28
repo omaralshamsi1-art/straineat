@@ -109,7 +109,7 @@ export class ProgressService {
     const hist = await this.plans.history(userId, n);
     const goal = plan.effectiveGoal ?? p.goal;
     const proteinT = plan.proteinG || 0;
-    type Row = { date: string; calories: boolean; protein: boolean; logged: boolean; water: boolean; steps: boolean | null };
+    type Row = { date: string; calories: boolean; protein: boolean; logged: boolean; water: boolean; steps: boolean | null; active: boolean };
     const rows: Row[] = [];
     for (const d of hist.days) {
       const [w, s] = await Promise.all([this.water.day(userId, d.date).catch(() => null), this.steps.day(userId, d.date).catch(() => null)]);
@@ -120,8 +120,12 @@ export class ProgressService {
         protein: d.meals > 0 && !!proteinT && d.proteinG >= proteinT * PROTEIN_HIT,
         water: !!w?.targetMl && w.intakeMl >= w.targetMl,
         steps: s?.steps == null ? null : s.steps >= s.goal,
+        active: d.meals > 0 || (w?.intakeMl ?? 0) > 0,
       });
     }
+    // days before the user started tracking (signup, or no data at all yet) aren't counted as misses
+    const firstActive = rows.find((r) => r.active)?.date ?? today;
+    rows.splice(0, rows.length, ...rows.filter((r) => r.date >= firstActive));
     const hasSteps = rows.some((r) => r.steps != null);
     const habits = ['calories', 'protein', 'logged', 'water', ...(hasSteps ? ['steps'] : [])] as (keyof Row)[];
     const score = (list: Row[]) => {

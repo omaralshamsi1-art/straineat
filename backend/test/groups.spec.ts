@@ -74,7 +74,15 @@ describe('groups', () => {
     expect(JSON.stringify(info.members)).not.toMatch(/friend|"owner":\s*"owner"/);
     const board = await svc.board('friend', g.id, 'total', 'week');
     expect(board.rows).toHaveLength(2);
-    expect(JSON.stringify(board)).not.toMatch(/kg|weight|intake/i);
+    // no body data leaks: check keys and values, not random ids (a regex over the JSON matched ids like "1kg5iha")
+    const leaks: string[] = [];
+    const walk = (v: unknown, k = ''): void => {
+      if (/kg|weight|intake/i.test(k)) leaks.push(k);
+      if (typeof v === 'string' && /\b(kg|weight|intake)\b/i.test(v)) leaks.push(`${k}=${v}`);
+      if (v && typeof v === 'object') for (const [kk, vv] of Object.entries(v)) walk(vv, kk);
+    };
+    walk(board);
+    expect(leaks).toEqual([]);
     expect(board.rows.find((r) => r.me)!.name).toBe('Sara');
     await expect(svc.board('stranger', g.id)).rejects.toThrow();
     const cal = await svc.board('friend', g.id, 'calories', 'day');

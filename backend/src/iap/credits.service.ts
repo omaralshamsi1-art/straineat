@@ -119,7 +119,8 @@ export class CreditsService {
     if (tx.bundleId !== this.bundleId) throw new BadRequestException('Purchase is for a different app');
     if (tx.productId !== this.productId) throw new BadRequestException('Unknown product');
     if (tx.revocationDate) throw new BadRequestException('This purchase was refunded');
-    if (tx.appAccountToken && String(tx.appAccountToken).toLowerCase() !== appAccountToken(userId)) {
+    // The app always tags purchases with the account; an untagged transaction can't be claimed by whoever sends it first.
+    if (!tx.appAccountToken || String(tx.appAccountToken).toLowerCase() !== appAccountToken(userId)) {
       throw new BadRequestException('This purchase belongs to another account');
     }
     const qty = Math.max(1, Number(tx.quantity) || 1);

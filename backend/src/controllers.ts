@@ -71,11 +71,13 @@ export class MealsController {
   ) {}
 
   /** A purchased credit is returned if the analysis it paid for fails. */
-  private async refundOnFail<T>(userId: string, paid: string, run: () => Promise<T>): Promise<T> {
+  /** The free use or purchased credit is returned if the analysis it paid for fails. */
+  private async refundOnFail<T>(userId: string, paid: 'owner' | 'free' | 'credit', run: () => Promise<T>): Promise<T> {
     try {
       return await run();
     } catch (e) {
       if (paid === 'credit') await this.credits?.refund(userId).catch(() => undefined);
+      else await this.usage.release(userId, 'analyze', paid).catch(() => undefined);
       throw e;
     }
   }
@@ -97,6 +99,7 @@ export class MealsController {
   /** Typed or dictated description, e.g. "أكلت شاورما دجاج وعصير برتقال". */
   @Post('analyze-text')
   async analyzeText(@UserId() userId: string, @Role() role: string, @Body() body: { text: string; restaurant?: string; eatenAt?: string }) {
+    if (typeof body?.text !== 'string' || !body.text.trim()) throw new BadRequestException('text is required'); // checked before it costs a use
     const paid = await this.usage.consume(userId, role, 'analyze');
     return this.refundOnFail(userId, paid, () => this.meals.analyzeText(userId, body?.text, { restaurant: body?.restaurant, eatenAt: body?.eatenAt }));
   }

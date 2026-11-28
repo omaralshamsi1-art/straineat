@@ -565,7 +565,9 @@ button.navcard span { font-size: 20px; }
 .tchips { flex-wrap: wrap; }
 /* ---- Today v4: WHOOP-style rings, swipe cards, monitors ---- */
 .brand #streakChip:empty { display: none; }
-.top { gap: 8px; } .top .brand { min-width: 0; } .top .daynav { flex: none; }
+/* narrow phones: the flame + number is enough, so the day pill never covers the streak */
+@media (max-width: 420px) { .brand .streak .sw { display: none; } .brand .streak { margin-inline-start: 6px; } }
+.top { gap: 8px; } .top .brand { min-width: 0; overflow: hidden; } .top .daynav { flex: none; }
 .brand .streak { cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; background: var(--card); border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 3px 9px; margin-inline-start: 8px; white-space: nowrap; }
 .brand .streak svg { color: #ff7a45; }
 .rings3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 6px; }
@@ -605,7 +607,9 @@ html[dir="ltr"] .rings3 .lb { text-transform: uppercase; letter-spacing: .12em; 
 .stack-empty svg { color: var(--good); }
 #stackMore .restore { position: relative; z-index: 2; display: block; margin: 16px auto 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; padding: 6px 10px; }
 .dayhead .ideas { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; min-height: 34px; padding: 0 12px; font-size: 13px; }
-.mon2b { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.mon2b { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin: 12px 0; }
+.mon2b > * { min-width: 0; overflow: hidden; }
+.mon2b .card * { min-width: 0; } .mon2b .card .t, .mon2b .card .v { overflow: hidden; text-overflow: ellipsis; }
 .mon2b .card { margin: 0; border: 0; text-align: start; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; gap: 4px; font: inherit; }
 .mon2b .t { font-size: 13px; font-weight: 800; display: flex; justify-content: space-between; }
 html[dir="ltr"] .mon2b .t { text-transform: uppercase; letter-spacing: .1em; font-size: 12px; }
@@ -1878,7 +1882,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     const today = new Date();
     Object.assign(ob, {
       i: 0, edit: !!p.onboarded, goal: p.goal && p.onboarded ? p.goal : 'lose', sex: p.sex ?? null,
-      h: p.heightCm || 170, w: p.weightKg || 75, act: p.activityLevel || 'light', pace: p.pace || 'moderate',
+      h: p.heightCm || 170, w: p.weightKg || 75, w0: p.onboarded ? p.weightKg : null, act: p.activityLevel || 'light', pace: p.pace || 'moderate',
       diet: p.dietStyle || 'normal', conds: [...(p.conditions || [])], meals: p.mealsPerDay || 3,
       preg: !!(p.screening && (p.screening.pregnant || p.screening.breastfeeding)), ed: !!(p.screening && p.screening.edHistory),
       preview: null, paces: null, mode: p.targetDate ? 'date' : 'pace', td: p.targetDate || '', ack: false,
@@ -2173,7 +2177,8 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       const [saved] = await Promise.all([
         (async () => {
           await api('profile', { method: 'PUT', json: { ...rest, onboarded: true } });
-          await api('weights', { method: 'POST', json: { kg: weightKg } });
+          // editing the plan only logs a weigh-in if the weight was actually changed
+          if (!ob.edit || ob.w0 == null || Math.abs(weightKg - ob.w0) >= 0.05) await api('weights', { method: 'POST', json: { kg: weightKg } });
           return api('plan');
         })(),
         new Promise((r) => setTimeout(r, 1800)),
@@ -2439,7 +2444,8 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
   let waterDay = null;
   const ltr = (ml) => (ml >= 1000 ? `${fmt1(ml / 1000)} ${T('لتر')}` : `${fmt(ml)} ${T('مل')}`);
   async function loadWater() {
-    try { paintWater(await api(`water?date=${isoDay(day)}`)); } catch { $('waterCard').classList.add('hidden'); }
+    const want = isoDay(day);
+    try { const w = await api(`water?date=${want}`); if (isoDay(day) === want) paintWater(w); } catch { if (isoDay(day) === want) $('waterCard').classList.add('hidden'); }
   }
   function paintWater(w) {
     waterDay = w;
@@ -2655,9 +2661,12 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     const nm = ls.get('ns_name') || (user() === 'meera' ? T('ميرا') : user());
     $('greet').innerHTML = `<em class="acc">${esc(greeting())}</em> ${esc(nm)}`;
     $('mealList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    const want = isoDay(day);
     await autoSyncWhoop();
+    if (isoDay(day) !== want) return; // a newer loadToday is running for the day now shown
     try {
-      const b = await api(`balance?date=${isoDay(day)}`);
+      const b = await api(`balance?date=${want}`);
+      if (isoDay(day) !== want) return;
       if (b.onboarded === false && isoDay(day) === isoDay(new Date())) { startOnboarding(await api('profile')); return; }
       const gd = b.goalDeltaKcal;
       $('goalLine').textContent = (GOAL_AR[b.goal] || '') + (gd ? ' · ' + (gd < 0 ? L`عجز ${fmt(-gd)}/يوم` : L`فائض ${fmt(gd)}/يوم`) : '');
@@ -2700,7 +2709,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       const st = m.streak;
       const c = m.challenge;
       // header shows only the streak number (like WHOOP); the weekly challenge is an insight card
-      $('streakChip').innerHTML = st.current ? `<button class="streak" id="streakBtn"><svg width="13" height="13"><use href="#i-flame"/></svg><b class="num">${st.current}</b> ${st.current === 1 ? T('يوم') : T('أيام')}</button>` : '';
+      $('streakChip').innerHTML = st.current ? `<button class="streak" id="streakBtn"><svg width="13" height="13"><use href="#i-flame"/></svg><b class="num">${st.current}</b><span class="sw"> ${st.current === 1 ? T('يوم') : T('أيام')}</span></button>` : '';
       const sb = $('streakBtn'); if (sb) sb.onclick = () => toast(L`${st.current} ${st.current === 1 ? T('يوم') : T('أيام')} متتالية سجّلت فيها وجباتك — استمر!`);
       void c; renderStack();
     } catch (e) { console.warn(e); }
@@ -2837,7 +2846,11 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
   function strainLabel(x) { return x >= 18 ? T('قصوى') : x >= 14 ? T('عالية') : x >= 10 ? T('متوسطة') : T('خفيفة'); }
   let stepsDay = null;
   async function loadSteps() {
-    try { stepsDay = await api(`steps?date=${isoDay(day)}`); } catch { stepsDay = null; }
+    const want = isoDay(day);
+    let st = null;
+    try { st = await api(`steps?date=${want}`); } catch { st = null; }
+    if (isoDay(day) !== want) return; // the user moved to another day meanwhile
+    stepsDay = st;
     renderMonitors(); renderActivity(lastBal && lastBal.activity);
   }
   function stepsRow() {
@@ -3055,6 +3068,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       const hs = 1 + 0.25 * Math.sin(t / 350); $('jyHalo').setAttribute('r', 20 * hs);
       for (const s2 of sparks) { s2.f += s2.v; if (s2.f > 1) s2.f = 0; const p = pt(s2.f * cur); s2.c.setAttribute('cx', p.x + Math.sin(t / 300 + s2.o) * 3); s2.c.setAttribute('cy', p.y + Math.cos(t / 280 + s2.o) * 3); s2.c.setAttribute('opacity', cur > 0.02 ? 0.3 + 0.6 * Math.abs(Math.sin(t / 400 + s2.o)) : 0); }
       $('jyFlag').setAttribute('transform', `translate(${g.x},${g.y}) scale(${1 + 0.06 * Math.sin(t / 500)})`);
+      if (reduce) { for (const s2 of sparks) s2.c.setAttribute('opacity', 0); return; } // reduced motion: draw once, no loop
       if (curView === 'progress') jyRaf = requestAnimationFrame(frame);
     };
     jyRaf = requestAnimationFrame(frame);
@@ -3137,7 +3151,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
         const pct = nowKg ? Math.max(0, Math.min(100, ((start - nowKg) / (start - tgt)) * 100)) : 0;
         $('pBar').style.width = `${Math.max(pct, 2)}%`;
         const spanDays = w.entries.length ? (Date.parse(last.date) - Date.parse(w.entries[0].date)) / 86400000 : 0;
-        $('pEta').textContent = reached ? '' : spanDays >= 14 && plan.etaDate ? L`بالمعدل الحالي تقريباً ${arDate(plan.etaDate)}` : T('نحتاج أسبوعين من القياسات لنقرأ اتجاهك.');
+        $('pEta').textContent = reached ? '' : plan.etaDate ? L`حسب خطتك تقريباً ${arDate(plan.etaDate)} · تاريخك الفعلي فوق في «رحلتك»` : T('نحتاج أسبوعين من القياسات لنقرأ اتجاهك.');
       }
       $('wChart').innerHTML = weightChart(w.entries, plan.targetWeightKg);
       planGoal = plan.effectiveGoal;

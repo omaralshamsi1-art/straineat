@@ -1,3 +1,4 @@
+import { usageDay } from '../usage/ai-usage';
 import { CreditsService } from '../iap/credits.service';
 import { BadRequestException, ConflictException, ForbiddenException, HttpException, HttpStatus, Inject, Injectable, Optional, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -179,38 +180,36 @@ export const DAILY_LIMITS = {
 export class UsageService {
   constructor(@Inject(REPOSITORY) private readonly repo: Repository, @Optional() private readonly credits?: CreditsService) {}
 
-  /** Counts one use. Over the daily cap, an `analyze` spends a purchased credit if the user has one. */
+  /** Counts one use (atomically, on the local usage day). Over the daily cap, an `analyze` spends a purchased credit if the user has one. */
   async consume(userId: string, role: string | undefined, kind: keyof typeof DAILY_LIMITS): Promise<'owner' | 'free' | 'credit'> {
     if (role === 'owner') return 'owner';
-    const day = new Date().toISOString().slice(0, 10);
-    const key = `usage:${day}:${kind}`;
-    const cur = (await this.repo.getCache(userId, key))?.payload as { n: number } | undefined;
-    const n = (cur?.n ?? 0) + 1;
-    let paid: 'free' | 'credit' = 'free';
-    if (n > DAILY_LIMITS[kind]) {
-      if (kind === 'analyze' && this.credits && (await this.credits.spend(userId))) {
-        paid = 'credit';
-      } else {
-        const message =
-          kind === 'analyze'
-            ? `وصلت للحد اليومي لتحليل الصور (${DAILY_LIMITS.analyze}). جرّب غداً أو أضف الوجبة من المفضلة.`
-            : kind === 'chat'
-              ? `وصلت للحد اليومي لرسائل المساعد (${DAILY_LIMITS.chat}). جرّب غداً.`
-              : `وصلت للحد اليومي لطلبات المدرب (${DAILY_LIMITS.coach}).`;
-        throw new HttpException(
-          { statusCode: 429, message, code: kind === 'analyze' ? 'AI_LIMIT' : 'LIMIT', canBuy: kind === 'analyze' && !!this.credits, limit: DAILY_LIMITS[kind] },
-          HttpStatus.TOO_MANY_REQUESTS,
-        );
-      }
-    }
-    await this.repo.setCache({ userId, key, payload: { n }, createdAt: new Date().toISOString() });
-    return paid;
+    const key = `usage:${usageDay()}:${kind}`;
+    const n = await this.repo.incrCache(userId, key, 1);
+    if (n <= DAILY_LIMITS[kind]) return 'free';
+    await this.repo.incrCache(userId, key, -1); // over the cap: this use isn't counted
+    if (kind === 'analyze' && this.credits && (await this.credits.spend(userId))) return 'credit';
+    const message =
+      kind === 'analyze'
+        ? `وصلت للحد اليومي لتحليل الصور (${DAILY_LIMITS.analyze}). جرّب غداً أو أضف الوجبة من المفضلة.`
+        : kind === 'chat'
+          ? `وصلت للحد اليومي لرسائل المساعد (${DAILY_LIMITS.chat}). جرّب غداً.`
+          : `وصلت للحد اليومي لطلبات المدرب (${DAILY_LIMITS.coach}).`;
+    throw new HttpException(
+      { statusCode: 429, message, code: kind === 'analyze' ? 'AI_LIMIT' : 'LIMIT', canBuy: kind === 'analyze' && !!this.credits, limit: DAILY_LIMITS[kind] },
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
+  }
+
+  /** Gives back a free use when the AI call it paid for failed. */
+  async release(userId: string, kind: keyof typeof DAILY_LIMITS, paid: 'owner' | 'free' | 'credit') {
+    if (paid !== 'free') return;
+    const key = `usage:${usageDay()}:${kind}`;
+    if ((await this.repo.incrCache(userId, key, -1)) < 0) await this.repo.incrCache(userId, key, 1);
   }
 
   /** Free uses left today for `analyze`. */
   async remainingToday(userId: string): Promise<number> {
-    const day = new Date().toISOString().slice(0, 10);
-    const n = ((await this.repo.getCache(userId, `usage:${day}:analyze`))?.payload as { n: number } | undefined)?.n ?? 0;
+    const n = ((await this.repo.getCache(userId, `usage:${usageDay()}:analyze`))?.payload as { n: number } | undefined)?.n ?? 0;
     return Math.max(0, DAILY_LIMITS.analyze - n);
   }
 }

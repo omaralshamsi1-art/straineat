@@ -64,6 +64,7 @@ private func roadPoint(_ f: Double, in size: CGSize) -> CGPoint {
 }
 
 struct JourneyCard: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let j: ProgressSummary.Journey
     @State private var progress: Double = 0
     @State private var shownAhead = 0
@@ -91,7 +92,7 @@ struct JourneyCard: View {
                             Circle().stroke(Theme.muted, style: StrokeStyle(lineWidth: 2.5, dash: [3, 3])).frame(width: 18, height: 18)
                                 .position(roadPoint(pf * progress, in: size))
                         }
-                        TimelineView(.animation) { tl in
+                        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { tl in
                             let t = tl.date.timeIntervalSinceReferenceDate
                             let pt = roadPoint(me * progress, in: size)
                             ZStack {
@@ -112,11 +113,17 @@ struct JourneyCard: View {
                 legend
             }
         }
-        .onAppear {
-            withAnimation(.easeOut(duration: 2.4).delay(0.25)) { progress = 1 }
+        .task(id: j.aheadDays) {
+            // tied to the view: cancelled when it disappears, no duplicate count-ups on tab switches
+            if reduceMotion { progress = 1 } else { withAnimation(.easeOut(duration: 2.4).delay(0.25)) { progress = 1 } }
             if let a = j.aheadDays {
                 let target = abs(a)
-                Task { for i in 0...max(1, target) { try? await Task.sleep(for: .milliseconds(1800 / max(1, target))); shownAhead = min(i, target) } }
+                if reduceMotion { shownAhead = target; return }
+                for i in 0...max(1, target) {
+                    try? await Task.sleep(for: .milliseconds(1800 / max(1, target)))
+                    if Task.isCancelled { return }
+                    shownAhead = min(i, target)
+                }
             }
         }
     }

@@ -35,6 +35,10 @@ export interface Repository {
 
   getCache(userId: string, key: string): Promise<CacheEntry | null>;
   setCache(e: CacheEntry): Promise<void>;
+  /** Atomically adds `delta` to payload.n of a cache row (creating it) and returns the new value. */
+  incrCache(userId: string, key: string, delta: number): Promise<number>;
+  /** Deletes cache rows whose key starts with one of `prefixes` and were written before `before` (housekeeping). */
+  purgeCache(prefixes: string[], before: string): Promise<number>;
 
   createUser(u: User): Promise<void>;
   getUserByEmail(email: string): Promise<User | null>;

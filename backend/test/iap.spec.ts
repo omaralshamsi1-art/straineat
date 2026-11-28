@@ -47,7 +47,8 @@ describe('Extra analyses (IAP credits)', () => {
   });
 
   it('after the free daily limit, analyses spend credits; with none left the error offers a purchase', async () => {
-    const s = setup(tx());
+    expect(await setup(tx()).credits.redeemApple('u1', '2000000123').catch((e) => e.message)).toMatch(/another account/); // untagged purchase
+    const s = setup(tx({ appAccountToken: appAccountToken('u1') }));
     for (let i = 0; i < DAILY_LIMITS.analyze; i++) expect(await s.usage.consume('u1', 'user', 'analyze')).toBe('free');
     const err: any = await s.usage.consume('u1', 'user', 'analyze').catch((e) => e);
     expect(err.getStatus()).toBe(429);

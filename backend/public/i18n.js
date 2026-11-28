@@ -9,6 +9,7 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "حسب خطتك تقريباً {} · تاريخك الفعلي فوق في «رحلتك»": "On your plan: around {} · your actual date is in \u201cYour journey\u201d above",
     "تنبيهات يومك": "Your day alerts",
     "بعد كل نشاط (10 دقائق أو أكثر) مع السعرات الباقية": "After each activity (10+ min), with calories left",
     "السعرات: عند 90% و100% من هدفك": "Calories: at 90% and 100% of your target",

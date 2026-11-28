@@ -74,6 +74,8 @@ export function dueReminders(i: {
   return out;
 }
 
+const TICK_CONCURRENCY = Number(process.env.REMINDER_CONCURRENCY) || 8;
+
 @Injectable()
 export class RemindersService implements OnModuleInit, OnModuleDestroy {
   private readonly log = new Logger(RemindersService.name);
@@ -83,6 +85,7 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
   private readonly pollMs: number;
   private readonly send: PushSender;
   private readonly sendDisabled: boolean;
+  private readonly pendingJourney = new Map<string, { target: number; level: number }>();
 
   constructor(
     @Inject(REPOSITORY) private readonly repo: Repository,
@@ -133,6 +136,10 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
 
   async subscribe(userId: string, sub: { endpoint?: string; keys?: { p256dh?: string; auth?: string } }) {
     if (!sub?.endpoint || !/^https:\/\//.test(sub.endpoint) || !sub.keys?.p256dh || !sub.keys?.auth) throw new BadRequestException('invalid subscription');
+    if (!isPushServiceUrl(sub.endpoint)) throw new BadRequestException('unsupported push service');
+    // at most 5 devices per user: the oldest goes
+    const mine = (await this.repo.listPushSubs(userId)).filter((x) => !isApnsEndpoint(x.endpoint) && x.endpoint !== sub.endpoint);
+    for (const old of mine.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(0, Math.max(0, mine.length - 4))) await this.repo.deletePushSub(old.endpoint);
     await this.repo.savePushSub({ userId, endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth }, createdAt: new Date().toISOString() });
     return { subscribed: true };
   }
@@ -183,15 +190,33 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** Runs every minute. Each reminder is sent at most once per user per day; one user's error never blocks the others. */
+  private lastPurge = '';
+  /** Once a day: drop per-day bookkeeping rows (sent-reminder markers, usage counters) older than 30 days. */
+  private async housekeeping(now: Date) {
+    const day = now.toISOString().slice(0, 10);
+    if (this.lastPurge === day || now.getUTCHours() < 1) return;
+    this.lastPurge = day;
+    try {
+      const n = await this.repo.purgeCache(['reminder:', 'usage:'], new Date(now.getTime() - 30 * 86400000).toISOString());
+      if (n) this.log.log(`housekeeping: removed ${n} old cache rows`);
+    } catch (e: any) { this.log.warn(`housekeeping: ${e?.message ?? e}`); }
+  }
+
   async tick(now = new Date()) {
     if (this.busy) return { users: 0, sent: 0, skipped: true }; // a slow tick (WHOOP sync) must not overlap the next
     this.busy = true;
     try {
       const users = [...new Set((await this.repo.listPushSubs()).map((s) => s.userId))];
       let sent = 0;
-      for (const userId of users) {
-        try { sent += await this.tickUser(userId, now); } catch (e: any) { this.log.warn(`reminders for ${userId}: ${e?.message ?? e}`); }
-      }
+      // a few users at a time so one minute's work keeps up as users grow
+      const queue = [...users];
+      const worker = async () => {
+        for (let u = queue.shift(); u !== undefined; u = queue.shift()) {
+          try { sent += await this.tickUser(u, now); } catch (e: any) { this.log.warn(`reminders for ${u}: ${e?.message ?? e}`); }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(TICK_CONCURRENCY, queue.length) }, worker));
+      await this.housekeeping(now);
       if (sent) this.log.log(`reminders sent: ${sent}`);
       return { users: users.length, sent };
     } finally {
@@ -277,8 +302,12 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
             const level = journeyLevel(j.frac);
             const prev = jPrev?.target === j.targetKg && jPrev?.level != null ? jPrev.level : null;
             const m = milestoneNudge({ level, prevLevel: prev, targetKg: j.targetKg, currentKg: j.currentKg, lang });
-            if (m) out.push(m);
-            await this.repo.setCache({ userId, key: jKey, payload: { target: j.targetKg, level: Math.max(level, prev ?? 0), at: now.toISOString() }, createdAt: now.toISOString() });
+            if (m) {
+              // the new level is saved only once the milestone is delivered (see tickUser)
+              out.push(m);
+              this.pendingJourney.set(userId, { target: j.targetKg, level });
+              await this.repo.setCache({ userId, key: jKey, payload: { target: j.targetKg, level: prev ?? 0, at: now.toISOString() }, createdAt: now.toISOString() });
+            } else await this.repo.setCache({ userId, key: jKey, payload: { target: j.targetKg, level: Math.max(level, prev ?? 0), at: now.toISOString() }, createdAt: now.toISOString() });
           } else await this.repo.setCache({ userId, key: jKey, payload: { at: now.toISOString() }, createdAt: now.toISOString() });
         }
       }
@@ -334,13 +363,29 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
         if (r.key.startsWith('kcal:'))
           for (const k of KCAL_STAGES.slice(0, KCAL_STAGES.indexOf(r.key as any)))
             await this.repo.setCache({ userId, key: `reminder:${today}:${k}`, payload: { at: now.toISOString(), skipped: true }, createdAt: now.toISOString() });
-        if (capped) {
+        const delivered = await this.notify(userId, r);
+        sent += delivered;
+        // only alerts that actually reached a device count toward the daily cap (iOS keeps meal/water/med reminders local)
+        if (capped && delivered > 0) {
           count++;
           await this.repo.setCache({ userId, key: capKey, payload: { n: count }, createdAt: now.toISOString() });
         }
-        sent += await this.notify(userId, r);
+        if (r.key.startsWith('goal:') && delivered > 0) {
+          const j = this.pendingJourney.get(userId);
+          if (j) await this.repo.setCache({ userId, key: 'nudge-journey', payload: { ...j, at: now.toISOString() }, createdAt: now.toISOString() });
+        }
       }
     }
     return sent;
   }
+}
+
+/** Web-push endpoints must belong to a real browser push service (the server POSTs to them, so no arbitrary hosts). */
+const PUSH_HOSTS = [/^fcm\.googleapis\.com$/, /^android\.googleapis\.com$/, /(^|\.)push\.services\.mozilla\.com$/, /(^|\.)notify\.windows\.com$/, /(^|\.)push\.apple\.com$/];
+export function isPushServiceUrl(endpoint: string, extra = process.env.PUSH_EXTRA_HOSTS ?? (process.env.NODE_ENV === 'test' ? 'push.example' : '')): boolean {
+  let u: URL;
+  try { u = new URL(endpoint); } catch { return false; }
+  if (u.protocol !== 'https:' || u.port || u.username) return false;
+  const host = u.hostname.toLowerCase();
+  return PUSH_HOSTS.some((r) => r.test(host)) || extra.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean).includes(host);
 }

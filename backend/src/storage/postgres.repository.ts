@@ -183,6 +183,24 @@ export class PostgresRepository implements Repository {
     );
   }
 
+  async incrCache(userId: string, key: string, delta: number) {
+    const r = await this.pool.query(
+      `insert into coach_cache (user_id, key, payload, created_at) values ($1,$2,jsonb_build_object('n',$3::int),now())
+       on conflict (user_id, key) do update set payload = jsonb_build_object('n', coalesce((coach_cache.payload->>'n')::int,0) + $3::int), created_at = now()
+       returning (payload->>'n')::int as n`,
+      [userId, key, delta],
+    );
+    return Number(r.rows[0].n);
+  }
+  async purgeCache(prefixes: string[], before: string) {
+    if (!prefixes.length) return 0;
+    const r = await this.pool.query(`delete from coach_cache where created_at < $1 and (${prefixes.map((_, i) => `key like $${i + 2}`).join(' or ')})`, [
+      before,
+      ...prefixes.map((p) => p.replace(/[%_\\]/g, (c) => '\\' + c) + '%'),
+    ]);
+    return r.rowCount ?? 0;
+  }
+
   async createUser(u: User) {
     await this.pool.query(
       `insert into users (id, email, name, password_hash, role, created_at) values ($1,$2,$3,$4,$5,$6)`,
@@ -278,7 +296,7 @@ export class PostgresRepository implements Repository {
         out[t] = (await client.query(`delete from ${t} where user_id=$1`, [userId])).rowCount ?? 0;
       }
       // connector keys / OAuth codes & tokens that resolve to this user
-      out.lookups = (await client.query(`delete from coach_cache where user_id='__lookup__' and payload->>'userId' = $1`, [userId])).rowCount ?? 0;
+      out.lookups = (await client.query(`delete from coach_cache where user_id in ('__lookup__','__shortcut__') and payload->>'userId' = $1`, [userId])).rowCount ?? 0;
       out.invites = (await client.query(`delete from invites where created_by=$1 and used_by is null`, [userId])).rowCount ?? 0;
       await client.query(`update invites set used_by=null where used_by=$1`, [userId]);
       out.users = (await client.query(`delete from users where id=$1`, [userId])).rowCount ?? 0;
