@@ -935,7 +935,7 @@ html[dir="ltr"] .mlAll .ar { display: inline-block; transform: scaleX(-1); }
 .stRow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: 0; border-top: 1px solid var(--line); background: none; color: var(--ink); font: inherit; text-align: start; }
 .stGrp > .stRow:first-child, .stGrp > .stRow.hidden + .stRow { border-top: 0; }
 button.stRow { cursor: pointer; }
-.stRow .ic { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-size: 16px; flex: none; }
+.stRow .ic { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; flex: none; background: color-mix(in srgb, var(--tc, #9aa3ad) 20%, transparent); color: var(--tc, #9aa3ad); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tc, #9aa3ad) 28%, transparent); }
 .stRow b { display: block; font-size: 15px; font-weight: 700; }
 .stRow .langsw { margin: 0; flex: none; } .stRow .langsw button { padding: 6px 10px; font-size: 12.5px; min-height: 0; }
 /* hide scroll bars (the page still scrolls normally) */
@@ -1053,6 +1053,15 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     <symbol id="i-heart" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".15"/><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M7 12.5l3.2 3.2L17 9"/></symbol>
     <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".15"/><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 7v6M12 16.5v.5"/></symbol>
+        <symbol id="i-watch" viewBox="0 0 24 24"><rect x="7" y="6" width="10" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 6l.5-3h5l.5 3M9 18l.5 3h5l.5-3M12 10v2.5l1.5 1"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-pill" viewBox="0 0 24 24"><rect x="3" y="8.5" width="18" height="7" rx="3.5" transform="rotate(-45 12 12)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9.5 9.5l5 5"/></symbol>
+    <symbol id="i-contrast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="currentColor" d="M12 3.5a8.5 8.5 0 0 1 0 17z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3.5 12h17M12 3.5c2.5 2.5 2.5 14.5 0 17M12 3.5c-2.5 2.5-2.5 14.5 0 17"/></symbol>
+    <symbol id="i-textsize" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 18l4.5-11L12 18M4.6 14h5.8M14 18l3-7.5 3 7.5M15 15.5h4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14.5v2"/></symbol>
+    <symbol id="i-bars" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 20h16M7 16v-4M12 16V7M17 16v-6"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3.5 19a5.5 5.5 0 0 1 11 0M15.5 6a3 3 0 0 1 0 5.5M17 14.5a5 5 0 0 1 3.5 4.5"/></symbol>
     <symbol id="i-chev-r" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></symbol>
     <symbol id="i-chev-l" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></symbol>
   </defs>
@@ -1472,25 +1481,25 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     <button class="stAcc" data-go="sacc"><span class="av" id="stAv">·</span><span class="t"><b id="stName">—</b><small id="stEmail" dir="ltr"></small></span><span class="ch">‹</span></button>
     <div class="stGh">الأجهزة والربط</div>
     <div class="stGrp">
-      <button class="stRow " data-go="sdev"><span class="ic" style="background:#1d3346">⌚</span><span class="t"><b>مصدر الحرق والأجهزة</b><small id="stSumDev"></small></span><span class="ch">‹</span></button>
-      <button class="stRow " data-go="sai"><span class="ic" style="background:#2c2546">✨</span><span class="t"><b>ChatGPT و Claude و Gemini</b><small id="stSumAi"></small></span><span class="ch">‹</span></button>
+      <button class="stRow " data-go="sdev"><span class="ic" style="--tc:#4aa8ff"><svg width="18" height="18"><use href="#i-watch"/></svg></span><span class="t"><b>مصدر الحرق والأجهزة</b><small id="stSumDev"></small></span><span class="ch">‹</span></button>
+      <button class="stRow " data-go="sai"><span class="ic" style="--tc:#a78bfa"><svg width="18" height="18"><use href="#i-spark"/></svg></span><span class="t"><b>ChatGPT و Claude و Gemini</b><small id="stSumAi"></small></span><span class="ch">‹</span></button>
     </div>
     <div class="stGh">التذكيرات</div>
     <div class="stGrp">
-      <button class="stRow " data-go="snotif"><span class="ic" style="background:#3a2e1d">🔔</span><span class="t"><b>الإشعارات</b><small id="stSumPush"></small></span><span class="ch">‹</span></button>
-      <button class="stRow " data-go="smed"><span class="ic" style="background:#1f3a2a">💊</span><span class="t"><b>الأدوية والفيتامينات</b><small id="stSumMed"></small></span><span class="ch">‹</span></button>
+      <button class="stRow " data-go="snotif"><span class="ic" style="--tc:#f5c26b"><svg width="18" height="18"><use href="#i-bell"/></svg></span><span class="t"><b>الإشعارات</b><small id="stSumPush"></small></span><span class="ch">‹</span></button>
+      <button class="stRow " data-go="smed"><span class="ic" style="--tc:#45d483"><svg width="18" height="18"><use href="#i-pill"/></svg></span><span class="t"><b>الأدوية والفيتامينات</b><small id="stSumMed"></small></span><span class="ch">‹</span></button>
     </div>
     <div class="stGh">التطبيق</div>
     <div class="stGrp">
-      <div class="stRow "><span class="ic" style="background:var(--card-2)">🌓</span><span class="t"><b>المظهر</b></span><div class="langsw" role="group" aria-label="المظهر" id="themeSw"><button type="button" data-theme-opt="system">تلقائي</button><button type="button" data-theme-opt="light">فاتح</button><button type="button" data-theme-opt="dark">داكن</button></div></div>
-      <div class="stRow "><span class="ic" style="background:var(--card-2)">🌐</span><span class="t"><b>اللغة</b></span><div class="langsw" role="group" aria-label="Language"><button type="button" data-lang="en">English</button><button type="button" data-lang="ar">العربية</button></div></div>
-      <div class="stRow"><span class="ic" style="background:var(--card-2)">🔠</span><span class="t"><b>حجم العرض</b></span><div class="langsw" role="group" aria-label="حجم العرض" id="sizeSw"><button type="button" data-size="sm">صغير</button><button type="button" data-size="md">عادي</button><button type="button" data-size="lg">كبير</button></div></div>
+      <div class="stRow "><span class="ic" style="--tc:#9aa3ad"><svg width="18" height="18"><use href="#i-contrast"/></svg></span><span class="t"><b>المظهر</b></span><div class="langsw" role="group" aria-label="المظهر" id="themeSw"><button type="button" data-theme-opt="system">تلقائي</button><button type="button" data-theme-opt="light">فاتح</button><button type="button" data-theme-opt="dark">داكن</button></div></div>
+      <div class="stRow "><span class="ic" style="--tc:#4aa8ff"><svg width="18" height="18"><use href="#i-globe"/></svg></span><span class="t"><b>اللغة</b></span><div class="langsw" role="group" aria-label="Language"><button type="button" data-lang="en">English</button><button type="button" data-lang="ar">العربية</button></div></div>
+      <div class="stRow"><span class="ic" style="--tc:#ff9e4d"><svg width="18" height="18"><use href="#i-textsize"/></svg></span><span class="t"><b>حجم العرض</b></span><div class="langsw" role="group" aria-label="حجم العرض" id="sizeSw"><button type="button" data-size="sm">صغير</button><button type="button" data-size="md">عادي</button><button type="button" data-size="lg">كبير</button></div></div>
     </div>
     <div class="stGh">الخصوصية</div>
     <div class="stGrp">
-      <button class="stRow " data-go="spriv"><span class="ic" style="background:var(--card-2)">🔒</span><span class="t"><b>الخصوصية والبيانات</b><small id="stSumPriv"></small></span><span class="ch">‹</span></button>
-      <button class="stRow hidden" id="stUsageRow" data-go="susage"><span class="ic" style="background:var(--card-2)">📊</span><span class="t"><b>استخدام الذكاء الاصطناعي</b><small id="stSumUsage"></small></span><span class="ch">‹</span></button>
-      <div class="stRow hidden" id="stInvRow"><span class="ic" style="background:var(--card-2)">👥</span><span class="t"><b>دعوة مستخدمين</b></span><span class="ch">‹</span></div>
+      <button class="stRow " data-go="spriv"><span class="ic" style="--tc:#9aa3ad"><svg width="18" height="18"><use href="#i-lock"/></svg></span><span class="t"><b>الخصوصية والبيانات</b><small id="stSumPriv"></small></span><span class="ch">‹</span></button>
+      <button class="stRow hidden" id="stUsageRow" data-go="susage"><span class="ic" style="--tc:#45d483"><svg width="18" height="18"><use href="#i-bars"/></svg></span><span class="t"><b>استخدام الذكاء الاصطناعي</b><small id="stSumUsage"></small></span><span class="ch">‹</span></button>
+      <div class="stRow hidden" id="stInvRow"><span class="ic" style="--tc:#f5c26b"><svg width="18" height="18"><use href="#i-users"/></svg></span><span class="t"><b>دعوة مستخدمين</b></span><span class="ch">‹</span></div>
     </div>
     <div class="card">
       <button class="rvDel" id="logout" style="margin-top:0">تسجيل الخروج</button>
