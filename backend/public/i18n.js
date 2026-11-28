@@ -9,6 +9,7 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "وجبات": "Meal",
     "التزام الأسبوع": "This week's habits",
     "من 100": "of 100",
     "مراقب التغذية": "Nutrition monitor",

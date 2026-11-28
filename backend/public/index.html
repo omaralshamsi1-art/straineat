@@ -3063,7 +3063,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       countUp($('bmiV'), b.value, 2200, 1);
     }, 150));
   }
-  const HABIT = () => ({ calories: [T('السعرات'), '#45d483'], protein: [T('البروتين'), '#f5c26b'], logged: [T('التسجيل'), '#45d483'], water: [T('الماء'), '#4aa8ff'], steps: [T('الخطوات'), '#ff9e4d'] });
+  const HABIT = () => ({ calories: [T('السعرات'), '#45d483'], protein: [T('البروتين'), '#f5c26b'], logged: [T('وجبات'), '#45d483'], water: [T('الماء'), '#4aa8ff'], steps: [T('الخطوات'), '#ff9e4d'] });
   function renderWeek(w) {
     $('wkWrap').classList.toggle('hidden', !w || w.score == null); if (!w || w.score == null) return;
     $('wkChip').innerHTML = w.delta == null ? `<i></i>${T('هذا الأسبوع')}` : `<i style="background:${w.delta >= 0 ? 'var(--good)' : 'var(--warn)'}"></i><bdi dir="ltr">${w.delta > 0 ? '+' : w.delta < 0 ? '−' : ''}${Math.abs(w.delta)}</bdi> ${T('عن الأسبوع الماضي')}`;

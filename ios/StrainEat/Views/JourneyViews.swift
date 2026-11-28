@@ -256,7 +256,7 @@ struct WeekHabitsCard: View {
         switch h {
         case "calories": return (t("Calories", "السعرات"), Color(red: 0.27, green: 0.83, blue: 0.51))
         case "protein": return (t("Protein", "البروتين"), Color(red: 0.96, green: 0.76, blue: 0.42))
-        case "logged": return (t("Logging", "التسجيل"), Color(red: 0.27, green: 0.83, blue: 0.51))
+        case "logged": return (t("Meal", "وجبات"), Color(red: 0.27, green: 0.83, blue: 0.51))
         case "water": return (t("Water", "الماء"), Color(red: 0.29, green: 0.66, blue: 1))
         default: return (t("Steps", "الخطوات"), Color(red: 1, green: 0.62, blue: 0.3))
         }
