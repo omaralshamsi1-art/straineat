@@ -607,6 +607,11 @@ html[dir="ltr"] .rings3 .lb { text-transform: uppercase; letter-spacing: .12em; 
 .stack-empty svg { color: var(--good); }
 #stackMore .restore { position: relative; z-index: 2; display: block; margin: 16px auto 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; padding: 6px 10px; }
 .dayhead .ideas { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; min-height: 34px; padding: 0 12px; font-size: 13px; }
+/* loading placeholders (data not answered yet) */
+.ftile .skel { display: block; height: 20px; width: 64px; margin: 4px 0 3px; border-radius: 6px; background: linear-gradient(90deg, color-mix(in srgb, var(--tc) 18%, transparent), color-mix(in srgb, var(--tc) 32%, transparent), color-mix(in srgb, var(--tc) 18%, transparent)); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite; }
+.ftile .skel.s2 { height: 9px; width: 44px; margin: 0; }
+@keyframes skel { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .ftile .skel { animation: none; } }
 .mon2b { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin: 12px 0; }
 .mon2b > * { min-width: 0; overflow: hidden; }
 .mon2b .card * { min-width: 0; } .mon2b .card .t, .mon2b .card .v { overflow: hidden; text-overflow: ellipsis; }
@@ -2263,16 +2268,17 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
 
   async function autoSyncWhoop() {
     const last = Number(ls.get('ns_whoop_sync', '0'));
-    if (Date.now() - last < 10 * 60 * 1000) return;
+    if (Date.now() - last < 10 * 60 * 1000) return false;
     try {
       if (ls.get('ns_whoop') !== '1') {
         const w = await api('integrations/whoop/status'); ls.set('ns_whoop', w.connected ? '1' : '0');
-        if (!w.connected) { ls.set('ns_whoop_sync', String(Date.now())); return; }
+        if (!w.connected) { ls.set('ns_whoop_sync', String(Date.now())); return false; }
       }
       const from = new Date(day); from.setDate(from.getDate() - 1);
       await api(`integrations/whoop/sync?from=${isoDay(from)}&to=${isoDay(new Date())}`, { method: 'POST' });
       ls.set('ns_whoop_sync', String(Date.now()));
-    } catch (e) { console.warn('whoop sync', e); }
+      return true;
+    } catch (e) { console.warn('whoop sync', e); return false; }
   }
 
   function macroRows(intake, targets) {
@@ -2449,7 +2455,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     try { const w = await api(`water?date=${want}`); if (isoDay(day) === want) paintWater(w); } catch { if (isoDay(day) === want) $('waterCard').classList.add('hidden'); }
   }
   function paintWater(w) {
-    waterDay = w;
+    waterDay = w; markLoaded('water');
     $('waterCard').classList.remove('hidden');
     const tgt = w.targetMl;
     $('wVal').textContent = tgt ? `${fmt1(w.intakeMl / 1000)} / ${fmt1(tgt / 1000)} ${T('لتر')}` : ltr(w.intakeMl);
@@ -2545,6 +2551,11 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     }
     return null;
   }
+  // which data sources have answered for the day on screen: until then a tile shows a placeholder, not a fake 0
+  let loadedFor = { d: '', set: new Set() };
+  function markLoaded(k) { const d = isoDay(day); if (loadedFor.d !== d) loadedFor = { d, set: new Set() }; loadedFor.set.add(k); }
+  const TILE_SRC = { left: 'bal', protein: 'bal', carbs: 'bal', fat: 'bal', fiber: 'bal', burn: 'bal', water: 'water', steps: 'steps', sleep: 'well', recovery: 'well', strain: 'well', week_budget: 'week', week_protein: 'week', week_water: 'week', week_steps: 'week' };
+  const isLoaded = (id) => loadedFor.d === isoDay(day) && loadedFor.set.has(TILE_SRC[id]);
   function emptyTile(id) {
     // no data yet → same colours as usual, value 0, and where the number will come from
     const wk = L`${0} من 7`;
@@ -2559,10 +2570,11 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       week_steps: ['fi-steps', '#ff9e4d', T('أيام الخطوات'), wk, T('هذا الأسبوع')],
     }[id];
     if (!E) return null;
+    if (!isLoaded(id)) return { ic: E[0], c: E[1], l: E[2], v: '', s: '', f: 0, go: null, det: null, empty: true, loading: true };
     const devices = ['burn', 'steps', 'sleep', 'recovery', 'strain'].includes(id);
     return { ic: E[0], c: E[1], l: E[2], v: E[3], s: E[4], f: 0, go: id === 'water' ? () => openWater() : devices ? () => show('sdev') : null, det: null, empty: true };
   }
-  const tileBtn = (id, d) => `<button class="ftile" data-ft="${id}" style="--tc:${d.c}"><span class="ic"><svg width="22" height="22"><use href="#${d.ic}"/></svg></span><span class="tx"><small>${esc(d.l)}</small><b class="num" dir="auto">${esc(d.v)}</b>${d.s ? `<span>${esc(d.s)}</span>` : ''}</span><i class="pg" style="width:${Math.round(d.f * 100)}%"></i></button>`;
+  const tileBtn = (id, d) => `<button class="ftile${d.loading ? ' ld' : ''}" data-ft="${id}" style="--tc:${d.c}"><span class="ic"><svg width="22" height="22"><use href="#${d.ic}"/></svg></span><span class="tx"><small>${esc(d.l)}</small>${d.loading ? '<b class="skel"></b><span class="skel s2"></span>' : `<b class="num" dir="auto">${esc(d.v)}</b>${d.s ? `<span>${esc(d.s)}</span>` : ''}`}</span><i class="pg" style="width:${Math.round(d.f * 100)}%"></i></button>`;
   function renderFocus() {
     const ringsHero = layout.hero === 'rings';
     const hd = ringsHero ? null : focusData(layout.hero);
@@ -2585,7 +2597,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
   }
   async function loadWeek() {
     try { weekSum = await api('week'); } catch { weekSum = null; } // the current week, also when looking at an earlier day
-    renderFocus();
+    markLoaded('week'); renderFocus(); saveSnap();
   }
   async function loadLayout() {
     try { const p = await api('profile'); if (p.todayLayout) { layout = p.todayLayout; ls.set('ns_layout', JSON.stringify(layout)); renderFocus(); } } catch {}
@@ -2661,14 +2673,22 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     $('dayLabel').textContent = dayLabel();
     const nm = ls.get('ns_name') || (user() === 'meera' ? T('ميرا') : user());
     $('greet').innerHTML = `<em class="acc">${esc(greeting())}</em> ${esc(nm)}`;
-    $('mealList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
     const want = isoDay(day);
-    await autoSyncWhoop();
-    if (isoDay(day) !== want) return; // a newer loadToday is running for the day now shown
+    // open instantly with the last numbers seen for today, then refresh quietly (no flashes of 0 / empty layout)
+    const painted = lastBal && lastBal.date === want;
+    if (!painted && !restoreSnap(want)) { $('mealList').innerHTML = '<div class="loading"><div class="spinner"></div></div>'; renderFocus(); } // tiles hold their place with placeholders
     try {
       const b = await api(`balance?date=${want}`);
-      if (isoDay(day) !== want) return;
+      if (isoDay(day) !== want) return; // the user moved to another day meanwhile
       if (b.onboarded === false && isoDay(day) === isoDay(new Date())) { startOnboarding(await api('profile')); return; }
+      await paintToday(b, want);
+      // WHOOP sync no longer holds up the screen: run it after, and refresh only if it brought new data
+      autoSyncWhoop().then((synced) => { if (synced && isoDay(day) === want) loadToday(); });
+    } catch (e) { if (!(lastBal && lastBal.date === want)) $('mealList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+
+  async function paintToday(b, want) {
+    {
       const gd = b.goalDeltaKcal;
       $('goalLine').textContent = (GOAL_AR[b.goal] || '') + (gd ? ' · ' + (gd < 0 ? L`عجز ${fmt(-gd)}/يوم` : L`فائض ${fmt(gd)}/يوم`) : '');
       const eaten = b.intake.calories, target = b.targetIntakeKcal;
@@ -2678,7 +2698,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       $('dayStatus').className = `status ${st.cls}`;
       $('dayStatus').innerHTML = `<svg width="22" height="22"><use href="#${st.cls === 'good' ? 'i-check' : 'i-alert'}"/></svg><span>${st.text}</span>`;
       $('kPendRow').classList.toggle('hidden', !(b.pendingDrafts.calories > 0)); $('kPend').textContent = fmt(b.pendingDrafts.calories);
-      lastBal = b; lastSt = st;
+      lastBal = b; lastSt = st; markLoaded('bal');
       renderOverview(b, st);
       $('tips').innerHTML = (b.tips || []).map((t) => {
         const full = tx(t, 'text'), head = full.split(/ — |: |\. /)[0];
@@ -2695,10 +2715,32 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       loadWellness();
       ramCtx = b.ramadan;
       const sched = await schedP; schedCache = sched;
+      if (isoDay(day) !== want) return;
       lastSt = st; renderStack(); renderMonitors();
       renderTimeline(b, sched);
+      saveSnap();
       loadWater(); loadSteps(); loadWeek();
-    } catch (e) { $('mealList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+    }
+  }
+
+  // last Today numbers per device, so reopening the app shows them at once (refreshed in the background)
+  function saveSnap() {
+    const d = isoDay(day);
+    if (d !== isoDay(new Date()) || !lastBal || lastBal.date !== d) return;
+    try { ls.set('ns_snap', JSON.stringify({ d, user: user(), bal: lastBal, sched: schedCache, well: wellCache, steps: stepsDay, water: waterDay, week: weekSum })); } catch {}
+  }
+  function restoreSnap(want) {
+    let sn = null;
+    try { sn = JSON.parse(ls.get('ns_snap') || 'null'); } catch { sn = null; }
+    if (!sn || sn.d !== want || sn.user !== user() || !sn.bal) return false;
+    wellCache = sn.well || null; stepsDay = sn.steps || null; weekSum = sn.week || null;
+    if (sn.water) paintWater(sn.water);
+    const b = sn.bal, st = dayState(b.goal, b.intake.calories, b.targetIntakeKcal, b.meals.length, true);
+    lastBal = b; lastSt = st; schedCache = sn.sched || null; planGoal = b.goal; ramCtx = b.ramadan;
+    for (const k of ['bal', 'well', 'steps', 'water', 'week']) markLoaded(k);
+    renderOverview(b, st); renderActivity(b.activity); renderRamadan(b.ramadan);
+    renderStack(); renderMonitors(); renderTimeline(b, schedCache); renderFocus();
+    return true;
   }
 
   // ---------------- motivation ----------------
@@ -2851,7 +2893,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     let st = null;
     try { st = await api(`steps?date=${want}`); } catch { st = null; }
     if (isoDay(day) !== want) return; // the user moved to another day meanwhile
-    stepsDay = st;
+    stepsDay = st; markLoaded('steps'); saveSnap();
     renderMonitors(); renderActivity(lastBal && lastBal.activity);
   }
   function stepsRow() {
@@ -3971,8 +4013,8 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     let w = null;
     try { w = await api(`integrations/whoop/wellness?date=${want}`); } catch { w = null; }
     if (isoDay(day) !== want) return; // the user moved to another day meanwhile
-    wellCache = w;
-    renderMonitors(); renderStack();
+    wellCache = w; markLoaded('well');
+    renderMonitors(); renderStack(); renderFocus(); saveSnap();
   }
 
   function wellnessDetail() {
