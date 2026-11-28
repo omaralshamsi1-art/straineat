@@ -963,6 +963,51 @@ html[data-size="lg"] { zoom: 1.1; }
 /* large: keep the header on one line by dropping the wordmark (the logo stays) */
 html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
 #tilesGrid > .ftile:last-child:nth-child(odd) { grid-column: 1 / -1; } /* a lone last tile spans the row */
+/* ---- Progress: journey, BMI capsule, week grid, jars ---- */
+.jyTxt { text-align: center; margin: 6px 0 0; }
+.jyTxt .k { color: var(--muted); font-size: 13px; font-weight: 700; }
+.jyTxt b { display: block; font-size: 42px; font-weight: 800; letter-spacing: -1px; margin-top: 2px; }
+.jyTxt .s { display: inline-flex; gap: 6px; align-items: center; margin-top: 8px; border-radius: 999px; padding: 6px 12px; font-weight: 800; font-size: 14px; background: #1d3a28; color: #b8f15a; }
+.jyTxt .s.late { background: #3a2f1d; color: #f5c26b; }
+.jyTxt .s.mute { background: var(--card-2); color: var(--muted); }
+.jyHero { position: relative; height: 290px; margin: 0 -6px; }
+.jyHero svg { width: 100%; height: 100%; }
+.jyTrk { fill: none; stroke: var(--line); stroke-width: 14; stroke-linecap: round; opacity: .8; }
+.jyDash { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 2 9; stroke-linecap: round; opacity: .5; }
+.jyLegend { display: flex; justify-content: center; gap: 16px; color: var(--muted); font-size: 12px; font-weight: 700; flex-wrap: wrap; margin-bottom: 8px; }
+.jyLegend span { display: flex; align-items: center; gap: 6px; } .jyLegend i { width: 10px; height: 10px; border-radius: 50%; }
+.jyHd { display: flex; justify-content: space-between; align-items: center; margin: 18px 4px 8px; font-weight: 800; font-size: 14px; letter-spacing: .04em; }
+.jyChip { background: var(--card-2); border-radius: 10px; padding: 5px 10px; font-size: 12.5px; font-weight: 700; display: inline-flex; gap: 6px; align-items: center; }
+.jyChip i { width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
+.jyCard { margin-top: 0; }
+.jyRow { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.jyBig b { font-size: 38px; font-weight: 800; } .jyBig small { color: var(--muted); font-weight: 700; }
+.jyNote { margin: 12px 0 0; font-size: 14px; color: var(--ink); opacity: .85; line-height: 1.6; }
+.jyNote:empty { display: none; }
+.bmiCap { position: relative; height: 30px; margin: 36px 0 8px; direction: ltr; display: flex; gap: 4px; }
+.bmiCap .z { height: 100%; border-radius: 10px; position: relative; overflow: hidden; background: var(--card-2); }
+.bmiCap .z::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent); transform: translateX(-100%); animation: jySheen 3.2s ease-in-out infinite; }
+@keyframes jySheen { to { transform: translateX(100%); } }
+.bmiCap .f { position: absolute; inset: 0; width: 0; transition: width 2.2s cubic-bezier(.2,.8,.2,1); }
+.bmiCap .me { position: absolute; top: -34px; transform: translateX(-50%); transition: left 2.2s cubic-bezier(.2,.8,.2,1); animation: jyBob 2.4s ease-in-out infinite; text-align: center; }
+.bmiCap .me b { display: block; background: var(--ink); color: var(--bg); border-radius: 9px; padding: 2px 7px; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.bmiCap .me i { display: block; width: 2px; height: 10px; margin: 0 auto; background: var(--ink); }
+@keyframes jyBob { 50% { margin-top: -4px; } }
+.bmiCap .goal { position: absolute; top: -4px; bottom: -4px; width: 3px; border-radius: 3px; background: #b8f15a; box-shadow: 0 0 10px #b8f15a; }
+.bmiScale { display: flex; gap: 4px; direction: ltr; color: var(--muted); font-size: 11px; font-weight: 700; } .bmiScale span { text-align: center; }
+.wkGrid { display: grid; grid-template-columns: auto repeat(7, 1fr); gap: 6px; align-items: center; margin-top: 12px; }
+.wkGrid .rl { color: var(--muted); font-size: 12px; font-weight: 700; white-space: nowrap; padding-inline-end: 4px; }
+.wkGrid .dh { color: var(--muted); font-size: 11px; text-align: center; font-weight: 700; }
+.wkGrid .dot { aspect-ratio: 1; border-radius: 8px; background: var(--card-2); transform: scale(.4); opacity: 0; transition: transform .5s cubic-bezier(.3,1.6,.4,1), opacity .4s; }
+.wkGrid .dot.on { transform: scale(1); opacity: 1; } .wkGrid .dot.fut { opacity: .35; }
+.jars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.jar { position: relative; height: 96px; background: var(--card-2); border-radius: 16px; overflow: hidden; text-align: center; padding-top: 10px; }
+.jar .w { position: absolute; left: 0; right: 0; bottom: 0; height: 0; transition: height 2s cubic-bezier(.2,.8,.2,1); }
+.jar .w::before { content: ''; position: absolute; left: -50%; top: -6px; width: 200%; height: 12px; background: inherit; border-radius: 45%; animation: jyWave 3s linear infinite; }
+@keyframes jyWave { to { transform: translateX(25%); } }
+.jar small, .jar b, .jar em { position: relative; z-index: 1; display: block; }
+.jar small { font-size: 11px; font-weight: 800; color: var(--ink); opacity: .85; } .jar b { font-size: 17px; margin-top: 4px; } .jar em { font-style: normal; font-size: 11px; font-weight: 800; margin-top: 2px; }
+@media (prefers-reduced-motion: reduce) { .bmiCap .me, .jar .w::before, .bmiCap .z::after { animation: none; } }
 </style>
 </head>
 <body>
@@ -1123,6 +1168,45 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
   <section id="v-progress" class="hidden fade">
     <div class="greet"><em class="acc">تقدّمك</em></div>
     <div class="sub" id="pSub"></div>
+
+    <!-- journey to the goal weight + BMI + habits + monitor -->
+    <div id="jyWrap" class="hidden">
+      <div class="jyTxt" id="jyTxt"></div>
+      <div class="jyHero"><svg viewBox="0 0 378 300" id="jySv" style="direction:ltr" aria-hidden="true">
+        <defs><linearGradient id="jyPg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#2f9e5f"/><stop offset="1" stop-color="#b8f15a"/></linearGradient>
+        <filter id="jyGl"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+        <path class="jyTrk" d="M40 280 C 40 205, 330 230, 330 165 C 330 105, 50 130, 55 72 C 58 30, 250 28, 330 28"/>
+        <path class="jyDash" d="M40 280 C 40 205, 330 230, 330 165 C 330 105, 50 130, 55 72 C 58 30, 250 28, 330 28"/>
+        <path id="jyProg" d="M40 280 C 40 205, 330 230, 330 165 C 330 105, 50 130, 55 72 C 58 30, 250 28, 330 28" fill="none" stroke="url(#jyPg)" stroke-width="14" stroke-linecap="round" filter="url(#jyGl)"/>
+        <g id="jyMiles"></g><g id="jySparks"></g>
+        <circle id="jyPlan" r="9" fill="none" stroke="#9aa3ab" stroke-width="2.5" stroke-dasharray="3 3"/>
+        <circle id="jyHalo" r="20" fill="#b8f15a" opacity=".25"/>
+        <circle id="jyMe" r="10" fill="#fff" stroke="#b8f15a" stroke-width="4"/>
+        <g id="jyFlag"><circle r="16" fill="#1d3a28" stroke="#b8f15a" stroke-width="2"/><text text-anchor="middle" y="6" font-size="16">🌿</text></g>
+      </svg></div>
+      <div class="jyLegend" id="jyLegend"></div>
+    </div>
+    <div id="bmiWrap" class="hidden">
+      <div class="jyHd"><span>مؤشر كتلة الجسم</span><span class="jyChip" id="bmiChip"></span></div>
+      <div class="card jyCard">
+        <div class="jyRow"><div class="jyBig"><b class="num" id="bmiV">0</b> <small>BMI</small></div><div class="small muted" id="bmiTo"></div></div>
+        <div class="bmiCap" id="bmiCap"></div>
+        <div class="bmiScale" id="bmiScale"></div>
+        <p class="jyNote" id="bmiNote"></p>
+      </div>
+    </div>
+    <div id="wkWrap" class="hidden">
+      <div class="jyHd"><span>التزام الأسبوع</span><span class="jyChip" id="wkChip"></span></div>
+      <div class="card jyCard">
+        <div class="jyBig"><b class="num" id="wkScore">0</b> <small>من 100</small></div>
+        <div class="wkGrid" id="wkGrid"></div>
+        <p class="jyNote" id="wkNote"></p>
+      </div>
+    </div>
+    <div id="monWrap" class="hidden">
+      <div class="jyHd"><span>مراقب التغذية</span><span class="small muted">متوسط 7 أيام</span></div>
+      <div class="jars" id="jars"></div>
+    </div>
 
     <div class="card" id="chCard"><div class="loading"><div class="spinner"></div></div></div>
 
@@ -2900,7 +2984,115 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     };
   }
 
+  // ---------------- progress header: journey · BMI · week · monitor ----------------
+  let jyRaf = 0;
+  const fmtDate = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(LOC, { day: 'numeric', month: 'long' });
+  function countUp(el, to, dur, dec) {
+    const t0 = performance.now();
+    (function f(n) { const k = Math.min(1, (n - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = dec ? (to * e).toFixed(dec) : fmt(Math.round(to * e)); if (k < 1) requestAnimationFrame(f); })(t0);
+  }
+  async function loadJourney() {
+    let r; try { r = await api('progress/summary'); } catch { return; }
+    if (curView !== 'progress') return;
+    renderJourney(r.journey); renderBmi(r.bmi); renderWeek(r.week); renderMonitor(r.monitor);
+  }
+  function renderJourney(j) {
+    const wrap = $('jyWrap'); cancelAnimationFrame(jyRaf);
+    if (!j || j.status === 'no_target') {
+      wrap.classList.remove('hidden');
+      $('jyTxt').innerHTML = `<div class="k">${T('رحلتك')}</div><b style="font-size:26px">${T('حدّد وزنك المستهدف')}</b><button class="btn ghost" id="jySet" style="margin-top:10px;width:auto;padding:10px 18px">${T('تعديل الهدف والخطة')}</button>`;
+      $('jySet').onclick = () => $('editPlan').click();
+      document.querySelector('.jyHero').classList.add('hidden'); $('jyLegend').innerHTML = ''; return;
+    }
+    wrap.classList.remove('hidden'); document.querySelector('.jyHero').classList.remove('hidden');
+    let head = '';
+    if (j.status === 'reached') head = `<div class="k">${T('رحلتك')}</div><b>${T('وصلت لهدفك 🎉')}</b>`;
+    else if (j.status === 'on_way') {
+      const a = j.aheadDays;
+      const chip = a == null ? '' : a >= 1 ? `<div class="s">↑ ${L`أبكر من خطتك بـ${'<span id="jyD">0</span>'} يوم`}</div>` : a <= -1 ? `<div class="s late">${L`متأخر عن خطتك ${'<span id="jyD">0</span>'} يوم`}</div>` : `<div class="s">✓ ${T('على الخطة بالضبط')}</div>`;
+      head = `<div class="k">${T('تصل لهدفك')}</div><b>${esc(fmtDate(j.eta))}</b>${chip}${j.tooFast ? `<div class="small" style="color:var(--warn);margin-top:8px">${T('تنزل أسرع من المعدل الصحي — زد أكلك شوي')}</div>` : ''}`;
+    } else if (j.status === 'stalled') head = `<div class="k">${T('رحلتك')}</div><b style="font-size:28px">${T('وزنك ثابت هالفترة')}</b><div class="s mute">${T('آخر 4 أسابيع')}</div>`;
+    else head = `<div class="k">${T('تاريخ وصولك')}</div><b style="font-size:28px">${L`بعد ${Math.max(0, j.needDays - (j.daysOfData || 0))} يوم`}</b><div class="s mute">${L`نحتاج ${j.needDays} يوم من الوزن · عندك ${j.daysOfData || 0}`}</div>`;
+    $('jyTxt').innerHTML = head;
+    $('jyLegend').innerHTML = `<span><i style="background:#fff;box-shadow:0 0 0 3px #b8f15a"></i>${L`أنت · ${fmt1(j.currentKg)} كغ`}</span>${j.planFrac != null ? `<span><i style="border:2px dashed #9aa3ab"></i>${T('الخطة')}</span>` : ''}<span>🌿 ${L`الهدف · ${fmt1(j.targetKg)} كغ`}</span>`;
+    // path animation
+    const NS = 'http://www.w3.org/2000/svg', prog = $('jyProg'), Lp = prog.getTotalLength(), pt = (f) => prog.getPointAtLength(Lp * f);
+    prog.style.strokeDasharray = Lp; prog.style.strokeDashoffset = Lp;
+    const g = pt(1); const miles = $('jyMiles'); miles.innerHTML = '';
+    const marks = [[0, j.startKg], [0.25, j.milestones[0]], [0.5, j.milestones[1]], [0.75, j.milestones[2]]];
+    for (const [f, kg] of marks) {
+      const p = pt(f), right = p.x > 190;
+      miles.insertAdjacentHTML('beforeend', `<circle cx="${p.x}" cy="${p.y}" r="4" fill="var(--bg)" stroke="#5d6b63" stroke-width="2"/><text x="${p.x + (right ? -14 : 14)}" y="${p.y + 4}" fill="#7b8790" font-size="11" font-weight="800" text-anchor="${right ? 'end' : 'start'}">${fmt1(kg)}</text>`);
+    }
+    const place = (id, f) => { const p = pt(f); $(id).setAttribute('cx', p.x); $(id).setAttribute('cy', p.y); };
+    $('jyPlan').style.display = j.planFrac == null ? 'none' : '';
+    const sp = $('jySparks'); sp.innerHTML = ''; const sparks = [];
+    for (let i = 0; i < 12; i++) { const c = document.createElementNS(NS, 'circle'); c.setAttribute('r', Math.random() * 1.8 + 1); c.setAttribute('fill', '#e9ffb8'); sp.appendChild(c); sparks.push({ c, f: Math.random(), v: 0.0012 + Math.random() * 0.002, o: Math.random() * 6 }); }
+    const ME = j.status === 'reached' ? 1 : j.frac, PLAN = j.planFrac || 0;
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let t0 = null;
+    const frame = (t) => {
+      if (t0 == null) t0 = t;
+      const k = reduce ? 1 : Math.min(1, Math.max(0, (t - t0 - 250) / 2400)), e = 1 - Math.pow(1 - k, 3), cur = ME * e;
+      prog.style.strokeDashoffset = Lp * (1 - cur);
+      place('jyMe', cur); place('jyHalo', cur); place('jyPlan', PLAN * e);
+      const hs = 1 + 0.25 * Math.sin(t / 350); $('jyHalo').setAttribute('r', 20 * hs);
+      for (const s2 of sparks) { s2.f += s2.v; if (s2.f > 1) s2.f = 0; const p = pt(s2.f * cur); s2.c.setAttribute('cx', p.x + Math.sin(t / 300 + s2.o) * 3); s2.c.setAttribute('cy', p.y + Math.cos(t / 280 + s2.o) * 3); s2.c.setAttribute('opacity', cur > 0.02 ? 0.3 + 0.6 * Math.abs(Math.sin(t / 400 + s2.o)) : 0); }
+      $('jyFlag').setAttribute('transform', `translate(${g.x},${g.y}) scale(${1 + 0.06 * Math.sin(t / 500)})`);
+      if (curView === 'progress') jyRaf = requestAnimationFrame(frame);
+    };
+    jyRaf = requestAnimationFrame(frame);
+    if ($('jyD')) countUp($('jyD'), Math.abs(j.aheadDays), 1800, 0);
+  }
+  function renderBmi(b) {
+    $('bmiWrap').classList.toggle('hidden', !b); if (!b) return;
+    $('bmiChip').innerHTML = b.deltaMonth == null ? `<i></i>${T('آخر وزن')}` : `<i style="background:${(b.deltaMonth < 0) === (b.value >= 25) || b.deltaMonth === 0 ? 'var(--good)' : 'var(--warn)'}"></i><bdi dir="ltr">${b.deltaMonth > 0 ? '+' : b.deltaMonth < 0 ? '−' : ''}${fmt1(Math.abs(b.deltaMonth))}</bdi> ${T('عن الشهر الماضي')}`;
+    $('bmiTo').innerHTML = b.toNormal > 0 ? `${T('باقي')} <b style="color:var(--ink)">${fmt1(b.toNormal)}</b> ${T('للمنطقة الطبيعية')}` : T('ضمن المنطقة الطبيعية ✓');
+    const Z = [[16, 18.5, '#4aa8ff'], [18.5, 25, '#45d483'], [25, 30, '#f5c26b'], [30, 35, '#f08a5d']], V = Math.max(16, Math.min(35, b.value)), W = (v) => (Math.max(16, Math.min(35, v)) - 16) / 19;
+    const cap = $('bmiCap'); cap.innerHTML = ''; $('bmiScale').innerHTML = '';
+    for (const [a, c2, col] of Z) {
+      cap.insertAdjacentHTML('beforeend', `<div class="z" style="flex:${c2 - a}"><div class="f" style="background:${col}" data-w="${V >= c2 ? 100 : V <= a ? 0 : ((V - a) / (c2 - a)) * 100}"></div></div>`);
+      $('bmiScale').insertAdjacentHTML('beforeend', `<span style="flex:${c2 - a}">${a}–${c2}</span>`);
+    }
+    if (b.target) cap.insertAdjacentHTML('beforeend', `<div class="goal" style="left:calc(${W(b.target) * 100}% - 1px)" title="${T('هدفك')}"></div>`);
+    cap.insertAdjacentHTML('beforeend', `<div class="me" style="left:0%"><b>${T('أنت')}</b><i></i></div>`);
+    $('bmiNote').textContent = b.zone === 'normal' ? T('وزنك ضمن المنطقة الطبيعية لطولك.') : b.zone === 'under' ? T('أقل من الطبيعي لطولك — خطتك تساعدك ترفعه بشكل صحي.') : T('المؤشر تقريبي ولا يفرّق بين العضل والدهون.');
+    requestAnimationFrame(() => setTimeout(() => {
+      cap.querySelectorAll('.f').forEach((f) => (f.style.width = f.dataset.w + '%'));
+      cap.querySelector('.me').style.left = W(b.value) * 100 + '%';
+      countUp($('bmiV'), b.value, 2200, 1);
+    }, 150));
+  }
+  const HABIT = () => ({ calories: [T('السعرات'), '#45d483'], protein: [T('البروتين'), '#f5c26b'], logged: [T('التسجيل'), '#45d483'], water: [T('الماء'), '#4aa8ff'], steps: [T('الخطوات'), '#ff9e4d'] });
+  function renderWeek(w) {
+    $('wkWrap').classList.toggle('hidden', !w || w.score == null); if (!w || w.score == null) return;
+    $('wkChip').innerHTML = w.delta == null ? `<i></i>${T('هذا الأسبوع')}` : `<i style="background:${w.delta >= 0 ? 'var(--good)' : 'var(--warn)'}"></i><bdi dir="ltr">${w.delta > 0 ? '+' : w.delta < 0 ? '−' : ''}${Math.abs(w.delta)}</bdi> ${T('عن الأسبوع الماضي')}`;
+    const H = HABIT(), days = [T('ن'), T('ث'), T('ر'), T('خ'), T('ج'), T('س'), T('ح')];
+    let html = '<span></span>' + days.map((d) => `<span class="dh">${d}</span>`).join('');
+    w.grid.forEach((row, ri) => {
+      const [name, col] = H[row.habit] || [row.habit, '#45d483'];
+      html += `<span class="rl">${esc(name)}</span>` + row.days.map((v, i) => `<span class="dot ${i >= w.daysSoFar ? 'fut' : ''}" data-d="${i}" data-r="${ri}" style="${v ? `background:${col}` : ''}"></span>`).join('');
+    });
+    $('wkGrid').innerHTML = html;
+    const wk = w.weakest; const wn = wk && H[wk.habit] ? H[wk.habit][0] : '';
+    $('wkNote').textContent = wk && wk.hit < wk.of ? L`💡 ${wn} أضعف نقطة — ${wk.hit} من ${wk.of} أيام هالأسبوع.` : T('💡 أسبوع ممتاز — كمّل كذا.');
+    countUp($('wkScore'), w.score, 1800, 0);
+    $('wkGrid').querySelectorAll('.dot').forEach((d) => setTimeout(() => d.classList.add('on'), 200 + +d.dataset.d * 110 + +d.dataset.r * 40));
+  }
+  function renderMonitor(m) {
+    const has = m && (m.sugar || m.sodium || m.fiber || m.water);
+    $('monWrap').classList.toggle('hidden', !has); if (!has) return;
+    const lv = { ok: [T('طبيعي'), '#2f9e5f', '#c9ffd9'], good: [T('جيد'), '#2f9e5f', '#c9ffd9'], high: [T('مرتفع'), '#b9852f', '#ffe2b0'], low: [T('قليل'), '#5b6670', '#e3e8ec'] };
+    const jar = (name, val, x, waterCol) => {
+      if (!x) return `<div class="jar"><small>${name}</small><b>—</b><em class="muted">${T('لا بيانات')}</em></div>`;
+      const [lab, bg, tx] = lv[x.level] || lv.ok;
+      return `<div class="jar"><div class="w" style="background:${waterCol && x.level !== 'low' ? '#2f6fae' : bg}" data-h="${Math.round((x.fill || 0) * 100)}"></div><small>${name}</small><b class="num">${val}</b><em style="color:${tx}">${lab}</em></div>`;
+    };
+    $('jars').innerHTML = jar(T('السكر'), m.sugar && L`${m.sugar.g}غ`, m.sugar) + jar(T('الصوديوم'), m.sodium && L`${fmt1(m.sodium.mg / 1000)}غ`, m.sodium) + jar(T('الألياف'), m.fiber && L`${m.fiber.g}غ`, m.fiber) + jar(T('الماء'), m.water && L`${fmt1(m.water.ml / 1000)}ل`, m.water, true);
+    setTimeout(() => $('jars').querySelectorAll('.w').forEach((w2) => (w2.style.height = w2.dataset.h + '%')), 200);
+  }
   async function loadProgress() {
+    loadJourney();
     try {
       const [w, plan, h] = await Promise.all([api('weights?days=90'), api('plan'), api('history?days=7')]);
       planCache = plan;

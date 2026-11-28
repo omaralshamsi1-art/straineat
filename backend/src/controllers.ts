@@ -1,3 +1,4 @@
+import { ProgressService } from './progress/progress.service';
 import { ForbiddenException, Inject, Optional } from '@nestjs/common';
 import { appAccountToken, CREDIT_PACK, CreditsService } from './iap/credits.service';
 import { REPOSITORY, Repository } from './storage/repository';
@@ -745,5 +746,16 @@ export class IapController {
   @Post('apple')
   redeem(@UserId() userId: string, @Body() body: { transactionId?: string }) {
     return this.credits.redeemApple(userId, String(body?.transactionId ?? ''));
+  }
+}
+
+/** Progress page header: journey, BMI, habits this week, nutrition monitor. */
+@Controller('progress')
+export class ProgressController {
+  constructor(private readonly progress: ProgressService) {}
+
+  @Get('summary')
+  summary(@UserId() userId: string) {
+    return this.progress.summary(userId);
   }
 }
