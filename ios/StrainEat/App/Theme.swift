@@ -272,7 +272,7 @@ extension Notification.Name {
 
 /// Big display numbers that still follow the user's text size (up to +30%, then shrink to fit instead of clipping).
 private struct HeroFont: ViewModifier {
-    @ScaledMetric(relativeTo: .largeTitle) private var size: CGFloat
+    @ScaledMetric private var size: CGFloat
     let base: CGFloat
     let weight: Font.Weight
     let design: Font.Design
