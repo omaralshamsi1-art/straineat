@@ -298,7 +298,7 @@ export class PostgresRepository implements Repository {
       // connector keys / OAuth codes & tokens that resolve to this user
       out.lookups = (await client.query(`delete from coach_cache where user_id in ('__lookup__','__shortcut__') and payload->>'userId' = $1`, [userId])).rowCount ?? 0;
       out.invites = (await client.query(`delete from invites where created_by=$1 and used_by is null`, [userId])).rowCount ?? 0;
-      await client.query(`update invites set used_by=null where used_by=$1`, [userId]);
+      await client.query(`update invites set used_by='__deleted__' where used_by=$1`, [userId]); // stays used (no reuse), without the old id
       out.users = (await client.query(`delete from users where id=$1`, [userId])).rowCount ?? 0;
       await client.query('commit');
     } catch (e) {

@@ -175,12 +175,12 @@ struct OverviewDetailView: View {
             case .eaten:
                 Text(t("CALORIES · LAST 7 DAYS", "سعرات آخر 7 أيام")).font(.caption.weight(.heavy)).tracking(0.8)
                 Text(pickedLabel).font(.caption).foregroundStyle(Theme.muted)
-                Text("\(fmt(picked?.intakeKcal ?? b.intake.calories)) / \(fmt(picked?.targetKcal ?? b.targetIntakeKcal ?? 0))").font(.system(size: 34, weight: .heavy)).monospacedDigit()
+                Text("\(fmt(picked?.intakeKcal ?? b.intake.calories)) / \(fmt(picked?.targetKcal ?? b.targetIntakeKcal ?? 0))").heroFont(34, weight: .heavy).monospacedDigit()
                     .contentTransition(.numericText())
                 chart(\.intakeKcal, color: eatColor, line: b.targetIntakeKcal)
             case .left:
                 Text(t("LEFT TODAY", "متبقي لك اليوم")).font(.caption.weight(.heavy)).tracking(0.8)
-                Text("\(fmt(b.remainingKcal ?? 0)) \(t("kcal", "سعرة"))").font(.system(size: 34, weight: .heavy)).monospacedDigit()
+                Text("\(fmt(b.remainingKcal ?? 0)) \(t("kcal", "سعرة"))").heroFont(34, weight: .heavy).monospacedDigit()
                 if let bonus = b.burnBonusKcal, bonus > 0, let base = b.baseTargetKcal {
                     Text(t("Your budget is \(fmt(base)) + \(fmt(bonus)) because you burned more than expected today (we add back only half — watch calorie estimates are rough).",
                            "ميزانيتك \(fmt(base)) + \(fmt(bonus)) لأن حرقك اليوم أكثر من المتوقع (نضيف نصف الزيادة فقط لأن تقدير الساعة تقريبي)."))
@@ -190,7 +190,7 @@ struct OverviewDetailView: View {
                 Text(t("BURN · LAST 7 DAYS", "الحرق آخر 7 أيام")).font(.caption.weight(.heavy)).tracking(0.8)
                 Text(pickedLabel).font(.caption).foregroundStyle(Theme.muted)
                 let burnV: Double? = picked != nil ? picked!.burnKcal : b.burn?.totalKcal
-                Text(burnV.map { "\(fmt($0)) \(t("kcal", "سعرة"))" } ?? "—").font(.system(size: 34, weight: .heavy)).monospacedDigit()
+                Text(burnV.map { "\(fmt($0)) \(t("kcal", "سعرة"))" } ?? "—").heroFont(34, weight: .heavy).monospacedDigit()
                     .contentTransition(.numericText())
                 Text(t("Ate \(fmt(picked?.intakeKcal ?? b.intake.calories))", "أكلت \(fmt(picked?.intakeKcal ?? b.intake.calories))")).font(.caption).foregroundStyle(Theme.muted)
                 chart(\.burnKcalOrZero, color: burnColor, line: b.intake.calories)
@@ -251,7 +251,7 @@ struct OverviewDetailView: View {
         return VStack(alignment: .leading, spacing: 8) {
             Text(label.uppercased()).font(.caption2.weight(.heavy)).tracking(0.6).foregroundStyle(Theme.muted).lineLimit(1)
             HStack(alignment: .firstTextBaseline, spacing: 3) {
-                Text(value).font(.system(size: 30, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+                Text(value).heroFont(30, weight: .heavy).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
                 Text(unit).font(.subheadline.weight(.semibold))
             }
             Spacer(minLength: 0)

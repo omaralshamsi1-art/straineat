@@ -87,7 +87,7 @@ struct MealReviewView: View {
             HStack(alignment: .center, spacing: 14) {
                 Group {
                     if let photo { Image(uiImage: photo).resizable().scaledToFill() }
-                    else { Text(kind == "drink" ? "☕" : kind == "snack" ? "🍎" : "🍽️").font(.system(size: 38)).frame(maxWidth: .infinity, maxHeight: .infinity).background(Theme.card2) }
+                    else { Text(kind == "drink" ? "☕" : kind == "snack" ? "🍎" : "🍽️").heroFont(38).frame(maxWidth: .infinity, maxHeight: .infinity).background(Theme.card2) }
                 }
                 .frame(width: 88, height: 88)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -128,7 +128,7 @@ struct MealReviewView: View {
         let n = liveTotals
         return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("\(Int(n.calories.rounded()))").font(.system(size: 60, weight: .heavy)).monospacedDigit()
+                Text("\(Int(n.calories.rounded()))").heroFont(60, weight: .heavy).monospacedDigit()
                 Text(plan.map { t("kcal · \(Int((n.calories / max(1, $0.targetKcal) * 100).rounded()))% of today's goal", "سعرة · \(Int((n.calories / max(1, $0.targetKcal) * 100).rounded()))% من هدف اليوم") } ?? t("kcal", "سعرة"))
                     .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.muted)
             }

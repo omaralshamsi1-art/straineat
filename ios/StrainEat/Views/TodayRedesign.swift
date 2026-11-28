@@ -79,7 +79,7 @@ struct TodayHero: View {
                             .stroke(over ? Theme.bad : ringGreen, style: StrokeStyle(lineWidth: 14, lineCap: .round)).rotationEffect(.degrees(-90))
                             .animation(.easeOut(duration: 0.6), value: frac)
                         VStack(spacing: 2) {
-                            Text("\(left < 0 ? "+" : "")\(fmt(abs(left)))").font(.system(size: 30, weight: .heavy)).monospacedDigit()
+                            Text("\(left < 0 ? "+" : "")\(fmt(abs(left)))").heroFont(30, weight: .heavy).monospacedDigit()
                                 .contentTransition(.numericText()).minimumScaleFactor(0.6).lineLimit(1)
                             Text(left < 0 ? t("over target", "فوق الهدف") : t("kcal left", "سعرة متبقية")).font(.caption).foregroundStyle(Theme.muted)
                         }

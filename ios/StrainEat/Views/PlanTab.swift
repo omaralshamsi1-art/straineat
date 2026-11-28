@@ -139,7 +139,7 @@ struct PlanHero: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(t("Your daily target", "هدفك اليومي")).font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            Text(fmt(plan.targetKcal)).font(.system(size: 44, weight: .heavy)).monospacedDigit()
+                            Text(fmt(plan.targetKcal)).heroFont(44, weight: .heavy).monospacedDigit()
                             Text(t("kcal", "سعرة")).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.muted)
                         }
                     }
@@ -233,7 +233,7 @@ struct PlanSummaryCard: View {
         Card(title: t("Your daily plan", "خطتك اليومية"), icon: "target",
              trailing: AnyView(Button(t("Edit", "تعديل"), action: onEdit).font(.subheadline.weight(.semibold)))) {
             HStack(alignment: .firstTextBaseline) {
-                Text(fmt(plan.targetKcal)).font(.system(size: 40, weight: .bold, design: .rounded)).monospacedDigit()
+                Text(fmt(plan.targetKcal)).heroFont(40, weight: .bold, design: .rounded).monospacedDigit()
                 Text(t("kcal/day", "سعرة/يوم")).foregroundStyle(Theme.muted)
                 Spacer()
                 Chip(text: goalName(plan.effectiveGoal))

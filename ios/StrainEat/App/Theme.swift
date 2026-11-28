@@ -269,3 +269,24 @@ extension Notification.Name {
     static let openProgress = Notification.Name("openProgress")
     static let openPlan = Notification.Name("openPlan")
 }
+
+/// Big display numbers that still follow the user's text size (up to +30%, then shrink to fit instead of clipping).
+private struct HeroFont: ViewModifier {
+    @ScaledMetric(relativeTo: .largeTitle) private var size: CGFloat
+    let base: CGFloat
+    let weight: Font.Weight
+    let design: Font.Design
+    init(_ base: CGFloat, _ weight: Font.Weight, _ design: Font.Design) {
+        self.base = base; self.weight = weight; self.design = design
+        _size = ScaledMetric(wrappedValue: base, relativeTo: .largeTitle)
+    }
+    func body(content: Content) -> some View {
+        content.font(.system(size: min(size, base * 1.3), weight: weight, design: design)).minimumScaleFactor(0.6)
+    }
+}
+
+extension View {
+    func heroFont(_ size: CGFloat, weight: Font.Weight = .regular, design: Font.Design = .default) -> some View {
+        modifier(HeroFont(size, weight, design))
+    }
+}

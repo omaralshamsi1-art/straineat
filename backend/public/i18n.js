@@ -9,6 +9,7 @@
   document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 
   var EN = {
+    "هذا مو ChatGPT ولا Claude ولا Gemini. لا توافق إلا إذا كنت تعرف هذا الموقع وأنت اللي بديت الربط.": "This is not ChatGPT, Claude or Gemini. Only approve if you know this site and you started the connection.",
     "وصلت هدفك اليوم — خلّها خفيفة": "Target reached today — keep it light",
     "ما في اتصال بالإنترنت — حاول مرة ثانية": "No internet connection — please try again",
     "حسب خطتك تقريباً {} · تاريخك الفعلي فوق في «رحلتك»": "On your plan: around {} · your actual date is in \u201cYour journey\u201d above",

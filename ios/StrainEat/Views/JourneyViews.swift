@@ -145,7 +145,7 @@ struct JourneyCard: View {
                 Text(t("You reached your goal 🎉", "وصلت لهدفك 🎉")).font(.title.weight(.heavy))
             case "on_way":
                 Text(t("You'll reach your goal", "تصل لهدفك")).font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
-                Text(dateText(j.eta)).font(.system(size: 40, weight: .heavy))
+                Text(dateText(j.eta)).heroFont(40, weight: .heavy)
                 if let a = j.aheadDays {
                     chip(a >= 1 ? t("↑ \(shownAhead) days ahead of plan", "↑ أبكر من خطتك بـ\(shownAhead) يوم") : a <= -1 ? t("\(shownAhead) days behind plan", "متأخر عن خطتك \(shownAhead) يوم") : t("✓ Right on plan", "✓ على الخطة بالضبط"), late: a <= -1)
                 }
@@ -210,7 +210,7 @@ struct BMICard: View {
             sectionHeader(t("Body mass index", "مؤشر كتلة الجسم"), b.deltaMonth.map { (($0 > 0 ? "+" : $0 < 0 ? "−" : "") + fmt1(abs($0))) + t(" vs last month", " عن الشهر الماضي") })
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(fmt1(b.value)).font(.system(size: 36, weight: .heavy)).monospacedDigit()
+                    Text(fmt1(b.value)).heroFont(36, weight: .heavy).monospacedDigit()
                     Text("BMI").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
                     Spacer()
                     Text(b.toNormal > 0 ? t("\(fmt1(b.toNormal)) to the healthy range", "باقي \(fmt1(b.toNormal)) للمنطقة الطبيعية") : t("In the healthy range ✓", "ضمن المنطقة الطبيعية ✓"))
@@ -273,7 +273,7 @@ struct WeekHabitsCard: View {
             sectionHeader(t("This week's habits", "التزام الأسبوع"), w.delta.map { ($0 > 0 ? "+" : $0 < 0 ? "−" : "") + "\(abs($0))" + t(" vs last week", " عن الأسبوع الماضي") })
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("\(w.score ?? 0)").font(.system(size: 40, weight: .heavy)).monospacedDigit().contentTransition(.numericText())
+                    Text("\(w.score ?? 0)").heroFont(40, weight: .heavy).monospacedDigit().contentTransition(.numericText())
                     Text(t("of 100", "من 100")).font(.subheadline.weight(.bold)).foregroundStyle(Theme.muted)
                 }
                 Grid(horizontalSpacing: 6, verticalSpacing: 6) {

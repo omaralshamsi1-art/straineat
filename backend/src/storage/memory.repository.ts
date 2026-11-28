@@ -192,6 +192,7 @@ export class MemoryRepository implements Repository {
     purge('coach_cache', this.cache, (v) => v.userId === userId || ((v.userId === '__lookup__' || v.userId === '__shortcut__') && (v.payload as any)?.userId === userId));
     purge('profiles', this.profiles, (v) => v.userId === userId);
     purge('invites', this.invites, (v) => v.createdBy === userId && !v.usedBy);
+    for (const v of this.invites.values()) if (v.usedBy === userId) v.usedBy = '__deleted__'; // stays used (no reuse)
     purge('users', this.users, (v) => v.id === userId);
     return out;
   }

@@ -57,7 +57,7 @@ struct AIConsentSheet: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Image(systemName: "sparkles").font(.system(size: 34, weight: .semibold)).foregroundStyle(Theme.brand2)
+                Image(systemName: "sparkles").heroFont(34, weight: .semibold).foregroundStyle(Theme.brand2)
                 Text(t("We use AI to analyse your meals", "نستخدم الذكاء الاصطناعي لتحليل وجباتك")).font(.title2.weight(.bold))
                 Text(t("To estimate calories and nutrition and answer your questions, we send to Google (Gemini API):",
                        "عشان نقدّر السعرات والقيم الغذائية ونرد على أسئلتك، نرسل إلى Google (Gemini API):"))

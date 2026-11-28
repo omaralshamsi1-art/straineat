@@ -3480,7 +3480,8 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     try { r = await api(`oauth/request/${encodeURIComponent(id)}`); } catch (e) { ls.del('ns_oauth_req'); return toast(e.message, 5000); }
     detOpen(T('ربط تطبيق ذكاء اصطناعي'));
     $('detBody').innerHTML = `<div class="card"><h3>${L`«${esc(r.clientName)}» يبي يوصل لحسابك في StrainEat`}</h3>
-      <p class="small muted" dir="ltr" style="text-align:start">${esc(r.host)}</p>
+      <p dir="ltr" style="text-align:start;font-weight:800;font-size:16px;margin:4px 0">${esc(r.host)}</p>
+      ${r.trusted ? '' : `<p class="small" style="color:var(--bad);line-height:1.7">⚠️ ${T('هذا مو ChatGPT ولا Claude ولا Gemini. لا توافق إلا إذا كنت تعرف هذا الموقع وأنت اللي بديت الربط.')}</p>`}
       <p class="small" style="line-height:1.8">${T('بيقدر:')}<br>• ${T('يسجّل وجباتك والماء والوزن')}<br>• ${T('يقرأ ملخص اليوم: السعرات والماكروز والماء والخطوات والحرق ووجبات اليوم')}</p>
       <p class="small muted">${T('ما يقدر يحذف شي أو يغيّر خطتك وإعداداتك. تقدر تلغي الربط أي وقت من الإعدادات.')}</p>
       <p class="small muted">${T('وافق بس إذا أنت اللي بديت الربط الحين من تطبيق الذكاء الاصطناعي.')}</p>

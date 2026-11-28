@@ -237,7 +237,7 @@ struct OnboardingView: View {
                 Circle().trim(from: 0, to: 0.75).stroke(Theme.brand2, style: StrokeStyle(lineWidth: 16, lineCap: .round))
                     .rotationEffect(.degrees(saving ? 360 : 0))
                     .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: saving)
-                Image(systemName: "chart.bar.fill").font(.system(size: 38)).foregroundStyle(Theme.brand2)
+                Image(systemName: "chart.bar.fill").heroFont(38).foregroundStyle(Theme.brand2)
             }
             .frame(width: 150, height: 150)
             .onAppear { saving = true }
@@ -371,7 +371,7 @@ struct OnboardingView: View {
         }
         return HStack(spacing: 16) {
             VStack(spacing: 4) {
-                Text(fmt1(bmi)).font(.system(size: 38, weight: .heavy, design: .rounded)).foregroundStyle(color).monospacedDigit()
+                Text(fmt1(bmi)).heroFont(38, weight: .heavy, design: .rounded).foregroundStyle(color).monospacedDigit()
                 Text(t("BMI", "مؤشر كتلة الجسم")).font(.caption).foregroundStyle(Theme.muted)
             }
             Divider().frame(height: 60)

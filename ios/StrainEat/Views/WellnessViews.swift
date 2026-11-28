@@ -99,7 +99,7 @@ struct WellnessDetailView: View {
                 VStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(t("RECOVERY · LAST 7 DAYS", "الاستشفاء آخر 7 أيام")).font(.caption.weight(.heavy)).tracking(0.8)
-                        Text(td.recovery.map { "\(Int($0))%" } ?? "—").font(.system(size: 40, weight: .heavy)).foregroundStyle(recoveryColor(td.recovery))
+                        Text(td.recovery.map { "\(Int($0))%" } ?? "—").heroFont(40, weight: .heavy).foregroundStyle(recoveryColor(td.recovery))
                             .contentTransition(.numericText())
                         if td.calibrating == true { Text(t("WHOOP is still calibrating", "WHOOP ما زال يعاير قياساتك")).font(.caption).foregroundStyle(Theme.muted) }
                         Chart(data.days) { d in
@@ -158,7 +158,7 @@ struct WellnessDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label).font(.caption2.weight(.heavy)).tracking(0.6).foregroundStyle(Theme.muted).lineLimit(1)
             HStack(alignment: .firstTextBaseline, spacing: 3) {
-                Text(value).font(.system(size: 30, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+                Text(value).heroFont(30, weight: .heavy).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
                 Text(unit).font(.subheadline.weight(.semibold))
             }
             Spacer(minLength: 0)

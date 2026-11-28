@@ -27,7 +27,12 @@ async function bootstrap() {
     http.get(`/${f}`, (_req: any, res: any) => res.sendFile(join(__dirname, '..', 'public', 'apple-touch-icon.png')));
   }
   http.get('/favicon.ico', (_req: any, res: any) => res.redirect(301, '/app/icon.svg'));
-  app.enableCors();
+  // CORS: the app itself is same-origin; only the AI-connector endpoints (OAuth discovery/registration/token, MCP)
+  // are open to other origins. They use bearer tokens, never cookies.
+  const OPEN_PATHS = /^\/(\.well-known\/|oauth\/|register$|token$|mcp\b)/;
+  app.enableCors((req: any, cb: (e: Error | null, o: object) => void) =>
+    cb(null, OPEN_PATHS.test(String(req.path ?? req.url ?? '').split('?')[0]) ? { origin: true } : { origin: false }),
+  );
   app.enableShutdownHooks();
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);

@@ -121,7 +121,7 @@ struct EnergyCard: View {
                         .environment(\.layoutDirection, .leftToRight)
                     VStack(spacing: 2) {
                         Text(fmt(abs(remaining)))
-                            .font(.system(size: 44, weight: .bold, design: .rounded)).monospacedDigit()
+                            .heroFont(44, weight: .bold, design: .rounded).monospacedDigit()
                             .foregroundStyle(Theme.status(within))
                         Text(within ? t("kcal left", "سعرة متبقية") : t("kcal over target", "سعرة فوق الهدف")).font(.subheadline).foregroundStyle(Theme.muted)
                     }

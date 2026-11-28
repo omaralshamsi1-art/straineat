@@ -45,7 +45,7 @@ struct ProgressTab: View {
         }.buttonStyle(.plain)
         return Card(title: t("Weight", "الوزن"), icon: "scalemass.fill", trailing: AnyView(addButton)) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(now.map { fmt1($0) } ?? "—").font(.system(size: 52, weight: .heavy)).monospacedDigit()
+                Text(now.map { fmt1($0) } ?? "—").heroFont(52, weight: .heavy).monospacedDigit()
                 Text(t("kg", "كغ")).font(.headline).foregroundStyle(Theme.muted)
                 Spacer(minLength: 4)
                 if let ch = change, abs(ch) >= 0.1 {

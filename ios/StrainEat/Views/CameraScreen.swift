@@ -24,7 +24,7 @@ struct CameraScreen: View {
                         CameraPreview(session: camera.session).ignoresSafeArea(edges: .top)
                     } else {
                         VStack(spacing: 12) {
-                            Image(systemName: "camera.fill").font(.system(size: 34))
+                            Image(systemName: "camera.fill").heroFont(34)
                             Text(camera.denied
                                  ? t("Allow camera access in Settings — or pick from Photos below", "اسمح بالكاميرا من الإعدادات — أو اختر من الصور تحت")
                                  : t("Camera isn't available — pick from Photos below", "الكاميرا غير متاحة — اختر من الصور تحت"))

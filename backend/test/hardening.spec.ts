@@ -141,3 +141,13 @@ describe('next-phase fixes', () => {
     expect(toEnglish('البريد أو كلمة المرور غير صحيحة')).toBe('Wrong email or password');
   });
 });
+
+describe('connector consent', () => {
+  it('a client calling itself "ChatGPT" is shown by its real host unless it is ChatGPT', async () => {
+    const { knownVendor } = await import('../src/mcp/oauth.service');
+    expect(knownVendor('chatgpt.com')).toBe('ChatGPT');
+    expect(knownVendor('claude.ai')).toBe('Claude');
+    expect(knownVendor('attacker.example')).toBeNull();
+    expect(knownVendor('chatgpt.com.attacker.example')).toBeNull();
+  });
+});

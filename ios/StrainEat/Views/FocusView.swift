@@ -206,7 +206,7 @@ struct BigRing: View {
                 .animation(.easeOut(duration: 0.8), value: d.frac)
             VStack(spacing: 2) {
                 Text(d.heroLabel ?? d.label).font(.footnote.weight(.heavy)).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.7)
-                Text(d.value).font(.system(size: 40, weight: .heavy)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
+                Text(d.value).heroFont(40, weight: .heavy).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
                 Text(d.heroSub ?? d.sub).font(.footnote.weight(.semibold)).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.7)
             }
             .padding(.horizontal, 24)

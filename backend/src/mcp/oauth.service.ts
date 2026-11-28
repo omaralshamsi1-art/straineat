@@ -163,7 +163,12 @@ export class OAuthService {
     const r = await this.request(id);
     const c = await this.client(r.clientId);
     if (!c) throw new NotFoundException('Unknown app');
-    return { clientName: c.client_name, host: new URL(r.redirectUri).host, scope: OAUTH_SCOPE };
+    const host = new URL(r.redirectUri).hostname.toLowerCase();
+    const vendor = knownVendor(host);
+    // a self-chosen name like "ChatGPT" is only shown when the redirect really goes to that vendor
+    const claims = /chat ?gpt|openai|claude|anthropic|gemini|google/i.test(c.client_name);
+    const clientName = vendor ?? (claims ? host : c.client_name);
+    return { clientName, host: new URL(r.redirectUri).host, trusted: !!vendor, scope: OAUTH_SCOPE };
   }
 
   async decide(userId: string, id: string, approve: boolean): Promise<{ redirect: string }> {
@@ -288,3 +293,14 @@ export function withParams(uri: string, params: Record<string, string | null | u
   return u.toString();
 }
 
+
+/** Redirect hosts of the AI apps StrainEat is built to connect with. */
+const VENDORS: [RegExp, string][] = [
+  [/(^|\.)(chatgpt\.com|openai\.com)$/, 'ChatGPT'],
+  [/(^|\.)(claude\.ai|claude\.com|anthropic\.com)$/, 'Claude'],
+  [/(^|\.)(gemini\.google\.com|google\.com|googleapis\.com)$/, 'Gemini'],
+];
+export function knownVendor(host: string): string | null {
+  for (const [re, name] of VENDORS) if (re.test(host)) return name;
+  return null;
+}
