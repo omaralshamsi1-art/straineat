@@ -34,6 +34,7 @@ export class EnergyService {
     const saved: EnergyDay[] = [];
     let restFill: ((date: string) => number | null) | undefined;
     for (const s of samples) {
+      if (!s || typeof s !== 'object') throw new BadRequestException('each sample needs date and source');
       if (!isIsoDate(s.date)) throw new BadRequestException(`Invalid date ${s.date}`);
       if (!VALID_SOURCES.has(s.source)) throw new BadRequestException(`Invalid source ${s.source}`);
       const active = num(s.activeKcal);

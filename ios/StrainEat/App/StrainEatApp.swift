@@ -59,7 +59,15 @@ struct RootView: View {
                     PlanTab()
                         .tag(3).tabItem { Label(t("My plan", "خطتي"), systemImage: "target") }
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .openTab)) { n in
+                    tab = (n.userInfo?["tab"] as? String) == "progress" ? 1 : 0
+                    UserDefaults.standard.removeObject(forKey: "pendingTab")
+                }
                 .task {
+                    if let p = UserDefaults.standard.string(forKey: "pendingTab") {
+                        tab = p == "progress" ? 1 : 0
+                        UserDefaults.standard.removeObject(forKey: "pendingTab")
+                    }
                     ExtraAnalyses.shared.start()
                     if !UserDefaults.standard.bool(forKey: "screenshotMode") {
                         try? await HealthKitManager.shared.requestAuthorization()

@@ -155,7 +155,7 @@ export function validateProfilePatch(patch: Partial<Profile>): Partial<Profile> 
     } else if (k === 'reminders') {
       const r = (v ?? {}) as Record<string, unknown>;
       const opt = (x: unknown) => (x === undefined ? undefined : x !== false); // omitted → kept (merged in update)
-      out.reminders = { meals: r.meals !== false, weight: r.weight !== false, water: r.water !== false, activity: opt(r.activity), calories: opt(r.calories), protein: opt(r.protein), weekly: opt(r.weekly), milestones: opt(r.milestones) } as Profile['reminders'];
+      out.reminders = { meals: opt(r.meals), weight: opt(r.weight), water: opt(r.water), activity: opt(r.activity), calories: opt(r.calories), protein: opt(r.protein), weekly: opt(r.weekly), milestones: opt(r.milestones) } as Profile['reminders'];
     } else if (k === 'birthDate') {
       if (v === null || v === '') { out.birthDate = null; continue; }
       const s = String(v);

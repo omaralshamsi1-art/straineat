@@ -172,7 +172,7 @@ export class RemindersService implements OnModuleInit, OnModuleDestroy {
     for (const s of await this.repo.listPushSubs(userId)) {
       if (isApnsEndpoint(s.endpoint)) {
         if (!this.apns?.configured || (msg.key && isLocalOnIos(msg.key))) continue; // the iOS app schedules these itself
-        const r = await this.apns.send(s.endpoint.slice(5), { title: msg.title, body: msg.body });
+        const r = await this.apns.send(s.endpoint.slice(5), { title: msg.title, body: msg.body, tab: tabFor(msg.key) });
         if (r === 'ok') n++;
         else if (r === 'gone') await this.repo.deletePushSub(s.endpoint);
         continue;
@@ -388,4 +388,11 @@ export function isPushServiceUrl(endpoint: string, extra = process.env.PUSH_EXTR
   if (u.protocol !== 'https:' || u.port || u.username) return false;
   const host = u.hostname.toLowerCase();
   return PUSH_HOSTS.some((r) => r.test(host)) || extra.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean).includes(host);
+}
+
+/** Which app screen an alert opens when tapped. */
+export function tabFor(key?: string): string {
+  if (!key) return 'today';
+  if (key === 'week' || key.startsWith('goal:') || key === 'weight') return 'progress';
+  return 'today';
 }

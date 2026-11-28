@@ -85,8 +85,10 @@ struct JourneyCard: View {
                         ForEach(Array(milestones.enumerated()), id: \.offset) { _, m in
                             let pt = roadPoint(m.0, in: size)
                             Circle().fill(Theme.bg).overlay(Circle().stroke(Theme.muted, lineWidth: 2)).frame(width: 9, height: 9).position(pt)
-                            Text(fmt1(m.1)).font(.caption2.weight(.heavy)).foregroundStyle(Theme.muted)
-                                .position(x: pt.x + (pt.x > size.width / 2 ? -22 : 22), y: pt.y)
+                            if abs(m.0 - me) >= 0.07 { // the "You" marker sits here: keep the dot, drop the label
+                                Text(fmt1(m.1)).font(.caption2.weight(.heavy)).foregroundStyle(Theme.muted)
+                                    .position(x: pt.x + (pt.x > size.width / 2 ? -22 : 22), y: pt.y)
+                            }
                         }
                         if let pf = j.planFrac {
                             Circle().stroke(Theme.muted, style: StrokeStyle(lineWidth: 2.5, dash: [3, 3])).frame(width: 18, height: 18)

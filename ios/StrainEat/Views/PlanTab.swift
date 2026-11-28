@@ -618,7 +618,7 @@ struct WaterSettingsCard: View {
                 Task {
                     if v { _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) }
                     else { UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["water-11", "water-14", "water-17", "water-20"]) }
-                    _ = try? await APIClient.shared.updateProfile(["reminders": ["meals": profile.reminders?.meals ?? true, "weight": profile.reminders?.weight ?? true, "water": v]])
+                    _ = try? await APIClient.shared.updateProfile(["reminders": ["water": v]]) // only what changed; the server keeps the rest
                 }
             })).tint(Theme.brand2)
             Toggle(t("I work or train in the heat most days (+750 ml water goal)", "أشتغل أو أتمرن في الحر أغلب الأيام (+750 مل لهدف الماء)"), isOn: Binding(get: { hot }, set: { v in

@@ -19,7 +19,7 @@ const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
 export interface Member { userId: string; name: string; color: string; joinedAt: string; shareMilestones: boolean }
 export interface Group { id: string; name: string; ownerId: string; code: string; members: Member[]; createdAt: string; deleted?: boolean }
 
-const cleanName = (v: unknown, max: number) => String(v ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, max);
+const cleanName = (v: unknown, max: number) => (typeof v === 'string' || typeof v === 'number' ? String(v) : '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, max);
 
 /**
  * Private, invite-only challenge groups. Members see each other's display name, a % against their own

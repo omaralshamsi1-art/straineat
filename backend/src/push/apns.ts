@@ -8,7 +8,7 @@ export const isApnsEndpoint = (e: string) => e.startsWith('apns:');
 export type ApnsResult = 'ok' | 'gone' | 'error';
 export interface ApnsSender {
   readonly configured: boolean;
-  send(token: string, msg: { title: string; body: string }): Promise<ApnsResult>;
+  send(token: string, msg: { title: string; body: string; tab?: string }): Promise<ApnsResult>;
 }
 
 const b64url = (b: Buffer | string) => Buffer.from(b).toString('base64').replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -55,9 +55,10 @@ export class ApnsService implements ApnsSender {
     return this.jwt.token;
   }
 
-  async send(token: string, msg: { title: string; body: string }): Promise<ApnsResult> {
+  async send(token: string, msg: { title: string; body: string; tab?: string }): Promise<ApnsResult> {
     if (!this.configured) return 'error';
-    const payload = JSON.stringify({ aps: { alert: { title: msg.title, body: msg.body }, sound: 'default' } });
+    // "tab" tells the app which screen to open when the alert is tapped
+    const payload = JSON.stringify({ aps: { alert: { title: msg.title, body: msg.body }, sound: 'default' }, ...(msg.tab ? { tab: msg.tab } : {}) });
     for (const host of ['https://api.push.apple.com', 'https://api.sandbox.push.apple.com']) {
       const r = await this.post(host, token, payload).catch((e) => ({ status: 0, reason: String(e?.message ?? e) }));
       if (r.status === 200) return 'ok';

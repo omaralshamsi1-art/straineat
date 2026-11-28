@@ -151,3 +151,28 @@ describe('connector consent', () => {
     expect(knownVendor('chatgpt.com.attacker.example')).toBeNull();
   });
 });
+
+describe('small fixes', () => {
+  it('day bounds follow daylight-saving changes', async () => {
+    const { dayBoundsUtc } = await import('../src/common/dates');
+    const spring = dayBoundsUtc('2026-03-29', 'Europe/Berlin');
+    expect(spring.start.toISOString()).toBe('2026-03-28T23:00:00.000Z');
+    expect(spring.end.toISOString()).toBe('2026-03-29T22:00:00.000Z'); // 23-hour day
+    const autumn = dayBoundsUtc('2026-10-25', 'Europe/Berlin');
+    expect(autumn.end.getTime() - autumn.start.getTime()).toBe(25 * 3600_000);
+    const dubai = dayBoundsUtc('2026-11-28', 'Asia/Dubai');
+    expect(dubai.start.toISOString()).toBe('2026-11-27T20:00:00.000Z');
+    expect(dubai.end.toISOString()).toBe('2026-11-28T20:00:00.000Z');
+  });
+});
+
+describe('alert taps', () => {
+  it('weekly summary, milestones and weigh-in open Progress; the rest open Today', async () => {
+    const { tabFor } = await import('../src/coach/reminders.service');
+    expect(tabFor('week')).toBe('progress');
+    expect(tabFor('goal:2')).toBe('progress');
+    expect(tabFor('weight')).toBe('progress');
+    expect(tabFor('kcal:90')).toBe('today');
+    expect(tabFor('wo:whoop:1')).toBe('today');
+  });
+});

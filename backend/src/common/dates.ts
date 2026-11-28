@@ -9,12 +9,18 @@ export function isIsoDate(s: unknown): s is string {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s; // rejects 2026-02-31, 2026-13-45
 }
 
-/** UTC start/end instants of a local calendar day (handles fixed-offset zones like Asia/Dubai exactly). */
+/** UTC instants of a local calendar day: [local midnight, next local midnight) — 23 or 25 h on DST-change days. */
 export function dayBoundsUtc(date: string, timeZone: string): { start: Date; end: Date } {
+  const next = new Date(new Date(`${date}T00:00:00Z`).getTime() + 86400_000).toISOString().slice(0, 10);
+  return { start: localMidnightUtc(date, timeZone), end: localMidnightUtc(next, timeZone) };
+}
+
+/** The UTC instant of 00:00 local time on `date` (offset taken at that instant, so DST days are exact). */
+function localMidnightUtc(date: string, timeZone: string): Date {
   const guess = new Date(`${date}T00:00:00Z`);
-  const offsetMin = tzOffsetMinutes(guess, timeZone);
-  const start = new Date(guess.getTime() - offsetMin * 60_000);
-  return { start, end: new Date(start.getTime() + 24 * 3600_000) };
+  let t = guess.getTime() - tzOffsetMinutes(guess, timeZone) * 60_000;
+  t = guess.getTime() - tzOffsetMinutes(new Date(t), timeZone) * 60_000; // re-check with the offset in force then
+  return new Date(t);
 }
 
 function tzOffsetMinutes(at: Date, timeZone: string): number {

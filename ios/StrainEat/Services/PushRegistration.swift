@@ -17,6 +17,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {}
 
+    /// Tapping an alert opens the screen it's about (Today or Progress).
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        let info = response.notification.request.content.userInfo
+        let tab = (info["tab"] as? String) ?? "today"
+        await MainActor.run {
+            UserDefaults.standard.set(tab, forKey: "pendingTab") // picked up at launch if the app wasn't running
+            NotificationCenter.default.post(name: .openTab, object: nil, userInfo: ["tab": tab])
+        }
+    }
+
     /// Show banners while the app is open too.
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
         [.banner, .sound, .list]
@@ -75,9 +85,8 @@ struct DayAlertsCard: View {
                     v[k] = nv
                     Task {
                         if nv { await PushRegistration.requestAndRegister() }
-                        _ = try? await APIClient.shared.updateProfile(["reminders": [
-                            "meals": profile.reminders?.meals ?? true, "weight": profile.reminders?.weight ?? true, "water": profile.reminders?.water ?? true, k: nv,
-                        ]])
+                        // only this switch is sent (the server keeps the others); if saving fails the switch goes back
+                        do { _ = try await APIClient.shared.updateProfile(["reminders": [k: nv]]) } catch { v[k] = !nv }
                     }
                 })).tint(Theme.brand2)
             }
@@ -91,4 +100,9 @@ struct DayAlertsCard: View {
             v = ["activity": r?.activity ?? true, "calories": r?.calories ?? true, "protein": r?.protein ?? true, "weekly": r?.weekly ?? true, "milestones": r?.milestones ?? true]
         }
     }
+}
+
+extension Notification.Name {
+    /// Posted when a tapped notification asks for a tab ("today" | "progress").
+    static let openTab = Notification.Name("StrainEatOpenTab")
 }

@@ -2246,7 +2246,6 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
   }
   $('prevDay').onclick = () => { day.setDate(day.getDate() - 1); loadToday(); };
   // suggestions only make sense for today
-  const _loadToday = () => {};
   $('nextDay').onclick = () => { if (isoDay(day) === isoDay(new Date())) return; day.setDate(day.getDate() + 1); loadToday(); };
 
   const SRC = { apple_health: 'Apple Health', whoop: 'WHOOP', health_connect: 'Health Connect', garmin: 'Garmin', fitbit: 'Fitbit', manual: T('يدوي') };
@@ -2711,7 +2710,6 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       renderActivity(b.activity);
       loadMotivation();
       renderRamadan(b.ramadan);
-      _loadToday();
       loadWellness();
       ramCtx = b.ramadan;
       const sched = await schedP; schedCache = sched;
@@ -3092,9 +3090,11 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
     prog.style.strokeDasharray = Lp; prog.style.strokeDashoffset = Lp;
     const g = pt(1); const miles = $('jyMiles'); miles.innerHTML = '';
     const marks = [[0, j.startKg], [0.25, j.milestones[0]], [0.5, j.milestones[1]], [0.75, j.milestones[2]]];
+    const youAt = j.status === 'reached' ? 1 : j.frac;
     for (const [f, kg] of marks) {
       const p = pt(f), right = p.x > 190;
-      miles.insertAdjacentHTML('beforeend', `<circle cx="${p.x}" cy="${p.y}" r="4" fill="var(--bg)" stroke="#5d6b63" stroke-width="2"/><text x="${p.x + (right ? -14 : 14)}" y="${p.y + 4}" fill="#7b8790" font-size="11" font-weight="800" text-anchor="${right ? 'end' : 'start'}">${fmt1(kg)}</text>`);
+      const underYou = youAt != null && Math.abs(f - youAt) < 0.07; // the "You" marker sits here: keep the dot, drop the label
+      miles.insertAdjacentHTML('beforeend', `<circle cx="${p.x}" cy="${p.y}" r="4" fill="var(--bg)" stroke="#5d6b63" stroke-width="2"/>${underYou ? '' : `<text x="${p.x + (right ? -14 : 14)}" y="${p.y + 4}" fill="#7b8790" font-size="11" font-weight="800" text-anchor="${right ? 'end' : 'start'}">${fmt1(kg)}</text>`}`);
     }
     const place = (id, f) => { const p = pt(f); $(id).setAttribute('cx', p.x); $(id).setAttribute('cy', p.y); };
     $('jyPlan').style.display = j.planFrac == null ? 'none' : '';
@@ -3227,7 +3227,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       : `<text x="${W - pr}" y="${target < lo ? H - pb - 6 : pt + 10}" text-anchor="${RTL_SVG ? 'start' : 'end'}" direction="${RTL_SVG ? 'rtl' : 'ltr'}" font-size="12" font-weight="700" fill="var(--accent)">${L`الهدف ${fmt1(target)}`} ${target < lo ? '↓' : '↑'}</text>`;
     const lab = (d) => new Date(`${d}T12:00:00`).toLocaleDateString(LOC, { day: 'numeric', month: 'short' });
     return L`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="رسم بياني للوزن" style="direction:ltr">${ticks}${tgt}<path d="${line}" fill="none" stroke="var(--brand-2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${dots}
-      <text x="${pl}" y="${H - 4}" font-size="11" fill="var(--muted)" text-anchor="${RTL_SVG ? 'end' : 'start'}" direction="${RTL_SVG ? 'rtl' : 'ltr'}">${lab(entries[0].date)}</text><text x="${W - pr}" y="${H - 4}" font-size="11" fill="var(--muted)" text-anchor="${RTL_SVG ? 'start' : 'end'}" direction="${RTL_SVG ? 'rtl' : 'ltr'}">${lab(entries[entries.length - 1].date)}</text></svg>`;
+      <text x="${pl}" y="${H - 4}" font-size="11" fill="var(--muted)" text-anchor="${RTL_SVG ? 'end' : 'start'}" direction="${RTL_SVG ? 'rtl' : 'ltr'}">${lab(entries[0].date)}</text>${entries.length > 1 && entries[0].date !== entries[entries.length - 1].date ? `<text x="${W - pr}" y="${H - 4}" font-size="11" fill="var(--muted)" text-anchor="${RTL_SVG ? 'start' : 'end'}" direction="${RTL_SVG ? 'rtl' : 'ltr'}">${lab(entries[entries.length - 1].date)}</text>` : ''}</svg>`;
   }
   function barChart(days) {
     const W = 520, H = 170, pb = 24, pt = 10, n = days.length, gap = 14;
@@ -3362,8 +3362,9 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       <label class="check" style="margin:0" title="${T('تفعيل')}"><input type="checkbox" data-med-on="${i}" ${m.enabled ? 'checked' : ''}></label>
       <button class="undo" data-med-del="${i}" style="color:var(--bad)">${T('حذف')}</button></div>`).join('')
       : `<p class="small muted" style="margin:0">${T('لا توجد تذكيرات بعد.')}</p>`;
-    $('medList').querySelectorAll('[data-med-on]').forEach((el) => (el.onchange = () => { meds[+el.dataset.medOn].enabled = el.checked; saveMeds(); }));
-    $('medList').querySelectorAll('[data-med-del]').forEach((el) => (el.onclick = () => { meds.splice(+el.dataset.medDel, 1); saveMeds(); }));
+    // on a failed save the list goes back to what the server has
+    $('medList').querySelectorAll('[data-med-on]').forEach((el) => (el.onchange = async () => { const before = structuredClone(meds); meds[+el.dataset.medOn].enabled = el.checked; if (!(await saveMeds())) { meds = before; renderMeds(); } }));
+    $('medList').querySelectorAll('[data-med-del]').forEach((el) => (el.onclick = async () => { const before = structuredClone(meds); meds.splice(+el.dataset.medDel, 1); if (!(await saveMeds())) { meds = before; renderMeds(); } }));
   }
   async function saveMeds() {
     try { const p = await api('profile', { method: 'PUT', json: { medReminders: meds } }); meds = p.medReminders || meds; renderMeds(); toast(T('تم الحفظ ✓')); return true; }
@@ -3390,6 +3391,7 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       if (!supported) { $('pushState').textContent = T('غير مدعوم هنا'); $('pushBtn').disabled = true; $('medPush').textContent = T('هذا المتصفح لا يدعم التنبيهات. على الآيفون: أضف التطبيق للشاشة الرئيسية وافتحه منها.'); return; }
       const reg = await navigator.serviceWorker.getRegistration('./');
       const sub = reg && (await reg.pushManager.getSubscription());
+      if (sub) api('push/subscribe', { method: 'POST', json: sub.toJSON() }).catch(() => {}); // keep the server in step with this browser
       $('pushState').textContent = sub ? T('مفعّلة ✓') : Notification.permission === 'denied' ? T('محظورة من الإعدادات') : T('غير مفعّلة');
       $('medPush').innerHTML = sub ? `<span style="color:var(--good)">${T('✓ التنبيهات مفعّلة على هذا الجهاز')}</span>` : `<span style="color:var(--bad)">${T('التنبيهات غير مفعّلة على هذا الجهاز — اضغط "تفعيل التنبيهات" في بطاقة التذكيرات فوق، وإلا لن يصلك تذكير الدواء.')}</span>`;
       $('pushBtn').textContent = sub ? T('إيقاف التنبيهات على هذا الجهاز') : T('تفعيل التنبيهات على هذا الجهاز');
@@ -3411,7 +3413,8 @@ html[data-size="lg"] .top .brand > span:first-of-type { display: none; }
       const { publicKey } = await api('push/key');
       if (!publicKey) return toast(T('التنبيهات غير مُعدّة على الخادم'));
       const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(publicKey) });
-      await api('push/subscribe', { method: 'POST', json: sub.toJSON() });
+      try { await api('push/subscribe', { method: 'POST', json: sub.toJSON() }); }
+      catch (e) { await sub.unsubscribe().catch(() => {}); throw e; } // don't leave the browser subscribed when the server isn't
       toast(T('تم تفعيل التنبيهات ✓')); loadPushState();
     } catch (e) { toast(e.message || T('تعذّر تفعيل التنبيهات'), 3500); }
   };
